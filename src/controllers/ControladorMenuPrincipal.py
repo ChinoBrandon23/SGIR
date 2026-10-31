@@ -17,7 +17,7 @@ class ControladorMenuPrincipal:
     def evaluar_input_menu(self, seleccion):
         match seleccion:
             case "1":
-                self.abrir_vista_receta(seleccion)
+                self.abrir_vista_receta()
             case "8":
                 subprocess.run('cls' if os.name == 'nt' else 'clear')
                 sys.exit()
@@ -30,7 +30,7 @@ class ControladorMenuPrincipal:
         self.vista.mostrar_layout()
         self.vista.mostrar_prompt_menu()
 
-    def abrir_vista_receta(self, user_input):
+    def abrir_vista_receta(self):
         vista = VistaRecetas(self.vista.console)
 
         vista.input_menu_recetas.agregar_escuchante(self.evaluar_input_menu_recetas)
