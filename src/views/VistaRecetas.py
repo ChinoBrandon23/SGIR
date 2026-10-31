@@ -2,6 +2,7 @@ import subprocess
 import os
 import time
 
+import rich
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
@@ -159,6 +160,33 @@ class VistaRecetas(VistaBase):
     def llenar_tabla_instrucciones(self, lista_instrucciones:dict[str, str]):
         for num, instruccion in lista_instrucciones.items():
             self.tabla_instrucciones.add_row(str(num), instruccion)
+
+    def mostrar_crear_receta(self, receta:Receta|None, mapa_idx_ing):
+        self.resetear_vista()
+
+        self.layout["main"].split_column(Layout(name="panel_receta"),
+                                         Layout(name="tabla_ing"),
+                                         Layout(name="tabla_ins"))
+
+        self.layout["panel_receta"].size = 3
+
+        panel = Panel(renderable=f"[bold white]Crear receta\n"
+                                 f"{receta.nombre if receta else "[bold magenta]Nombre de la receta[/bold magenta]"}[/bold white]. "
+                                 f"Porciones: {receta.num_porciones if receta else "[bold magenta]Número de porciones[/bold magenta]"}")
+
+        panel.height = 7
+
+        if receta and len(receta.lista_ingredientes) > 1:
+            self.llenar_tabla_ingredientes(receta.lista_ingredientes, mapa_idx_ing)
+
+        if receta:
+            self.llenar_tabla_instrucciones(receta.instrucciones)
+
+        self.layout["panel_receta"].update(panel)
+        self.layout["opciones"].update(Columns())
+        self.layout["tabla_ing"].update(self.tabla_ingredientes)
+        self.layout["tabla_ins"].update(self.tabla_instrucciones)
+
 
     def crear_banda_opciones_principal(self):
         opciones_columna = Columns()
@@ -325,6 +353,11 @@ class VistaRecetas(VistaBase):
             self.mostrar_crear_ingrediente_prompt()
 
     def mostrar_modificar_ingrediente_prompt(self, opciones):
+        if len(opciones) == 0:
+            rich.print("[bold green]Error: No hay ingredientes para editar, volviendo al menú editar...[/bold green]")
+            time.sleep(5)
+            return None, None
+
         ing_idx = Prompt.ask("[bold yellow]Ingresa el número del ingrediente a modificar[/bold yellow]",
                              choices=opciones,
                              show_choices=False)
@@ -345,15 +378,20 @@ class VistaRecetas(VistaBase):
             self.mostrar_crear_ingrediente_prompt()
 
     def mostrar_borrar_ingrediente_prompt(self, opciones):
-        info = Prompt.ask("[bold yellow]Ingresa el número del ingrediente a borrar[/bold yellow]",
-                          choices=opciones,
-                          show_choices=False)
+        if len(opciones) == 0:
+            rich.print("[bold green]Error: No hay ingredientes para borrar, volviendo al menú editar...[/bold green]")
+            time.sleep(5)
+            return None
 
-        if info is not None:
+        num_ing = Prompt.ask("[bold yellow]Ingresa el número del ingrediente a borrar[/bold yellow]",
+                             choices=opciones,
+                             show_choices=False)
+
+        if num_ing is not None:
             confirmacion = Prompt.ask(f"[bold yellow]Confirmar borrar ingrediente[/bold yellow] "
-                                      f"[italic white]#{info}[/italic white]", choices=["S", "N"])
+                                      f"[italic white]#{num_ing}[/italic white]", choices=["S", "N"])
             if confirmacion == "S":
-                return info
+                return num_ing
             else:
                 return None
 
@@ -379,12 +417,60 @@ class VistaRecetas(VistaBase):
         info = Prompt.ask("[bold yellow]Ingresa la instrucción[/bold yellow]")
 
         if info is not None:
-            confirmacion = Prompt.ask("Confirmar agregar instrucción[/bold yellow]", choices=["S", "N"])
+            confirmacion = Prompt.ask("[bold yellow]Confirmar agregar instrucción[/bold yellow]", choices=["S", "N"])
             if confirmacion == "S":
                 return info
             else:
                 return None
 
+    def mostrar_editar_instruccion_prompt(self, opciones):
+        if len(opciones) == 0:
+            rich.print("[bold green]Error: No hay instrucciones para editar, volviendo al menú editar...[/bold green]")
+            time.sleep(5)
+            return None, None
+
+        inst_num = Prompt.ask("[bold yellow]Ingresa el número de la instrucción a modificar[/bold yellow]",
+                              choices=opciones,
+                              show_choices=False)
+
+        nueva_inst = Prompt.ask(f"[bold yellow]Ingresa la nueva instrucción #{inst_num}[/bold yellow]")
+
+        if nueva_inst is not None:
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar agregar nueva instrucción #{inst_num}[/bold yellow]", choices=["S", "N"])
+            if confirmacion == "S":
+                return inst_num, nueva_inst
+            else:
+                return None
+
+    def mostrar_borrar_instruccion_prompt(self, opciones):
+        if len(opciones) == 0:
+            rich.print("[bold green]Error: No hay instrucciones para editar, volviendo al menú editar...[/bold green]")
+            time.sleep(5)
+            return None
+
+        inst_num = Prompt.ask("[bold yellow]Ingresa el número de la instrucción a borrar[/bold yellow]",
+                              choices=opciones,
+                              show_choices=False)
+
+        if inst_num is not None:
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar borrar ingrediente #{inst_num}[/bold yellow]",
+                                      choices=["S", "N"])
+
+            if confirmacion == "S":
+                return inst_num
+            else:
+                return None
+
+    def mostrar_prompt_crear_receta(self):
+        nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 1 para cancelar")
+
+        if nombre is not "0":
+            porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta o 1 para cancelar")
+
+            if porciones is not "0":
+                return nombre, porciones
+
+        return None, None
 
     def refrescar_pantalla(self):
         subprocess.run('cls' if os.name == 'nt' else 'clear')
