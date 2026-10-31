@@ -1,6 +1,6 @@
 from rich.prompt import Prompt
 
-class InputEmisor(Prompt):
+class InputEmisor:
     def __init__(self):
         super().__init__()
         self.user_input = None
