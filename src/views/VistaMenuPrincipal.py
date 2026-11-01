@@ -33,5 +33,8 @@ class VistaMenuPrincipal(VistaBase):
         self.input_menu.imprimir("Ingresa una opción", choices=[str(i) for i in range(1, 9)])
 
     def mostrar_layout(self):
-        subprocess.run('cls' if os.name == 'nt' else 'clear')
+        try:
+            subprocess.run('cls' if os.name == 'nt' else 'clear')
+        except FileNotFoundError:
+            print(chr(27) + "[2J")
         self.console.print(self.layout, justify="center")

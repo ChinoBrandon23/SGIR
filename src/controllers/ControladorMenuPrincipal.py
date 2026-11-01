@@ -19,7 +19,10 @@ class ControladorMenuPrincipal:
             case "1":
                 self.abrir_vista_receta()
             case "8":
-                subprocess.run('cls' if os.name == 'nt' else 'clear')
+                try:
+                    subprocess.run('cls' if os.name == 'nt' else 'clear')
+                except FileNotFoundError:
+                    print(chr(27) + "[2J")
                 sys.exit()
 
     def evaluar_input_menu_recetas(self, seleccion:str):
