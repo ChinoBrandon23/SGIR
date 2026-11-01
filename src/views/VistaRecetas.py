@@ -69,11 +69,11 @@ class VistaRecetas(VistaBase):
         if self.tabla_ingredientes.row_count > 0 or self.tabla_instrucciones.row_count > 0:
             self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_receta"),
-                                         Layout(name="tabla_ing"),
+        self.layout["main"].split_column(Layout(name="panel_receta"), Layout(name="tablas"))
+        self.layout["tablas"].split_row(Layout(name="tabla_ing"),
                                          Layout(name="tabla_ins"))
 
-        self.layout["panel_receta"].size = 2
+        self.layout["panel_receta"].size = 3
 
         nombre_receta = datos_editados["nombre"] if "nombre" in datos_editados else receta.nombre
         nombre_receta += "**" if "nombre" in datos_editados else ""
@@ -89,7 +89,7 @@ class VistaRecetas(VistaBase):
                                  f"{"[/bold red]" if "porciones" in datos_editados else "[/italic yellow]"}"
                                  f"[italic yellow] porciones [/italic yellow]")
 
-        panel.height = 7
+        panel.height = 3
 
         if datos_editados and len(datos_editados["ingredientes"]):
             ingredientes = datos_editados["ingredientes"][:]
@@ -112,7 +112,6 @@ class VistaRecetas(VistaBase):
             self.tabla_ingredientes.add_column(col)
 
     def llenar_tabla_ingredientes(self, lista_ingredientes:list[IngredientesReceta], mapa_idx_ing:list, ing_editados=None):
-
         for ingrediente in lista_ingredientes:
             nombre_ing = ingrediente.ingrediente.nombre
 
@@ -164,9 +163,9 @@ class VistaRecetas(VistaBase):
     def mostrar_crear_receta(self, receta:Receta|None, mapa_idx_ing):
         self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_receta"),
-                                         Layout(name="tabla_ing"),
-                                         Layout(name="tabla_ins"))
+        self.layout["main"].split_column(Layout(name="panel_receta"), Layout(name="tablas"))
+        self.layout["tablas"].split_row(Layout(name="tabla_ing"),
+                                        Layout(name="tabla_ins"))
 
         self.layout["panel_receta"].size = 3
 
@@ -472,7 +471,19 @@ class VistaRecetas(VistaBase):
 
         return None, None
 
+    def paginar(self, items:list, num_pag:int):
+        lineas_disp = ((self.console.size[1] - 6) // 2) - 6
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
     def refrescar_pantalla(self):
         subprocess.run('cls' if os.name == 'nt' else 'clear')
         self.console.print(self.layout, justify="center")
-
