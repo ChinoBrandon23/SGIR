@@ -10,10 +10,12 @@ for insumo in insumos:
     print(insumo.fecha_caducidad)
 
 '''
+import shutil
 
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton
+from rich.console import Console
 
+from views.VistaMenuPrincipal import VistaMenuPrincipal
+from controllers.ControladorMenuPrincipal import ControladorMenuPrincipal
 
 print('iniciando app...')
 
@@ -24,9 +26,7 @@ import sys
 from PySide6.QtWidgets import QApplication
 
 from daos.insumo_dao import InsumoDAO
-from services.inventario_servicio import InventarioServicio
-from views.vista_inventario import InventarioView
-from controllers.inventario_controller import InventarioController
+
 
 def main():
     app = QApplication(sys.argv)
@@ -34,20 +34,28 @@ def main():
     #Capa de DAO
     db_connection = "Conexión MySQL"
     dao = InsumoDAO(db_connection)
-    
-    #Capa Servicios
-    service = InventarioServicio(dao)
-    
-    #Capa Vista
-    view = InventarioView()
-    
-    #Capa Controladora
-    controller = InventarioController(view, service)
-    
-    # Mostrar la aplicación
-    view.resize(400, 200)
-    view.show()
-    sys.exit(app.exec())
+    #
+    # #Capa Servicios
+    # service = InventarioServicio(dao)
+    #
+    # #Capa Vista
+    # view = InventarioView()
+    #
+    # #Capa Controladora
+    # controller = InventarioController(view, service)
+    #
+    # # Mostrar la aplicación
+    # view.resize(400, 200)
+    # view.show()
+    # sys.exit(app.exec())
+
+    _width, _height = shutil.get_terminal_size()
+
+    consola = Console()
+    consola.size = (_width - 1, _height - 3)
+
+    vista_principal = VistaMenuPrincipal(consola)
+    ControladorMenuPrincipal(vista=vista_principal)
 
 if __name__ == "__main__":
     main()
