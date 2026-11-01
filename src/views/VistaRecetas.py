@@ -462,12 +462,12 @@ class VistaRecetas(VistaBase):
                 return None
 
     def mostrar_prompt_crear_receta(self):
-        nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
+        nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 1 para cancelar")
 
-        if nombre is not "0":
-            porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta o 0 para cancelar")
+        if nombre is not "1":
+            porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta o 1 para cancelar")
 
-            if porciones is not "0":
+            if porciones is not "1":
                 return nombre, porciones
 
         return None, None
