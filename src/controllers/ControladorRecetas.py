@@ -103,13 +103,19 @@ class ControladorRecetas:
 
         elif len(self.formulario["ingredientes"]):
             for ing in self.formulario["ingredientes"]:
+                receta_lista_nombre = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
+                if ing["nombre"] in receta_lista_nombre:
+                    # ing duplicado
+                    idx = receta_lista_nombre.index(ing["nombre"])
+                    self.receta_actual.lista_ingredientes.pop(idx)
+
                 self.receta_actual.agregarIngrediente(Ingrediente("1",
                                                                   ing["nombre"]), ing["cantidad"], ing["unidad_m"])
 
-        lista_nombres = [receta.num for receta in self.recetas_testeo]
+        lista_num = [receta.num for receta in self.recetas_testeo]
 
-        if self.receta_actual.num in lista_nombres:
-            idx = lista_nombres.index(self.receta_actual.nombre)
+        if self.receta_actual.num in lista_num:
+            idx = lista_num.index(self.receta_actual.num)
             self.recetas_testeo.pop(idx)
             self.recetas_testeo.insert(idx, copy.deepcopy(self.receta_actual))
         else:
