@@ -3,6 +3,7 @@ import os
 import time
 
 import rich
+from rich.align import Align
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
@@ -54,7 +55,7 @@ class VistaRecetas(VistaBase):
     def mostrar_todas_recetas(self):
         self.resetear_vista()
 
-        self.layout["main"].update(self.tabla_recetas)
+        self.layout["main"].update(Align.center(self.tabla_recetas, vertical="top"))
 
     def configurar_tabla_recetas(self):
         columnas = ["#", "Nombre"]
@@ -209,6 +210,7 @@ class VistaRecetas(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Volver a recetas",
                     "[2] Editar receta",
+                    "[3] Eliminar receta",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -291,12 +293,21 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "m"],
+                                          choices=["1", "2", "3", "m"],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
             self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_prompt_eliminar_receta_prompt(self):
+        confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, confirma para continuar[/bold red]",
+                                  choices=["S","N"])
+
+        if confirmacion == "S":
+            return True
+
+        return False
 
     def mostrar_opciones_editar_prompt(self):
         self.input_menu_editar_receta.imprimir("Selecciona una opción",
@@ -463,8 +474,15 @@ class VistaRecetas(VistaBase):
     def mostrar_prompt_crear_receta(self):
         nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
 
+        if len(nombre) == 0:
+            self.refrescar_pantalla()
+            self.mostrar_prompt_crear_receta()
+
         if nombre is not "0":
             porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta o 0 para cancelar")
+
+            if len(porciones) == 0:
+                self.mostrar_prompt_crear_receta()
 
             if porciones is not "0":
                 return nombre, porciones
