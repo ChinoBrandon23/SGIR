@@ -38,7 +38,7 @@ class Ingrediente:
         self._nombre = value
 
     @property
-    def insumo(self) -> Insumo:
+    def insumo(self) -> Insumo|None:
         return self._insumo
 
     @insumo.setter
