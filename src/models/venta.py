@@ -1,11 +1,16 @@
+from typing import List
+#imports de modelos
+from models.venta import Consumo
+from models.platillo import Platillo
+
 class Venta:
-    def __init__(self, num, fecha, numero_comensales, monto_total=0.0):
+    def __init__(self, num:int, fecha:str, numero_comensales:int, monto_total:float=0.0):
         self._num = num
         self._fecha = fecha
         self._numero_comensales = numero_comensales
         self._monto_total = monto_total
         # Aqui esta la lista de objetos Consumo
-        self._detalles = []
+        self._detalles: List[Consumo] = []
 
     @property
     def num(self):
@@ -47,14 +52,14 @@ class Venta:
     def detalles(self, value):
         self._detalles = value
 
-    def agregar_consumo(self, platillo, importe, cantidad_platillos):
+    def agregar_consumo(self, platillo:Platillo, importe:float, cantidad_platillos:int):
         nuevo_detalle = Consumo(platillo, importe, cantidad_platillos)
         self._detalles.append(nuevo_detalle)
 
 
 #sub-clase consumo (es una tabla intermedia en el DB)
 class Consumo:
-    def __init__(self, platillo, importe, cantidad_platillos):
+    def __init__(self, platillo:Platillo, importe:float, cantidad_platillos:int):
         #self._venta = venta
         self._platillo = platillo
         self._importe = importe

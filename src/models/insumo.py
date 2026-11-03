@@ -1,15 +1,31 @@
+from typing import Optional
+#model imports
+from models.tipo_insumo import TipoInsumo
+from models.marca import Marca
+
 class Insumo:
-    def __init__(self, num, nombre, fecha_compra=None, fecha_caducidad=None, precio_unitario=0.0, umbral=0, stock=0, unidad_medida=None, tipo_insumo=None, marca=None):
+    def __init__(self, 
+                num:int,
+                nombre:str,
+                unidad_medida:str,
+                fecha_compra: Optional[str] = None,
+                fecha_caducidad: Optional[str] = None,
+                precio_unitario:float=0.0,
+                umbral:float = 0,
+                stock:float = 0,
+                tipo_insumo: Optional[TipoInsumo] = None,
+                marca: Optional[Marca] = None
+                ):
         self._num = num
         self._nombre = nombre
         self._fecha_compra = fecha_compra  
         self._fecha_caducidad = fecha_caducidad
+        self._unidad_medida = unidad_medida
         self._precio_unitario = precio_unitario  
         self._umbral = umbral 
         self._stock = stock
-        self._unidad_medida = unidad_medida
 
-        #fks
+        #fk's
         self._tipo_insumo = tipo_insumo
         self._marca = marca
 

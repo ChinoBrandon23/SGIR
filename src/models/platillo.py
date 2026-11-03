@@ -1,9 +1,20 @@
+from typing import Optional
+#model imports
+from models.categoria import Categoria
+from models.receta import Receta
+
 class Platillo:
-    def __init__(self, num, nombre, categoria=None, receta=None):
+    def __init__(
+            self,
+            num:int, 
+            nombre:str, 
+            categoria: Optional[Categoria] = None, 
+            receta: Optional[Receta] = None
+        ):
+    
         self._num = num
         self._nombre = nombre
-
-
+        #fk's
         self._categoria = categoria
         self._receta = receta
 
