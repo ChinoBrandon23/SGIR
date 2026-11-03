@@ -1,14 +1,19 @@
+from typing import List
+#model imports
+from models.receta import IngredientesReceta
+from models.ingrediente import Ingrediente
+
 class Receta:
-    def __init__(self, num, nombre, num_porciones, instrucciones):
+    def __init__(self, num:int, nombre:str, num_porciones:int, instrucciones:dict[int,str]):
         self._num = num
         self._nombre = nombre
         self._num_porciones = num_porciones
 
-        #diccionario para las instrucciones {"numeroIntruccion":"instruccion"}
+        #diccionario para las instrucciones {numeroIntruccion:"instruccion"}
         self._instrucciones = instrucciones
 
         #lista para almacenar los ingredientes de la receta
-        self._lista_ingredientes = []  
+        self._lista_ingredientes: List[IngredientesReceta] = []  
 
     @property
     def num(self):
@@ -51,7 +56,7 @@ class Receta:
         self._lista_ingredientes = value
 
     #metodo para agregar ingrediente a la receta, usando el submodelo IngredientesReceta
-    def agregarIngrediente(self, ingrediente, cantidad, unidad_medida):
+    def agregarIngrediente(self, ingrediente:Ingrediente, cantidad:float, unidad_medida:str):
         nuevo_ingrediente = IngredientesReceta(ingrediente, cantidad, unidad_medida)
         self._lista_ingredientes.append(nuevo_ingrediente)
 
@@ -59,7 +64,7 @@ class Receta:
 
 #Sub-clase para encapsular los ingredientes de la receta, puede llamarse tambien DetalleReceta.
 class IngredientesReceta:
-    def __init__(self, ingrediente, cantidad, unidad_medida):
+    def __init__(self, ingrediente:Ingrediente, cantidad:float, unidad_medida:str):
         self._ingrediente = ingrediente 
         self._cantidad = cantidad
         self._unidad_medida = unidad_medida
