@@ -1,7 +1,10 @@
+from __future__ import annotations  # Para evitar referencias circulares
+from typing import TYPE_CHECKING
 from typing import List
-#model imports
-from models.receta import IngredientesReceta
-from models.ingrediente import Ingrediente
+if TYPE_CHECKING:
+    #model imports
+    from models.ingrediente import Ingrediente
+    from models.receta import IngredientesReceta
 
 class Receta:
     def __init__(self, num:int, nombre:str, num_porciones:int, instrucciones:dict[int,str]):
@@ -68,7 +71,6 @@ class IngredientesReceta:
         self._ingrediente = ingrediente 
         self._cantidad = cantidad
         self._unidad_medida = unidad_medida
-
 
     @property
     def ingrediente(self):
