@@ -11,7 +11,7 @@ class Insumo:
                 fecha_compra: Optional[str] = None,
                 fecha_caducidad: Optional[str] = None,
                 precio_unitario:float=0.0,
-                umbral:int = 0,
+                umbral:float = 0,
                 stock:float = 0,
                 tipo_insumo: Optional[TipoInsumo] = None,
                 marca: Optional[Marca] = None
