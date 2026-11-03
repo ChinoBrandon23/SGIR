@@ -12,7 +12,7 @@ class Ingrediente:
     def __init__(self,
                 num:int,
                 nombre:str,
-                insumo: Insumo,
+                insumo: Optional[Insumo] = None,
                 receta: Optional[Receta] = None
                 ):
         self._num = num
