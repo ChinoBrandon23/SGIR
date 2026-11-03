@@ -3,6 +3,7 @@ import os
 import time
 
 import rich
+from rich.align import Align
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
@@ -54,7 +55,7 @@ class VistaRecetas(VistaBase):
     def mostrar_todas_recetas(self):
         self.resetear_vista()
 
-        self.layout["main"].update(self.tabla_recetas)
+        self.layout["main"].update(Align.center(self.tabla_recetas, vertical="top"))
 
     def configurar_tabla_recetas(self):
         columnas = ["#", "Nombre"]
@@ -69,11 +70,11 @@ class VistaRecetas(VistaBase):
         if self.tabla_ingredientes.row_count > 0 or self.tabla_instrucciones.row_count > 0:
             self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_receta"),
-                                         Layout(name="tabla_ing"),
+        self.layout["main"].split_column(Layout(name="panel_receta"), Layout(name="tablas"))
+        self.layout["tablas"].split_row(Layout(name="tabla_ing"),
                                          Layout(name="tabla_ins"))
 
-        self.layout["panel_receta"].size = 2
+        self.layout["panel_receta"].size = 3
 
         nombre_receta = datos_editados["nombre"] if "nombre" in datos_editados else receta.nombre
         nombre_receta += "**" if "nombre" in datos_editados else ""
@@ -89,7 +90,7 @@ class VistaRecetas(VistaBase):
                                  f"{"[/bold red]" if "porciones" in datos_editados else "[/italic yellow]"}"
                                  f"[italic yellow] porciones [/italic yellow]")
 
-        panel.height = 7
+        panel.height = 3
 
         if datos_editados and len(datos_editados["ingredientes"]):
             ingredientes = datos_editados["ingredientes"][:]
@@ -112,7 +113,6 @@ class VistaRecetas(VistaBase):
             self.tabla_ingredientes.add_column(col)
 
     def llenar_tabla_ingredientes(self, lista_ingredientes:list[IngredientesReceta], mapa_idx_ing:list, ing_editados=None):
-
         for ingrediente in lista_ingredientes:
             nombre_ing = ingrediente.ingrediente.nombre
 
@@ -164,9 +164,9 @@ class VistaRecetas(VistaBase):
     def mostrar_crear_receta(self, receta:Receta|None, mapa_idx_ing):
         self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_receta"),
-                                         Layout(name="tabla_ing"),
-                                         Layout(name="tabla_ins"))
+        self.layout["main"].split_column(Layout(name="panel_receta"), Layout(name="tablas"))
+        self.layout["tablas"].split_row(Layout(name="tabla_ing"),
+                                        Layout(name="tabla_ins"))
 
         self.layout["panel_receta"].size = 3
 
@@ -210,6 +210,7 @@ class VistaRecetas(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Volver a recetas",
                     "[2] Editar receta",
+                    "[3] Eliminar receta",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -292,12 +293,21 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "m"],
+                                          choices=["1", "2", "3", "m"],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
             self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_prompt_eliminar_receta_prompt(self):
+        confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, confirma para continuar[/bold red]",
+                                  choices=["S","N"])
+
+        if confirmacion == "S":
+            return True
+
+        return False
 
     def mostrar_opciones_editar_prompt(self):
         self.input_menu_editar_receta.imprimir("Selecciona una opción",
@@ -464,15 +474,37 @@ class VistaRecetas(VistaBase):
     def mostrar_prompt_crear_receta(self):
         nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
 
+        if len(nombre) == 0:
+            self.refrescar_pantalla()
+            self.mostrar_prompt_crear_receta()
+
         if nombre is not "0":
             porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta o 0 para cancelar")
+
+            if len(porciones) == 0:
+                self.mostrar_prompt_crear_receta()
 
             if porciones is not "0":
                 return nombre, porciones
 
         return None, None
 
-    def refrescar_pantalla(self):
-        subprocess.run('cls' if os.name == 'nt' else 'clear')
-        self.console.print(self.layout, justify="center")
+    def paginar(self, items:list, num_pag:int):
+        lineas_disp = ((self.console.size[1] - 6) // 2) - 6
 
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def refrescar_pantalla(self):
+        try:
+            subprocess.run('cls' if os.name == 'nt' else 'clear')
+        except FileNotFoundError:
+            print(chr(27) + "[2J")
+        self.console.print(self.layout, justify="center")

@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from rich.table import Table
+from rich.align import Align
 
 from views.VistaBase import VistaBase
 from views.clases_personalizadas.InputEmisor import InputEmisor
@@ -27,11 +28,14 @@ class VistaMenuPrincipal(VistaBase):
             self.tabla_menu.add_row(str(contador_opciones), opcion)
             contador_opciones += 1
 
-        self.layout["contenido"].update(self.tabla_menu)
+        self.layout["contenido"].update(Align.center(self.tabla_menu, vertical="middle"))
 
     def mostrar_prompt_menu(self) :
         self.input_menu.imprimir("Ingresa una opción", choices=[str(i) for i in range(1, 9)])
 
     def mostrar_layout(self):
-        subprocess.run('cls' if os.name == 'nt' else 'clear')
+        try:
+            subprocess.run('cls' if os.name == 'nt' else 'clear')
+        except FileNotFoundError:
+            print(chr(27) + "[2J")
         self.console.print(self.layout, justify="center")

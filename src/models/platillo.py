@@ -5,7 +5,7 @@ class Platillo:
 
 
         self._categoria = categoria
-        self._receta = categoria
+        self._receta = receta
 
     @property
     def num(self):
@@ -38,4 +38,3 @@ class Platillo:
     @receta.setter
     def receta(self, value):
         self._receta = value   
-

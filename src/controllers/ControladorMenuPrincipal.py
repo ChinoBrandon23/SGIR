@@ -2,8 +2,10 @@ import os
 import subprocess
 import sys
 
+from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from views.VistaMenuPrincipal import VistaMenuPrincipal
+from views.VistaPlatillos import VistaPlatillos
 from views.VistaRecetas import VistaRecetas
 
 class ControladorMenuPrincipal:
@@ -18,11 +20,16 @@ class ControladorMenuPrincipal:
         match seleccion:
             case "1":
                 self.abrir_vista_receta()
+            case "2":
+                self.abrir_vista_platillos()
             case "8":
-                subprocess.run('cls' if os.name == 'nt' else 'clear')
+                try:
+                    subprocess.run('cls' if os.name == 'nt' else 'clear')
+                except FileNotFoundError:
+                    print(chr(27) + "[2J")
                 sys.exit()
 
-    def evaluar_input_menu_recetas(self, seleccion:str):
+    def evaluar_redirigir_menu_principal(self, seleccion:str):
         if seleccion == "m" or seleccion == "M":
             self.abrir_menu_principal()
 
@@ -33,9 +40,17 @@ class ControladorMenuPrincipal:
     def abrir_vista_receta(self):
         vista = VistaRecetas(self.vista.console)
 
-        vista.input_menu_recetas.agregar_escuchante(self.evaluar_input_menu_recetas)
-        vista.input_menu_detalles.agregar_escuchante(self.evaluar_input_menu_recetas)
-        vista.input_menu_editar_receta.agregar_escuchante(self.evaluar_input_menu_recetas)
+        vista.input_menu_recetas.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar_receta.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
         ControladorRecetas(vista)
 
+    def abrir_vista_platillos(self):
+        vista = VistaPlatillos(self.vista.console)
+
+        vista.input_menu_platillos.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+
+        ControladorPlatillos(vista)
