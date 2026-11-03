@@ -4,7 +4,7 @@ class EstadoOrden:
         self._nombre = nombre
 
     @property
-    def clave(self):
+    def clave(self) -> str:
         return self._clave
 
     @clave.setter
@@ -12,7 +12,7 @@ class EstadoOrden:
         self._clave = value
 
     @property
-    def nombre(self):
+    def nombre(self) -> str:
         return self._nombre
 
     @nombre.setter
