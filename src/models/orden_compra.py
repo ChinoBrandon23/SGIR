@@ -1,5 +1,21 @@
+from typing import Optional
+from typing import List
+
+#model imports
+from models.insumo import Insumo
+from models.estado_orden import EstadoOrden
+from models.proveedor import Proveedor
+from models.orden_compra import DetalleCompra
+
 class OrdenCompra:
-    def __init__(self, num, fecha_creacion, fecha_cierre, total_bruto=0.0, estado_orden=None, proveedor=None):
+    def __init__(self,
+                num:int,
+                fecha_creacion:str,
+                fecha_cierre:str,
+                total_bruto:float = 0.0,
+                estado_orden: Optional[EstadoOrden] = None,
+                proveedor: Optional[Proveedor] = None
+                ):
         self._num = num
         self._fecha_creacion = fecha_creacion
         self._fecha_cierre = fecha_cierre
@@ -7,7 +23,8 @@ class OrdenCompra:
         self._estado_orden = estado_orden
         self._proveedor = proveedor
 
-        self._lista_compras = []  #Lista para almacenar los detalles de la orden de compra
+        #Lista para almacenar los detalles de la orden de compra
+        self._lista_compras: List[DetalleCompra] = []  
 
     @property
     def num(self):
@@ -57,14 +74,25 @@ class OrdenCompra:
     def proveedor(self, value):
         self._proveedor = value
 
-    def agregar_insumo_compra(self, insumo,cantidad, unidad_medida, importe):
+    def agregar_insumo_compra(
+                self,
+                insumo:Insumo,
+                cantidad:float,
+                unidad_medida:str,
+                importe:float = 0.0
+                ):
         #metodo de agregacion para  guardar el detalle de la orden de compra, es decir, una nueva compra de insumo
         nueva_compra = DetalleCompra(insumo,cantidad, unidad_medida, importe)
         self._lista_compras.append(nueva_compra)
 
-
+#Es la talba Lista_Compra
 class DetalleCompra:
-    def __init__(self, insumo, cantidad, unidad_medida,importe=0.0):
+    def __init__(self,
+                insumo:Insumo,
+                cantidad:float,
+                unidad_medida:str,
+                importe:float = 0.0
+                ):
         self._insumo = insumo
         self._cantidad = cantidad
         self._unidad_medida = unidad_medida
