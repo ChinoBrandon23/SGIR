@@ -27,7 +27,7 @@ class OrdenCompra:
         self._lista_compras: List[DetalleCompra] = []  
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -35,7 +35,7 @@ class OrdenCompra:
         self._num = value
 
     @property
-    def fecha_creacion(self):
+    def fecha_creacion(self) -> str|datetime|None:
         return self._fecha_creacion
 
     @fecha_creacion.setter
@@ -43,7 +43,7 @@ class OrdenCompra:
         self._fecha_creacion = value
 
     @property
-    def fecha_cierre(self):
+    def fecha_cierre(self) -> str|datetime|None:
         return self._fecha_cierre
 
     @fecha_cierre.setter
@@ -51,7 +51,7 @@ class OrdenCompra:
         self._fecha_cierre = value
 
     @property
-    def total_bruto(self):
+    def total_bruto(self) -> float:
         return self._total_bruto
 
     @total_bruto.setter
@@ -59,7 +59,7 @@ class OrdenCompra:
         self._total_bruto = value
 
     @property
-    def estado_orden(self):
+    def estado_orden(self) -> EstadoOrden|None:
         return self._estado_orden
 
     @estado_orden.setter
@@ -67,7 +67,7 @@ class OrdenCompra:
         self._estado_orden = value
 
     @property
-    def proveedor(self):
+    def proveedor(self) -> Proveedor|None:
         return self._proveedor
 
     @proveedor.setter
@@ -99,7 +99,7 @@ class DetalleCompra:
         self._importe = importe
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -107,7 +107,7 @@ class DetalleCompra:
         self._num = value
 
     @property
-    def insumo(self):
+    def insumo(self) -> Insumo:
         return self._insumo
 
     @insumo.setter
@@ -115,7 +115,7 @@ class DetalleCompra:
         self._insumo = value
 
     @property
-    def cantidad(self):
+    def cantidad(self) -> float:
         return self._cantidad
 
     @cantidad.setter
@@ -123,7 +123,7 @@ class DetalleCompra:
         self._cantidad = value
 
     @property
-    def unidad_medida(self):
+    def unidad_medida(self) -> str:
         return self._unidad_medida
 
     @unidad_medida.setter
@@ -131,7 +131,7 @@ class DetalleCompra:
         self._unidad_medida = value
 
     @property
-    def importe(self):
+    def importe(self) -> float:
         return self._importe
 
     @importe.setter

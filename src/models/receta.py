@@ -1,7 +1,10 @@
+from __future__ import annotations  # Para evitar referencias circulares
+from typing import TYPE_CHECKING
 from typing import List
-#model imports
-from models.receta import IngredientesReceta
-from models.ingrediente import Ingrediente
+if TYPE_CHECKING:
+    #model imports
+    from models.ingrediente import Ingrediente
+    from models.receta import IngredientesReceta
 
 class Receta:
     def __init__(self, num:int, nombre:str, num_porciones:int, instrucciones:dict[int,str]):
@@ -16,7 +19,7 @@ class Receta:
         self._lista_ingredientes: List[IngredientesReceta] = []  
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -24,7 +27,7 @@ class Receta:
         self._num = value
 
     @property
-    def nombre(self):
+    def nombre(self) -> str:
         return self._nombre
 
     @nombre.setter
@@ -32,7 +35,7 @@ class Receta:
         self._nombre = value
 
     @property
-    def num_porciones(self):
+    def num_porciones(self) -> int:
         return self._num_porciones
 
     @num_porciones.setter
@@ -40,7 +43,7 @@ class Receta:
         self._num_porciones = value
 
     @property
-    def instrucciones(self):
+    def instrucciones(self) -> dict[int,str]:
         return self._instrucciones
 
     @instrucciones.setter
@@ -48,7 +51,7 @@ class Receta:
         self._instrucciones = value
 
     @property
-    def lista_ingredientes(self):
+    def lista_ingredientes(self) -> List[IngredientesReceta]:
         return self._lista_ingredientes 
 
     @lista_ingredientes.setter
@@ -69,17 +72,16 @@ class IngredientesReceta:
         self._cantidad = cantidad
         self._unidad_medida = unidad_medida
 
-
     @property
-    def ingrediente(self):
+    def ingrediente(self) -> Ingrediente:
         return self._ingrediente
 
     @property
-    def cantidad(self):
+    def cantidad(self) -> float:
         return self._cantidad
 
     @property
-    def unidad_medida(self):
+    def unidad_medida(self) -> str:
         return self._unidad_medida
 
 

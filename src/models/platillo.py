@@ -19,7 +19,7 @@ class Platillo:
         self._receta = receta
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -27,7 +27,7 @@ class Platillo:
         self._num = value
 
     @property
-    def nombre(self):
+    def nombre(self) -> str:
         return self._nombre
 
     @nombre.setter
@@ -35,7 +35,7 @@ class Platillo:
         self._nombre = value
 
     @property
-    def categoria(self):
+    def categoria(self) -> Categoria|None:
         return self._categoria
 
     @categoria.setter
@@ -43,7 +43,7 @@ class Platillo:
         self._categoria = value
     
     @property
-    def receta(self):
+    def receta(self) -> Receta|None:
         return self._receta    
 
     @receta.setter

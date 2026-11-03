@@ -9,8 +9,8 @@ class Insumo:
                 num:int,
                 nombre:str,
                 unidad_medida:str,
-                fecha_compra: Optional[str|datetime] = None,
                 fecha_caducidad: Optional[str|datetime] = None,
+                fecha_compra: Optional[str|datetime] = None,
                 precio_unitario:float=0.0,
                 umbral:float = 0,
                 stock:float = 0,
@@ -31,7 +31,7 @@ class Insumo:
         self._marca = marca
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -39,7 +39,7 @@ class Insumo:
         self._num = value
 
     @property
-    def nombre(self):
+    def nombre(self) -> str:
         return self._nombre
 
     @nombre.setter
@@ -47,7 +47,7 @@ class Insumo:
         self._nombre = value
 
     @property
-    def fecha_compra(self):
+    def fecha_compra(self) -> str|datetime|None:
         return self._fecha_compra
 
     @fecha_compra.setter
@@ -55,7 +55,7 @@ class Insumo:
         self._fecha_compra = value
 
     @property
-    def fecha_caducidad(self):
+    def fecha_caducidad(self) -> str|datetime|None:
         return self._fecha_caducidad
 
     @fecha_caducidad.setter
@@ -63,7 +63,7 @@ class Insumo:
         self._fecha_caducidad = value
 
     @property
-    def precio_unitario(self):
+    def precio_unitario(self) -> float:
         return self._precio_unitario
 
     @precio_unitario.setter
@@ -71,7 +71,7 @@ class Insumo:
         self._precio_unitario = value
 
     @property
-    def umbral(self):
+    def umbral(self) -> float:
         return self._umbral
 
     @umbral.setter
@@ -79,7 +79,7 @@ class Insumo:
         self._umbral = value
 
     @property
-    def stock(self):
+    def stock(self) -> float:
         return self._stock
 
     @stock.setter
@@ -87,7 +87,7 @@ class Insumo:
         self._stock = value
 
     @property
-    def unidad_medida(self):
+    def unidad_medida(self) -> str:
         return self._unidad_medida
 
     @unidad_medida.setter
@@ -95,7 +95,7 @@ class Insumo:
         self._unidad_medida = value
 
     @property
-    def tipo_insumo(self):
+    def tipo_insumo(self) -> TipoInsumo|None:
         return self._tipo_insumo
 
     @tipo_insumo.setter
@@ -103,7 +103,7 @@ class Insumo:
         self._tipo_insumo = value   
 
     @property
-    def marca(self):
+    def marca(self) -> Marca|None:
         return self._marca
 
     @marca.setter

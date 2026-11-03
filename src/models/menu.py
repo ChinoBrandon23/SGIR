@@ -23,7 +23,7 @@ class Menu:
         self._detalles:List[DetalleMenu] = [] #en una lista se guardaran los objetos de la clase DetalleMenu
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -31,7 +31,7 @@ class Menu:
         self._num = value
 
     @property
-    def nombre(self):
+    def nombre(self) -> str:
         return self._nombre
 
     @nombre.setter
@@ -39,7 +39,7 @@ class Menu:
         self._nombre = value
 
     @property
-    def cantidad_platillos(self):
+    def cantidad_platillos(self) -> int:
         return self._cantidad_platillos
 
     @cantidad_platillos.setter
@@ -47,11 +47,15 @@ class Menu:
         self._cantidad_platillos = value
 
     @property
-    def detalles(self):
+    def detalles(self) -> List[DetalleMenu]:
         return self._detalles
 
+    @detalles.setter
+    def detalles(self, value):
+        self._detalles = value
+
     @property
-    def fecha_inicial(self):
+    def fecha_inicial(self) -> str|datetime|None:
         return self._fecha_inicial
 
     @fecha_inicial.setter
@@ -59,7 +63,7 @@ class Menu:
         self._nombre = value
 
     @property
-    def fecha_final(self):
+    def fecha_final(self) -> str|datetime|None:
         return self._fecha_final
 
     @fecha_final.setter
@@ -76,15 +80,15 @@ class Menu:
 class DetalleMenu:
     #Sub-modelo para encapsular la tabla intermedia MENU_PLATILLO
     def __init__(self, platillo:Platillo, precio:float):
-        self._platillo = platillo # Objeto Platillo
+        self._platillo = platillo 
         self._precio = precio
 
     @property
-    def platillo(self):
+    def platillo(self) -> Platillo:
         return self._platillo
 
     @property
-    def precio(self):
+    def precio(self) -> float:
         return self._precio
 
 

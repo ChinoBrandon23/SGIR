@@ -4,7 +4,7 @@ class Proveedor:
         self._nombre = nombre
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -12,7 +12,7 @@ class Proveedor:
         self._num = value
 
     @property
-    def nombre(self):
+    def nombre(self) -> str:
         return self._nombre
 
     @nombre.setter

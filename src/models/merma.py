@@ -25,7 +25,7 @@ class Merma:
         self._tipo_merma = tipo_merma
 
     @property
-    def num(self):
+    def num(self) -> int:
         return self._num
 
     @num.setter
@@ -33,7 +33,7 @@ class Merma:
         self._num = value
 
     @property
-    def descripcion(self):
+    def descripcion(self) -> str:
         return self._descripcion
 
     @descripcion.setter
@@ -42,7 +42,7 @@ class Merma:
 
 
     @property
-    def fecha(self):
+    def fecha(self) -> str|datetime|None:
         return self._fecha
 
     @fecha.setter
@@ -50,7 +50,7 @@ class Merma:
         self._fecha = value
 
     @property
-    def unidad_medida(self):
+    def unidad_medida(self) -> str:
         return self._unidad_medida
 
     @unidad_medida.setter
@@ -58,7 +58,7 @@ class Merma:
         self._unidad_medida = value
 
     @property
-    def cantidad(self):
+    def cantidad(self) -> float:
         return self._cantidad
 
     @cantidad.setter
@@ -66,7 +66,7 @@ class Merma:
         self._cantidad = value
 
     @property
-    def insumo(self):
+    def insumo(self) -> Insumo:
         return self._insumo 
 
     @insumo.setter
@@ -74,7 +74,7 @@ class Merma:
         self._insumo = value
 
     @property
-    def tipo_merma(self):
+    def tipo_merma(self) -> TipoMerma:
         return self._tipo_merma 
 
     @tipo_merma.setter
