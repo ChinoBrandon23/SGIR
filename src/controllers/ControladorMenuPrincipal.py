@@ -2,9 +2,11 @@ import os
 import subprocess
 import sys
 
+from controllers.ControladorMenus import ControladorMenus
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from views.VistaMenuPrincipal import VistaMenuPrincipal
+from views.VistaMenus import VistaMenus
 from views.VistaPlatillos import VistaPlatillos
 from views.VistaRecetas import VistaRecetas
 
@@ -22,6 +24,8 @@ class ControladorMenuPrincipal:
                 self.abrir_vista_receta()
             case "2":
                 self.abrir_vista_platillos()
+            case "3":
+                self.abrir_vista_menus()
             case "8":
                 try:
                     subprocess.run('cls' if os.name == 'nt' else 'clear')
@@ -54,3 +58,12 @@ class ControladorMenuPrincipal:
         vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
         ControladorPlatillos(vista)
+
+    def abrir_vista_menus(self):
+        vista = VistaMenus(self.vista.console)
+
+        vista.input_menu_menus.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+
+        ControladorMenus(vista)
