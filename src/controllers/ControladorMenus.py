@@ -1,6 +1,5 @@
 import copy
 import datetime
-import sys
 import time
 
 from models.categoria import Categoria
