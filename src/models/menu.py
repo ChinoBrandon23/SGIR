@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import date
 #imports de los modelos
 from models.platillo import Platillo
 
@@ -9,8 +9,8 @@ class Menu:
                 num:int,
                 nombre:str,
                 cantidad_platillos:int = 0,
-                fecha_inicial: Optional[str|datetime] = None, 
-                fecha_final: Optional[str|datetime] = None
+                fecha_inicial: Optional[str|date] = None,
+                fecha_final: Optional[str|date] = None
                 ):
         self._num = num
         self._nombre = nombre
