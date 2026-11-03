@@ -1,3 +1,6 @@
+from typing import Optional
+from datetime import datetime
+
 #model imports
 from models.insumo import Insumo
 from models.tipo_merma import TipoMerma
@@ -6,7 +9,7 @@ class Merma:
     def __init__(self, 
                 num:int,
                 descripcion:str,
-                fecha:str,
+                fecha: Optional[str|datetime],
                 unidad_medida:str,
                 cantidad:float,
                 insumo:Insumo,

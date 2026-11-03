@@ -1,5 +1,5 @@
-from typing import Optional
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 
 #model imports
 from models.insumo import Insumo
@@ -10,8 +10,8 @@ from models.orden_compra import DetalleCompra
 class OrdenCompra:
     def __init__(self,
                 num:int,
-                fecha_creacion:str,
-                fecha_cierre:str,
+                fecha_creacion: Optional[str|datetime],
+                fecha_cierre: Optional[str|datetime],
                 total_bruto:float = 0.0,
                 estado_orden: Optional[EstadoOrden] = None,
                 proveedor: Optional[Proveedor] = None

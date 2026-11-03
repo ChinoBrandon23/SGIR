@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 #model imports
 from models.tipo_insumo import TipoInsumo
 from models.marca import Marca
@@ -8,8 +9,8 @@ class Insumo:
                 num:int,
                 nombre:str,
                 unidad_medida:str,
-                fecha_compra: Optional[str] = None,
-                fecha_caducidad: Optional[str] = None,
+                fecha_compra: Optional[str|datetime] = None,
+                fecha_caducidad: Optional[str|datetime] = None,
                 precio_unitario:float=0.0,
                 umbral:float = 0,
                 stock:float = 0,
