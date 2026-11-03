@@ -1,5 +1,5 @@
 class TipoInsumo:
-    def __init__(self, clave, nombre):
+    def __init__(self, clave:str, nombre:str):
         self._clave = clave
         self._nombre = nombre
 
