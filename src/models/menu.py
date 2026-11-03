@@ -1,7 +1,6 @@
 from typing import List, Optional
 from datetime import datetime
 #imports de los modelos
-from models.menu import DetalleMenu
 from models.platillo import Platillo
 
 class Menu:
