@@ -1,13 +1,20 @@
 from typing import Optional
 #model imports
 from models.insumo import Insumo
+from models.receta import Receta
 
 class Ingrediente:
-    def __init__(self, num:int, nombre:str, insumo: Optional[Insumo] = None):
+    def __init__(self,
+                num:int,
+                nombre:str,
+                insumo: Optional[Insumo] = None,
+                receta: Optional[Receta] = None
+                ):
         self._num = num
         self._nombre = nombre
         #fk
         self._insumo = insumo
+        self._receta = receta
 
     @property
     def num(self):
