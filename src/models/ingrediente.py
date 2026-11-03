@@ -40,6 +40,14 @@ class Ingrediente:
     def insumo(self, value):
         self._insumo = value
 
+    @property
+    def receta(self):
+        return self._receta
+
+    @receta.setter
+    def receta(self, value):
+        self._receta = value
+
 '''
 from Insumo import Insumo
 from Marca import Marca
