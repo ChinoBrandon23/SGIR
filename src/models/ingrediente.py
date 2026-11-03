@@ -1,7 +1,9 @@
-#from models.Insumo import Insumo
+from typing import Optional
+#model imports
+from models.insumo import Insumo
 
 class Ingrediente:
-    def __init__(self, num, nombre, insumo=None):
+    def __init__(self, num:int, nombre:str, insumo: Optional[Insumo] = None):
         self._num = num
         self._nombre = nombre
         #fk
