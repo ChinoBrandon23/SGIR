@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 #imports de los modelos
 from models.platillo import Platillo
 
@@ -54,7 +54,7 @@ class Menu:
         self._detalles = value
 
     @property
-    def fecha_inicial(self) -> str|datetime|None:
+    def fecha_inicial(self) -> str|date|None:
         return self._fecha_inicial
 
     @fecha_inicial.setter
@@ -62,7 +62,7 @@ class Menu:
         self._nombre = value
 
     @property
-    def fecha_final(self) -> str|datetime|None:
+    def fecha_final(self) -> str|date|None:
         return self._fecha_final
 
     @fecha_final.setter
@@ -73,7 +73,6 @@ class Menu:
         """metodo agreagacion para instanciar y guardar el detalle del menu"""
         nuevo_detalle = DetalleMenu(platillo, precio)
         self._detalles.append(nuevo_detalle)
-    
 
 
 class DetalleMenu:
@@ -89,19 +88,3 @@ class DetalleMenu:
     @property
     def precio(self) -> float:
         return self._precio
-
-
-'''
-from Platillo import Platillo
-menu = Menu(1,'navidad',4)
-pizza_p = Platillo(1,'Pizza de Peperonni')
-
-menu.agregar_platillo(pizza_p,400,'10-12-2026','26-12-2026')
-
-#Aqui se imprimen los detalles de los platillos del Menu
-for detalleM in menu.detalles:
-    print(detalleM.platillo.nombre)
-    print(detalleM.precio)
-    print(detalleM.fecha_inicial)
-    print(detalleM.fecha_final)'''
-
