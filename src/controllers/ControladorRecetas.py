@@ -32,15 +32,11 @@ class ControladorRecetas:
         receta1 = Receta(2, "Receta de Pizza", 4,
                          {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
 
-        Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", fecha_compra="2026-01-01",
-                                                       fecha_caducidad="2026-01-01", precio_unitario=2.0, umbral=5,
-                                                       stock=10, unidad_medida="kg", tipo_insumo=None, marca=None))
+        Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
+                                                       stock=10, tipo_insumo=None, marca=None))
         receta1.agregarIngrediente(Ingrediente1, 2, "taza")
-        receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", fecha_compra="2026-01-01",
-                                                                     fecha_caducidad="2026-01-01",
-                                                                     precio_unitario=1.0, umbral=5, stock=10,
-                                                                     unidad_medida="kg", tipo_insumo=None,
-                                                                     marca=None)), 1, "cucharada")
+        receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
+                                                                     tipo_insumo=None, marca=None)), 1, "cucharada")
 
         return [Receta(1, "Pasta en salsa de tomate", 10, {}), receta1]
 
@@ -98,10 +94,10 @@ class ControladorRecetas:
         if "nombre" in self.formulario:
             self.receta_actual.nombre = self.formulario["nombre"]
 
-        elif "porciones" in self.formulario:
+        if "porciones" in self.formulario:
             self.receta_actual.num_porciones = self.formulario["porciones"]
 
-        elif len(self.formulario["ingredientes"]):
+        if len(self.formulario["ingredientes"]):
             for ing in self.formulario["ingredientes"]:
                 receta_lista_nombre = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
                 if ing["nombre"] in receta_lista_nombre:

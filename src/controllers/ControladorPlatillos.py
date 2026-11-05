@@ -42,15 +42,11 @@ class ControladorPlatillos:
         receta1 = Receta(2, "Receta de Pizza", 4,
                          {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
 
-        Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", fecha_compra="2026-01-01",
-                                                       fecha_caducidad="2026-01-01", precio_unitario=2.0, umbral=5,
-                                                       stock=10, unidad_medida="kg", tipo_insumo=None, marca=None))
+        Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
+                                                       stock=10, tipo_insumo=None, marca=None))
         receta1.agregarIngrediente(Ingrediente1, 2, "taza")
-        receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", fecha_compra="2026-01-01",
-                                                                     fecha_caducidad="2026-01-01",
-                                                                     precio_unitario=1.0, umbral=5, stock=10,
-                                                                     unidad_medida="kg", tipo_insumo=None,
-                                                                     marca=None)), 1, "cucharada")
+        receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
+                                                                    tipo_insumo=None, marca=None)), 1, "cucharada")
         receta2 = Receta(1, "Pasta en salsa de tomate", 10, {})
 
 
