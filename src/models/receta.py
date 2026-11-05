@@ -85,24 +85,3 @@ class IngredientesReceta:
         return self._unidad_medida
 
 
-
-'''
-
-from Ingrediente import Ingrediente
-from Insumo import Insumo
-#EJEMPLO DE USO
-receta1 = Receta(1, "Receta de Pizza", 4, {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"}) 
-
-for num, instruccion in receta1.instrucciones.items():
-    print(f"Instrucción {num}: {instruccion}")
-
-Ingrediente1 = Ingrediente(1, "Harina",Insumo(1, "Harina de Trigo", fecha_compra="2026-01-01", fecha_caducidad="2026-01-01", precio_unitario=2.0, umbral=5, stock=10, unidad_medida="kg", tipo_insumo=None, marca=None))
-receta1.agregarIngrediente(Ingrediente1, 2, "taza")
-receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", fecha_compra="2026-01-01", fecha_caducidad="2026-01-01", precio_unitario=1.0, umbral=5, stock=10, unidad_medida="kg", tipo_insumo=None, marca=None)), 1, "cucharada")
-
-for ingrediente_receta in receta1._lista_ingredientes:
-    print('')
-    print('Ingrediente:', ingrediente_receta.ingrediente.nombre)
-    print('Cantidad:', ingrediente_receta.cantidad)
-    print('Unidad de Medida:', ingrediente_receta.unidad_medida)
-'''
