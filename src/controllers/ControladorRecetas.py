@@ -15,7 +15,7 @@ class ControladorRecetas:
         self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
         self.ing_idx = {}
 
-        self.recetas_testeo = self.crear_recetas_testeo()
+        self.recetas_testeo = self.servicio.obtener_recetas()
 
         self.configurar_listeners()
         self.mostrar_lista_recetas()

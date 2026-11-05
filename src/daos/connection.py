@@ -2,11 +2,12 @@ from mysql.connector import pooling
 from mysql.connector.errors import PoolError
 import os
 
+
 # Configuracion de la base de datos
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
     "database": os.environ.get("DB_NAME", "sogir"),
-    "user": os.environ.get("DB_USER", "root"),
+    "user": os.environ.get("DB_USER", "admin"),
     "password": os.environ.get("DB_PASSWORD", "")
 }
 
