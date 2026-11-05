@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import date
 #imports de modelos
 from models.venta import Consumo
 from models.platillo import Platillo
@@ -7,7 +7,7 @@ from models.platillo import Platillo
 class Venta:
     def __init__(self,
                 num:int,
-                fecha: Optional[str|datetime],
+                fecha: Optional[str|date],
                 numero_comensales:int,
                 monto_total:float = 0.0):
         self._num = num
