@@ -8,10 +8,6 @@ class Insumo:
     def __init__(self, 
                 num:int,
                 nombre:str,
-                unidad_medida:str,
-                fecha_caducidad: Optional[str|datetime] = None,
-                fecha_compra: Optional[str|datetime] = None,
-                precio_unitario:float=0.0,
                 umbral:float = 0,
                 stock:float = 0,
                 tipo_insumo: Optional[TipoInsumo] = None,
@@ -19,10 +15,6 @@ class Insumo:
                 ):
         self._num = num
         self._nombre = nombre
-        self._fecha_compra = fecha_compra  
-        self._fecha_caducidad = fecha_caducidad
-        self._unidad_medida = unidad_medida
-        self._precio_unitario = precio_unitario  
         self._umbral = umbral 
         self._stock = stock
 
@@ -47,30 +39,6 @@ class Insumo:
         self._nombre = value
 
     @property
-    def fecha_compra(self) -> str|datetime|None:
-        return self._fecha_compra
-
-    @fecha_compra.setter
-    def fecha_compra(self, value):
-        self._fecha_compra = value
-
-    @property
-    def fecha_caducidad(self) -> str|datetime|None:
-        return self._fecha_caducidad
-
-    @fecha_caducidad.setter
-    def fecha_caducidad(self, value):
-        self._fecha_caducidad = value
-
-    @property
-    def precio_unitario(self) -> float:
-        return self._precio_unitario
-
-    @precio_unitario.setter
-    def precio_unitario(self, value):
-        self._precio_unitario = value
-
-    @property
     def umbral(self) -> float:
         return self._umbral
 
@@ -87,14 +55,6 @@ class Insumo:
         self._stock = value
 
     @property
-    def unidad_medida(self) -> str:
-        return self._unidad_medida
-
-    @unidad_medida.setter
-    def unidad_medida(self, value):
-        self._unidad_medida = value
-
-    @property
     def tipo_insumo(self) -> TipoInsumo|None:
         return self._tipo_insumo
 
@@ -109,14 +69,3 @@ class Insumo:
     @marca.setter
     def marca(self, value):
         self._marca = value
-
-    
-
-'''
-from TipoInsumo import TipoInsumo
-from Marca import Marca
-
-tomate = Insumo(1, "Tomate Verde", fecha_compra="2023-10-01", fecha_caducidad="2023-10-15", precio_unitario=2.5, umbral=5, stock=10, unidad_medida="kg", tipo_insumo=TipoInsumo(1, "Vegetal"), marca=Marca(1, "Marca A"))
-print(tomate.stock)
-
-''' 

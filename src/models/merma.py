@@ -80,26 +80,3 @@ class Merma:
     @tipo_merma.setter
     def tipo_merma(self, value):
         self._tipo_merma = value
-
-
-
-'''
-
-from Insumo import Insumo
-from Marca import Marca
-from TipoInsumo import TipoInsumo
-from Ingrediente import Ingrediente
-from TipoMerma import TipoMerma
-
-#ejemplo uso
-tomate_fisico = Insumo(1, "Tomate Verde", 
-    fecha_compra="2023-01-01", fecha_caducidad="2023-01-10", precio_unitario=10.0, 
-    umbral=5, stock=10, unidad_medida="kg", tipo_insumo=TipoInsumo(1, "Vegetal"), 
-    marca=Marca(1, "Marca A"))
-tomate_ingrediente = Ingrediente(1, "Tomate Verde", insumo=tomate_fisico)
-
-merma1 = Merma(1, "Merma de tomate por mal estado", "2026-10-26", "kg", 2, insumo=tomate_ingrediente.insumo, tipo_merma=TipoMerma(1, "CADUCIDAD"))
-
-print(f"Se registro una merma de {merma1.cantidad} {merma1.unidad_medida} de '{merma1.insumo.nombre}' debido a '{merma1.tipo_merma.nombre}' el dia {merma1.fecha}.")
-
-'''
