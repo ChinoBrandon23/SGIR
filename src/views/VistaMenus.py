@@ -66,7 +66,7 @@ class VistaMenus(VistaBase):
     def mostrar_detalles_menu(self, menu: Menu | None, datos_editados, mapa_platillos):
         self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menu"))
+        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_orden_compra"))
         self.layout["panel_menu"].size = 4
 
         nombre_menu = f"{menu.nombre}**" if "nombre" in datos_editados else menu.nombre
@@ -74,7 +74,6 @@ class VistaMenus(VistaBase):
         if menu.fecha_inicial and menu.fecha_final:
             vigencia_menu = f"{datetime.datetime.strftime(menu.fecha_inicial, "%d-%m-%Y")} a {datetime.date.strftime(menu.fecha_final, "%d-%m-%Y")}"
         else:
-            nombre_menu = "Nombre del menú"
             vigencia_menu = "N/A"
 
         panel = Panel(renderable=f"{"[bold red]" if "nombre" in datos_editados else "[bold yellow]"}"
@@ -90,7 +89,7 @@ class VistaMenus(VistaBase):
             self.llenar_tabla_detalles_menu(menu.detalles, mapa_platillos, datos_editados["platillos"])
 
         self.layout["panel_menu"].update(panel)
-        self.layout["tabla_detalles_menu"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
+        self.layout["tabla_detalles_orden_compra"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
 
     def configurar_tabla_detalles_menu(self):
         encabezados = ["#", "Platillo", "Categoría", "Precio"]
@@ -148,12 +147,12 @@ class VistaMenus(VistaBase):
         for i in range(len(lista_platillos)):
             tabla.add_row(str(i+1), lista_platillos[i].nombre)
 
-        self.layout["tabla_detalles_menu"].update(Align.center(tabla, vertical="middle"))
+        self.layout["tabla_detalles_orden_compra"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_crear_menu(self, menu: Menu | None, platillo_idx):
         self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menu"))
+        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_orden_compra"))
 
         self.layout["panel_menu"].size = 3
 
@@ -167,7 +166,7 @@ class VistaMenus(VistaBase):
                 self.llenar_tabla_detalles_menu(menu.detalles)
 
         self.layout["panel_menu"].update(panel)
-        self.layout["tabla_detalles_menu"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
+        self.layout["tabla_detalles_orden_compra"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
 
     def crear_banda_opciones_principal(self):
         opciones_columna = Columns()
@@ -405,5 +404,8 @@ class VistaMenus(VistaBase):
         return items[idx_inicio:idx_final], prox_pag
 
     def refrescar_pantalla(self):
-        subprocess.run('cls' if os.name == 'nt' else 'clear')
+        try:
+            subprocess.run('cls' if os.name == 'nt' else 'clear')
+        except FileNotFoundError:
+            print(chr(27) + "[2J")
         self.console.print(self.layout, justify="center")

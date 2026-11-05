@@ -9,7 +9,7 @@ from src.models.compra import DetalleCompra
 class Compra:
     def __init__(self,
                 num:int,
-                fecha_creacion: Optional[str|datetime],
+                fecha_creacion: Optional[str|date],
                 total_bruto:float = 0.0,
                 proveedor: Optional[Proveedor] = None
                 ):
@@ -30,7 +30,7 @@ class Compra:
         self._num = value
 
     @property
-    def fecha_creacion(self) -> str|datetime|None:
+    def fecha_creacion(self) -> str|date|None:
         return self._fecha_creacion
 
     @fecha_creacion.setter
@@ -60,8 +60,8 @@ class Compra:
                 unidad_medida:str,
                 importe:float,
                 monto_unitario:float,
-                fecha_caducidad: Optional[datetime|str],
-                fecha_compra: Optional[datetime|str],
+                fecha_caducidad: Optional[date|str],
+                fecha_compra: Optional[date|str],
                 ):
         #metodo de agregacion para  guardar el detalle de la orden de compra, es decir, una nueva compra de insumo
         nueva_compra = DetalleCompra(insumo,
@@ -82,8 +82,8 @@ class DetalleCompra:
                 unidad_medida:str,
                 importe:float = 0.0,
                 monto_unitario:float=0.0,
-                fecha_caducidad: Optional[str|datetime] = None,
-                fecha_compra: Optional[str|datetime] = None
+                fecha_caducidad: Optional[str|date] = None,
+                fecha_compra: Optional[str|date] = None
                 ):
         self._insumo = insumo
         self._cantidad = cantidad
@@ -127,7 +127,7 @@ class DetalleCompra:
         self._importe = value
 
     @property
-    def fecha_compra(self) -> str|datetime|None:
+    def fecha_compra(self) -> str|date|None:
         return self._fecha_compra
 
     @fecha_compra.setter
@@ -135,7 +135,7 @@ class DetalleCompra:
         self._fecha_compra = value
 
     @property
-    def fecha_caducidad(self) -> str|datetime|None:
+    def fecha_caducidad(self) -> str|date|None:
         return self._fecha_caducidad
 
     @fecha_caducidad.setter
