@@ -2,7 +2,7 @@ from models.tipo_insumo import TipoInsumo
 from models.marca import Marca
 from models.insumo import Insumo
 from models.ingrediente import Ingrediente
-from models.receta import Receta
+from models.receta import Receta,IngredientesReceta
 
 from typing import List
 
@@ -30,30 +30,33 @@ class RecetaDAO:
             # 'with' cierra automáticamente el cursor al terminar de usarse
             with connection.cursor(dictionary=True) as cursor:
                 #sql = "SELECT r.num, r.nombre, r.numPorciones FROM receta AS r WHERE r.num = %s"
-                sql = "SELECT num, nombre, numPorciones FROM receta"
+                sql = "SELECT num NumReceta, nombre NomReceta, numPorciones NumPor FROM receta"
                 cursor.execute(sql)
                 filas = cursor.fetchall()
-
-                sql2 = '''
-                    SELECT
-                    i.num,
-                    i.instruccion
-                    FROM receta AS r
-                    INNER JOIN instrucciones AS i ON i.receta = r.num
-                    WHERE r.num = 1;
-                                '''
-                cursor.execute(sql2)
-                filas_instrucciones = cursor.fetchall()
-
+                
                 lista_recetas: List[Receta] = []
                 # mapeando recetas a una lista
                 for fila in filas:
                     nueva_receta = Receta(
-                        num=fila['num'],
-                        nombre=fila['nombre'],
-                        num_porciones=fila['numPorciones'],
-                        instrucciones=self.obtener_instrucion_receta_por_id(fila['num']))
+                        num=fila['NumReceta'],
+                        nombre=fila['NomReceta'],
+                        num_porciones=fila['NumPor'],
+                        instrucciones=self.obtener_instrucion_receta_por_id(fila['NumReceta']))
+                    filitas = self.obtener_ingredientes_receta(fila['NumReceta'])
+                    for filita in filitas:
+                        nueva_receta.agregarIngrediente(
+                            ingrediente=Ingrediente(filita['NumIngre'],filita['IngreNombre'],insumo=None,receta=None),
+                            cantidad=filita['Cantidad'],
+                            unidad_medida=filita['uniMedida']
+                            )                    
                     lista_recetas.append(nueva_receta)
+
+                    #r.num NumReceta,
+                    #i.num NumIngre,
+                    #i.nombre IngreNombre,
+                    #li.cantidad Cantidad,
+                    #li.unidadMedida uniMedida
+
                 return lista_recetas
 
         except mysql.connector.Error as err:
@@ -107,7 +110,35 @@ class RecetaDAO:
         #        return ingrediente
         #return False
 
-    def obtener_todos_ingredientes(self):
+    def obtener_ingredientes_receta(self, num_receta:int):
+        '''obtiene todo los ingredientes de una receta'''
+    #nombre, cantidad, unidad de medida
+        connection = self.db.get_connection()
+        try:
+            # 'with' cierra automáticamente el cursor al terminar de usarse
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''SELECT 
+                            r.num NumReceta,
+                            i.num NumIngre,
+                            i.nombre IngreNombre,
+                            li.cantidad Cantidad,
+                            li.unidadMedida uniMedida
+                        FROM lista_ingredientes li
+                        INNER JOIN receta AS r ON li.receta = r.num
+                        INNER JOIN ingrediente AS i ON li.ingrediente = i.num
+                        WHERE r.num = %s;'''
+                cursor.execute(sql,(num_receta,))
+
+                return cursor.fetchall()
+            
+        except mysql.connector.Error as err:
+            # manejo de errores de base de datos
+            print(f"Error al obtener recetas: {err}")
+        finally:
+            # devuelve el pool, incluso si hubo un error o un return antes
+            if connection.is_connected():
+                connection.close()
+
         #return self._tabla_ingredientes
         pass
 
