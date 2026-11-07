@@ -66,7 +66,7 @@ class VistaMenus(VistaBase):
     def mostrar_detalles_menu(self, menu: Menu | None, datos_editados, mapa_platillos):
         self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_orden_compra"))
+        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
         self.layout["panel_menu"].size = 4
 
         nombre_menu = f"{menu.nombre}**" if "nombre" in datos_editados else menu.nombre
@@ -89,7 +89,7 @@ class VistaMenus(VistaBase):
             self.llenar_tabla_detalles_menu(menu.detalles, mapa_platillos, datos_editados["platillos"])
 
         self.layout["panel_menu"].update(panel)
-        self.layout["tabla_detalles_orden_compra"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
+        self.layout["tabla_detalles_menus"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
 
     def configurar_tabla_detalles_menu(self):
         encabezados = ["#", "Platillo", "Categoría", "Precio"]
@@ -147,12 +147,12 @@ class VistaMenus(VistaBase):
         for i in range(len(lista_platillos)):
             tabla.add_row(str(i+1), lista_platillos[i].nombre)
 
-        self.layout["tabla_detalles_orden_compra"].update(Align.center(tabla, vertical="middle"))
+        self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_crear_menu(self, menu: Menu | None, platillo_idx):
         self.resetear_vista()
 
-        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_orden_compra"))
+        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
 
         self.layout["panel_menu"].size = 3
 
@@ -166,7 +166,7 @@ class VistaMenus(VistaBase):
                 self.llenar_tabla_detalles_menu(menu.detalles)
 
         self.layout["panel_menu"].update(panel)
-        self.layout["tabla_detalles_orden_compra"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
+        self.layout["tabla_detalles_menus"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
 
     def crear_banda_opciones_principal(self):
         opciones_columna = Columns()

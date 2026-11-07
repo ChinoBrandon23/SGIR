@@ -4,7 +4,6 @@ from datetime import datetime, date
 #model imports
 from models.insumo import Insumo
 from models.proveedor import Proveedor
-from src.models.compra import DetalleCompra
 
 class Compra:
     def __init__(self,
@@ -52,6 +51,10 @@ class Compra:
     @proveedor.setter
     def proveedor(self, value):
         self._proveedor = value
+
+    @property
+    def lista_compras(self) -> List[DetalleCompra]:
+        return self._lista_compras
 
     def agregar_insumo_compra(
                 self,
@@ -143,10 +146,10 @@ class DetalleCompra:
         self._fecha_caducidad = value
 
     @property
-    def precio_unitario(self) -> float:
-        return self._precio_unitario
+    def monto_unitario(self) -> float:
+        return self._monto_unitario
 
-    @precio_unitario.setter
-    def precio_unitario(self, value):
-        self._precio_unitario = value
+    @monto_unitario.setter
+    def monto_unitario(self, value):
+        self._monto_unitario = value
 
