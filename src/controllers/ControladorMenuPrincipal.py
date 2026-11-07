@@ -2,9 +2,11 @@ import os
 import subprocess
 import sys
 
+from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorMenus import ControladorMenus
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
+from views.VistaCompras import VistaCompras
 from views.VistaMenuPrincipal import VistaMenuPrincipal
 from views.VistaMenus import VistaMenus
 from views.VistaPlatillos import VistaPlatillos
@@ -26,6 +28,8 @@ class ControladorMenuPrincipal:
                 self.abrir_vista_platillos()
             case "3":
                 self.abrir_vista_menus()
+            case "4":
+                self.abrir_vista_compras()
             case "8":
                 try:
                     subprocess.run('cls' if os.name == 'nt' else 'clear')
@@ -67,3 +71,12 @@ class ControladorMenuPrincipal:
         vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
         ControladorMenus(vista)
+
+    def abrir_vista_compras(self):
+        vista = VistaCompras(self.vista.console)
+
+        vista.input_menu_compras.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+
+        ControladorCompras(vista)
