@@ -13,26 +13,43 @@ from mysql.connector import Error
 class RecetaDAO:    
     def __init__(self, db_manager):
         self.db = db_manager # clase que hace crea las conexiones
+
     '''funciones de consulta'''
 
-    def buscar_por_id(self, num_insumo:int):
-        pass
-    
-    def buscar_por_nombre(self, nombre_insumo:str):
-        #for receta in self._tabla_recetas:
-        #    if receta.nombre == nombre_insumo:
-        #        return receta
-        #return False
-        pass
-        
-    def obtener_recetas(self):
-        """Obtiene una receta por su id."""
+    def obtener_receta_por_id(self, num_receta:int):
+        '''obtiene una receta por su numero.'''
+        #nombre, cantidad, unidad de medida
         connection = self.db.get_connection()
-
         try:
             # 'with' cierra automáticamente el cursor al terminar de usarse
             with connection.cursor(dictionary=True) as cursor:
-                #sql = "SELECT r.num, r.nombre, r.numPorciones FROM receta AS r WHERE r.num = %s"
+                sql = '''
+                        SELECT num NumReceta, nombre NomReceta, numPorciones NumPor 
+                        FROM receta 
+                        WHERE num = %s;'''
+                cursor.execute(sql,(num_receta,))
+                respuesta = cursor.fetchone()
+                if not respuesta:
+                    raise IndexError('DAO:  No existe la receta en la BD.')
+                receta = Receta(
+                        num=respuesta['NumReceta'],
+                        nombre=respuesta['NomReceta'],
+                        num_porciones=respuesta['NumPor'],
+                        instrucciones={}
+                    )
+                return receta
+        except mysql.connector.Error as err:
+            # manejo de errores de base de datos
+            raise Error(f"Error generico de mysql receta: {err}")
+        finally:
+            # devuelve el pool, incluso si hubo un error o un return antes
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_recetas(self):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
                 sql = "SELECT num NumReceta, nombre NomReceta, numPorciones NumPor FROM receta"
                 cursor.execute(sql)
                 filas = cursor.fetchall()
@@ -44,23 +61,8 @@ class RecetaDAO:
                         num=fila['NumReceta'],
                         nombre=fila['NomReceta'],
                         num_porciones=fila['NumPor'],
-                        instrucciones=self.obtener_instrucion_receta_por_id(fila['NumReceta']))
-                    filitas:dict = self.obtener_ingredientes_receta(fila['NumReceta'])
-
-                    for filita in filitas:
-                        nueva_receta.agregarIngrediente(
-                            ingrediente=Ingrediente(filita['NumIngre'],filita['IngreNombre'],insumo=None,receta=None),
-                            cantidad=filita['Cantidad'],
-                            unidad_medida=filita['uniMedida']
-                            )                    
+                        instrucciones={})
                     lista_recetas.append(nueva_receta)
-
-                    #r.num NumReceta,
-                    #i.num NumIngre,
-                    #i.nombre IngreNombre,
-                    #li.cantidad Cantidad,
-                    #li.unidadMedida uniMedida
-
                 return lista_recetas
 
         except mysql.connector.Error as err:
@@ -73,7 +75,7 @@ class RecetaDAO:
                 connection.close()
 
     def obtener_instrucion_receta_por_id(self, num_receta:int):
-        """Obtiene una instruccion por su id."""
+        """Obtiene todas las instrucciones de una receta."""
         connection = self.db.get_connection()
 
         try:
@@ -86,7 +88,7 @@ class RecetaDAO:
                     FROM receta AS r
                     INNER JOIN instrucciones AS i ON i.receta = r.num
                     WHERE r.num = %s;
-                                '''
+                    '''
 
                 # mapeando instruccion
                 cursor.execute(sql, (num_receta,))                
@@ -99,20 +101,12 @@ class RecetaDAO:
 
         except mysql.connector.Error as err:
             # manejo de errores de base de datos
-            print(f"Error al obtener instruccion: {err}")
+            raise Error(f"Error al obtener instruccion: {err}")
 
         finally:
             # devuelve el pool, incluso si hubo un error o un return antes
             if connection.is_connected():
                 connection.close()
-
-    def buscar_ingrediente_por_id(self, num_ingrediente:int):
-        pass
-        #"""Simula un SELECT * FROM receta WHERE num = ?"""
-        #for ingrediente in self._tabla_ingredientes:
-        #    if ingrediente.num == num_ingrediente:
-        #        return ingrediente
-        #return False
 
     def obtener_ingredientes_receta(self, num_receta:int):
         '''obtiene todo los ingredientes de una receta'''
@@ -121,7 +115,8 @@ class RecetaDAO:
         try:
             # 'with' cierra automáticamente el cursor al terminar de usarse
             with connection.cursor(dictionary=True) as cursor:
-                sql = '''SELECT 
+                sql = '''
+                        SELECT 
                             r.num NumReceta,
                             i.num NumIngre,
                             i.nombre IngreNombre,
@@ -132,19 +127,15 @@ class RecetaDAO:
                         INNER JOIN ingrediente AS i ON li.ingrediente = i.num
                         WHERE r.num = %s;'''
                 cursor.execute(sql,(num_receta,))
-
                 return cursor.fetchall()
             
         except mysql.connector.Error as err:
             # manejo de errores de base de datos
-            print(f"Error al obtener recetas: {err}")
+            raise Error(f"Error al obtener recetas: {err}")
         finally:
             # devuelve el pool, incluso si hubo un error o un return antes
             if connection.is_connected():
                 connection.close()
-
-        #return self._tabla_ingredientes
-        pass
 
     '''funciones de registro'''
 
@@ -176,7 +167,6 @@ class RecetaDAO:
         
         #nombre receta, num porciones, ingredientes (nombre, cantidad, unidadMedida)
         #instrucciones(num,intruccion)
-
 
     def agregar_ingrediente_a_receta(self, num_receta:int, ingrediente_receta:IngredientesReceta):
         
@@ -228,8 +218,95 @@ class RecetaDAO:
             except mysql.connector.Error as err:
                 # si hay fallo, se revierte la query ejecutada
                 connection.rollback()
-                raise Error(f"Error al insertar la instruccion: {err}")
+                raise Error(f"Error al insertar la instruccion a la receta: {err}")
 
+            finally:
+                # devuelve el pool, incluso si hubo un error o un return antes
+                if connection.is_connected():
+                    connection.close()
+
+    '''funciones de actualizacion'''
+
+    def actualizar_receta(self,receta:Receta):
+        '''Actualiza el registro de una receta segun su numero'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                        UPDATE receta
+                        SET nombre = %s, numPorciones = %s
+                        WHERE num = %s;
+                        '''
+                valores = (
+                    receta.nombre,
+                    receta.num_porciones,
+                    receta.num
+                )
+                cursor.execute(sql,valores)
+                connection.commit()
+                
+        except mysql.connector.Error as err:
+            connection.rollback()
+            # manejo de errores de base de datos
+            raise Error(f"Error al actualizar la receta: {err}")
+
+        finally:
+            # devuelve el pool, incluso si hubo un error o un return antes
+            if connection.is_connected():
+                connection.close()
+
+    def actualizar_ingrediente_receta(self, num_receta:int, ingrediente_receta:IngredientesReceta):
+        '''Actualiza una lista de ingredientes de una receta. (objeto IngredienteReceta)'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                        UPDATE lista_ingredientes li
+                        INNER JOIN ingrediente ing ON li.ingrediente = ing.num
+                        INNER JOIN receta r ON li.receta = r.num
+                        SET ing.nombre = %s, li.cantidad = %s
+                        WHERE r.num = %s;'''
+                valores = (
+                    ingrediente_receta.ingrediente.nombre,
+                    ingrediente_receta.cantidad,
+                    num_receta
+                )
+                cursor.execute(sql,valores)
+                connection.commit()
+                return cursor.rowcount > 0
+        except mysql.connector.Error as err:
+            connection.rollback()
+            # manejo de errores de base de datos
+            raise Error(f"Error al insertar al actualizar ingrediente de la receta: {err}")
+        finally:
+            # devuelve el pool, incluso si hubo un error o un return antes
+            if connection.is_connected():
+                connection.close()
+
+    def actualizar_instruccion_receta(self, num_receta:int,num_instruccion:int, instruccion_nueva:str):
+            '''Actualiza la lista de instrucciones de una receta.'''
+            connection = self.db.get_connection()
+            try:
+                with connection.cursor(dictionary=True) as cursor:
+                    sql = '''
+                            UPDATE instrucciones ins
+                            INNER JOIN receta r ON ins.receta = r.num
+                            SET ins.instruccion = %s
+                            WHERE r.num = %s AND ins.num = %s;'''
+                    valores = (
+                        instruccion_nueva,
+                        num_receta,
+                        num_instruccion,
+                    )
+                    cursor.execute(sql,valores)
+                    connection.commit()
+                    #devuele el numero de filas que se actualizaron
+                    return cursor.rowcount > 0
+
+            except mysql.connector.Error as err:
+                connection.rollback()
+                # manejo de errores de base de datos
+                raise Error(f"Error al actualizar instruccion de la receta: {err}")
             finally:
                 # devuelve el pool, incluso si hubo un error o un return antes
                 if connection.is_connected():
