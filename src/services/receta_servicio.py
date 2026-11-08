@@ -42,6 +42,12 @@ class RecetaServicio:
 
     def crear_receta(self, receta:Receta):
         '''Crear una receta.'''
+
+        # evalua que la receta no exista
+        if self._receta_dao.obtener_receta_por_id(receta.num):
+            # la receta existe y hay que impedir creacion
+            raise ValueError('Servicio: El numero de receta es invalido. La receta ya existe.')
+        
         self._receta_dao.crear_receta_vacia(receta=receta)
 
         if receta.lista_ingredientes:
