@@ -18,7 +18,7 @@ class VistaMenuPrincipal(VistaBase):
         self.mostrar_layout()
 
     def configurar_menu(self):
-        opciones_menu = ["Recetas", "Platillos", "Menús", "Órdenes de compra", "Inventario", "Merma", "Ventas", "Salir"]
+        opciones_menu = ["Recetas", "Platillos", "Menús", "Compras", "Inventario", "Merma", "Ventas", "Salir"]
 
         self.tabla_menu.add_column()
         self.tabla_menu.add_column("Opciones", justify="center")
