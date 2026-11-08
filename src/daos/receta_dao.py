@@ -162,7 +162,7 @@ class RecetaDAO:
                 cursor.execute(query,(receta.nombre,receta.num_porciones))
                 connection.commit()
                 
-                return connection.lastrowid()
+                #return connection.lastrowid()
 
         except mysql.connector.Error as err:
             # si hay fallo, se revierte la query ejecutada
@@ -196,7 +196,7 @@ class RecetaDAO:
                 )
                 cursor.execute(query,valores)
                 connection.commit()
-                return connection.lastrowid()
+                #return connection.lastrowid()
 
         except mysql.connector.Error as err:
             # si hay fallo, se revierte la query ejecutada
@@ -223,7 +223,7 @@ class RecetaDAO:
                     )
                     cursor.execute(query,valores)
                     connection.commit()
-                    return connection.lastrowid()
+                    #return connection.lastrowid()
 
             except mysql.connector.Error as err:
                 # si hay fallo, se revierte la query ejecutada

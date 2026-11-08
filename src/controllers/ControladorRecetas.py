@@ -44,7 +44,7 @@ class ControladorRecetas:
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
-
+        self.recetas_testeo = self.servicio.obtener_recetas()
         self.vista.mostrar_todas_recetas()
 
         for receta in self.recetas_testeo:
@@ -57,6 +57,7 @@ class ControladorRecetas:
         if self.receta_actual is None:
             # Si no tenemos un receta actual, busca la receta por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
+            self.recetas_testeo = self.servicio.obtener_recetas()
             for receta in self.recetas_testeo:
                 if str(receta.num) == receta_num:
                     # La receta encontrada se convierte en la nueva receta actual
@@ -184,6 +185,7 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las recetas y pasarlas
+                self.recetas_testeo = self.servicio.obtener_recetas()
                 self.vista.mostrar_abrir_detalles_prompt(self.recetas_testeo)
             case "2":
                 # Aquí crea receta
@@ -193,6 +195,7 @@ class ControladorRecetas:
                     # debería llamar al servicio para crear una receta nueva
                     num = len(self.recetas_testeo) + 1
                     self.receta_actual = Receta(num, nombre, porciones, {})
+                    self.servicio.crear_receta(receta=self.receta_actual)
                     self.mapear_ingredientes()
                     self.mostrar_formulario_crear_receta()
                 else:
