@@ -154,12 +154,12 @@ class VistaMenus(VistaBase):
 
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
 
-        self.layout["panel_menu"].size = 3
+        self.layout["panel_menu"].size = 4
 
         panel = Panel(renderable=f"[bold white]Crear menú\n"
                                  f"{menu.nombre if menu else "[bold magenta]Nombre del menú[/bold magenta]"}[/bold white]")
 
-        panel.height = 7
+        panel.height = 4
 
         if menu:
             if len(menu.detalles):

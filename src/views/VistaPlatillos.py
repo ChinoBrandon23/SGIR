@@ -129,12 +129,12 @@ class VistaPlatillos(VistaBase):
 
         self.layout["main"].split_column(Layout(name="panel_platillo"), Layout(name="tabla_detalles"))
 
-        self.layout["panel_platillo"].size = 3
+        self.layout["panel_platillo"].size = 4
 
         panel = Panel(renderable=f"[bold white]Crear platillo\n"
                                  f"{platillo.nombre if platillo else "[bold magenta]Nombre del platillo[/bold magenta]"}[/bold white]")
 
-        panel.height = 7
+        panel.height = 4
 
         if platillo:
             if platillo.categoria:
