@@ -168,13 +168,13 @@ class VistaRecetas(VistaBase):
         self.layout["tablas"].split_row(Layout(name="tabla_ing"),
                                         Layout(name="tabla_ins"))
 
-        self.layout["panel_receta"].size = 3
+        self.layout["panel_receta"].size = 4
 
         panel = Panel(renderable=f"[bold white]Crear receta\n"
                                  f"{receta.nombre if receta else "[bold magenta]Nombre de la receta[/bold magenta]"}[/bold white]. "
                                  f"Porciones: {receta.num_porciones if receta else "[bold magenta]Número de porciones[/bold magenta]"}")
 
-        panel.height = 7
+        panel.height = 4
 
         if receta and len(receta.lista_ingredientes) > 1:
             self.llenar_tabla_ingredientes(receta.lista_ingredientes, mapa_idx_ing)

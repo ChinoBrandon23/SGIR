@@ -6,11 +6,14 @@ from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorMenus import ControladorMenus
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
+from controllers.ControladorVentas import ControladorVentas
 from views.VistaCompras import VistaCompras
 from views.VistaMenuPrincipal import VistaMenuPrincipal
 from views.VistaMenus import VistaMenus
 from views.VistaPlatillos import VistaPlatillos
 from views.VistaRecetas import VistaRecetas
+from views.VistaVentas import VistaVentas
+
 
 from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
@@ -35,6 +38,8 @@ class ControladorMenuPrincipal:
                 self.abrir_vista_menus()
             case "4":
                 self.abrir_vista_compras()
+            case "7":
+                self.abrir_vista_ventas()
             case "8":
                 try:
                     subprocess.run('cls' if os.name == 'nt' else 'clear')
@@ -87,3 +92,12 @@ class ControladorMenuPrincipal:
         vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
         ControladorCompras(vista)
+
+    def abrir_vista_ventas(self):
+        vista = VistaVentas(self.vista.console)
+
+        vista.input_menu_ventas.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+
+        ControladorVentas(vista)

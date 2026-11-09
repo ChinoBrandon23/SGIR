@@ -1,7 +1,6 @@
 from typing import List, Optional
 from datetime import date
 #imports de modelos
-from models.venta import Consumo
 from models.platillo import Platillo
 
 class Venta:

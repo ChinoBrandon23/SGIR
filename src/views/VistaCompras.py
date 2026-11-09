@@ -407,7 +407,7 @@ class VistaCompras(VistaBase):
             proveedor = Prompt.ask("[bold yellow]Ingresa el nombre del nuevo proveedor[/bold yellow]")
 
         confirmacion = Prompt.ask(
-            f"[bold yellow]Confirma el nombre del nuevo proveedor: [bold red]{proveedor}[/bold red][/bold yellow]",
+            f"[bold yellow]Confirma el nombre del nuevo proveedor: [italic white]{proveedor}[/italic white][/bold yellow]",
             choices=["S", "N"])
 
         if confirmacion == "S":
@@ -454,7 +454,7 @@ class VistaCompras(VistaBase):
 
             if len(fecha_compra):
                 confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma fecha de compra: [bold red]{fecha_compra}[/bold red][/bold yellow]", choices=["S", "N"])
+                    f"[bold yellow]Confirma fecha de compra: [italic white]{fecha_compra}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -467,7 +467,7 @@ class VistaCompras(VistaBase):
 
             if len(cantidad):
                 confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma cantidad: [bold red]{cantidad}[/bold red][/bold yellow]", choices=["S", "N"])
+                    f"[bold yellow]Confirma cantidad: [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -480,7 +480,7 @@ class VistaCompras(VistaBase):
 
             if len(unidad_medida):
                 confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma cantidad: [bold red]{unidad_medida}[/bold red][/bold yellow]", choices=["S", "N"])
+                    f"[bold yellow]Confirma cantidad: [italic white]{unidad_medida}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -492,7 +492,7 @@ class VistaCompras(VistaBase):
             monto_unitario = Prompt.ask("[bold yellow]Ingresa el monto unitario del insumo[/bold yellow]")
 
             if len(monto_unitario):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma monto unitario: [bold red]{monto_unitario}[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma monto unitario: [italic white]{monto_unitario}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -505,7 +505,7 @@ class VistaCompras(VistaBase):
         #
         #     if len(monto_unitario):
         #         confirmacion = Prompt.ask(
-        #             f"[bold yellow]Confirma importe: [bold red]{importe}[/bold red][/bold yellow]", choices=["S", "N"])
+        #             f"[bold yellow]Confirma importe: [italic white]{importe}[/italic white][/bold yellow]", choices=["S", "N"])
         #
         #         if confirmacion == "S":
         #             break
@@ -518,7 +518,7 @@ class VistaCompras(VistaBase):
 
             if len(fecha_caducidad):
                 confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma fecha de caducidad: [bold red]{fecha_caducidad}[/bold red][/bold yellow]", choices=["S", "N"])
+                    f"[bold yellow]Confirma fecha de caducidad: [italic white]{fecha_caducidad}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -535,7 +535,7 @@ class VistaCompras(VistaBase):
             self.refrescar_pantalla()
             nombre = Prompt.ask("[bold yellow]Ingresa el nombre del nuevo insumo. Utiliza un nombre genérico[/bold yellow]")
             if len(nombre) > 0:
-                confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre del insumo: [bold red]{nombre}[/bold red]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre del insumo: [italic white]{nombre}[/italic white]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -547,7 +547,7 @@ class VistaCompras(VistaBase):
             umbral = Prompt.ask("[bold yellow]Ingresa el umbral (sin unidad de medida) para este insumo[/bold yellow]")
 
             if len(umbral) > 0:
-                confirmacion = Prompt.ask(f"[bold yellow]Confirmar umbral del insumo: [bold red]{umbral} unidades[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirmar umbral del insumo: [italic white]{umbral} unidades[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     break
@@ -576,7 +576,7 @@ class VistaCompras(VistaBase):
             self.refrescar_pantalla()
             marca_nom = Prompt.ask("[bold yellow]Ingresa el nombre de la nueva marca[/bold yellow]")
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre de la nueva marca: [bold red]{marca_nom}[/bold red][/bold yellow]", choices=["S", "N"])
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre de la nueva marca: [italic white]{marca_nom}[/italic white][/bold yellow]", choices=["S", "N"])
 
         if confirmacion == "S":
             return marca_nom
@@ -602,7 +602,7 @@ class VistaCompras(VistaBase):
             self.refrescar_pantalla()
             tipo_nombre = Prompt.ask("[bold yellow]Ingresa el nombre del nuevo tipo de insumo[/bold yellow]")
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar crear nuevo tipo de insumo: [bold red]{tipo_nombre}[/bold red][/bold yellow]", choices=["S", "N"])
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar crear nuevo tipo de insumo: [italic white]{tipo_nombre}[/italic white][/bold yellow]", choices=["S", "N"])
 
         if confirmacion == "S":
             return tipo_nombre
@@ -632,7 +632,7 @@ class VistaCompras(VistaBase):
             return None
 
         num_insumo = Prompt.ask("[bold yellow]Ingresa el número del insumo a remover[/bold yellow]", choices=opciones, show_choices=False)
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar borrar insumo [bold red]#{num_insumo}[/bold red][/bold yellow]", choices=["S", "N"])
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar borrar insumo [italic white]#{num_insumo}[/italic white][/bold yellow]", choices=["S", "N"])
 
         if confirmacion == "S":
             return num_insumo
@@ -656,7 +656,7 @@ class VistaCompras(VistaBase):
             cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad para este insumo[/bold yellow]")
 
             if len(cantidad):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma la nueva cantidad: [bold red]{cantidad}[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma la nueva cantidad: [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     return num_ins, cantidad
@@ -680,7 +680,7 @@ class VistaCompras(VistaBase):
             unidad_m = Prompt.ask("[bold yellow]Ingresa la nueva unidad de medida para este insumo[/bold yellow]")
 
             if len(unidad_m):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma la nueva unidad de medida: [bold red]{unidad_m}[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma la nueva unidad de medida: [italic white]{unidad_m}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     return num_ins, unidad_m
@@ -704,7 +704,7 @@ class VistaCompras(VistaBase):
             monto = Prompt.ask("[bold yellow]Ingresa el nuevo monto unitario[/bold yellow]")
 
             if len(monto):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo monto: [bold red]{monto}[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo monto: [italic white]{monto}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     return num_ins, monto
@@ -728,7 +728,7 @@ class VistaCompras(VistaBase):
             fecha = Prompt.ask("[bold yellow]Ingresa la nueva fecha de compra para este insumo en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow][/bold yellow]")
 
             if len(fecha):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma la fecha de compra: [bold red]{fecha}[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma la fecha de compra: [italic white]{fecha}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     return num_ins, fecha
@@ -752,7 +752,7 @@ class VistaCompras(VistaBase):
             fecha = Prompt.ask("[bold yellow]Ingresa la nueva fecha de compra para este insumo en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow][/bold yellow]")
 
             if len(fecha):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma la fecha de compra: [bold red]{fecha}[/bold red][/bold yellow]", choices=["S", "N"])
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma la fecha de compra: [italic white]{fecha}[/italic white][/bold yellow]", choices=["S", "N"])
 
                 if confirmacion == "S":
                     return num_ins, fecha
