@@ -6,16 +6,17 @@ from models.insumo import Insumo
 from models.receta import Receta
 from views.VistaRecetas import VistaRecetas
 
+from services.receta_servicio import RecetaServicio
 
 class ControladorRecetas:
-    def __init__(self, vista:VistaRecetas, servicio=None):
+    def __init__(self, vista:VistaRecetas, servicio:RecetaServicio):
         self.vista = vista
         self.servicio = servicio
         self.receta_actual = None
         self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
         self.ing_idx = {}
 
-        self.recetas_testeo = self.crear_recetas_testeo()
+        self.recetas_testeo = self.servicio.obtener_recetas()
 
         self.configurar_listeners()
         self.mostrar_lista_recetas()
@@ -28,23 +29,11 @@ class ControladorRecetas:
         self.vista.input_menu_editar_ing.agregar_escuchante(self.evaluar_seleccion_editar_ing)
         self.vista.input_menu_editar_inst.agregar_escuchante(self.evaluar_seleccion_editar_inst)
 
-    def crear_recetas_testeo(self):
-        receta1 = Receta(2, "Receta de Pizza", 4,
-                         {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
-
-        Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
-                                                       stock=10, tipo_insumo=None, marca=None))
-        receta1.agregarIngrediente(Ingrediente1, 2, "taza")
-        receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
-                                                                     tipo_insumo=None, marca=None)), 1, "cucharada")
-
-        return [Receta(1, "Pasta en salsa de tomate", 10, {}), receta1]
-
     def mostrar_lista_recetas(self):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
-
+        self.recetas_testeo = self.servicio.obtener_recetas()
         self.vista.mostrar_todas_recetas()
 
         for receta in self.recetas_testeo:
@@ -53,15 +42,10 @@ class ControladorRecetas:
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_recetas_prompt()
 
-    def mostrar_detalles_receta(self, receta_num=None):
+    def mostrar_detalles_receta(self, receta_num = None):
         if self.receta_actual is None:
             # Si no tenemos un receta actual, busca la receta por el num pasado como arg
-            # idealmente con un servicio pero por ahora uso un loop para testeo
-            for receta in self.recetas_testeo:
-                if str(receta.num) == receta_num:
-                    # La receta encontrada se convierte en la nueva receta actual
-                    self.receta_actual = copy.deepcopy(receta)
-                    break
+            self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
         self.mapear_ingredientes()
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
         self.vista.mostrar_detalles_receta(self.receta_actual, datos_editados=self.formulario, mapa_idx_ing=self.ing_idx)
@@ -122,19 +106,6 @@ class ControladorRecetas:
         self.cancelar_edicion_actual()
         self.mostrar_detalles_receta(receta_actual_num)
 
-    def cancelar_edicion_actual(self):
-        # resetea formulario y receta actual
-        self.receta_actual = None
-        self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
-
-    def usuario_esta_editando(self):
-        # checa si el usuario ha hecho cambios desde que entró a la vista de detalles
-        if (len(self.formulario["ingredientes"]) > 0
-                or len(self.formulario["instrucciones"]) > 0
-                or len(self.formulario.items()) > 3) or self.formulario["item_borrado"]:
-            return True
-        return False
-
     def agregar_edicion_ingrediente(self, dict_ing):
         lista_ing_editados_nombre = [ing["nombre"] for ing in self.formulario["ingredientes"]]
 
@@ -184,6 +155,7 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las recetas y pasarlas
+                self.recetas_testeo = self.servicio.obtener_recetas()
                 self.vista.mostrar_abrir_detalles_prompt(self.recetas_testeo)
             case "2":
                 # Aquí crea receta
@@ -193,6 +165,7 @@ class ControladorRecetas:
                     # debería llamar al servicio para crear una receta nueva
                     num = len(self.recetas_testeo) + 1
                     self.receta_actual = Receta(num, nombre, porciones, {})
+                    self.servicio.crear_receta(receta=self.receta_actual)
                     self.mapear_ingredientes()
                     self.mostrar_formulario_crear_receta()
                 else:
@@ -218,10 +191,7 @@ class ControladorRecetas:
             case "3":
                 borrar = self.vista.mostrar_prompt_eliminar_receta_prompt()
                 if borrar:
-                    for receta in self.recetas_testeo:
-                        if receta.nombre == self.receta_actual.nombre:
-                            self.recetas_testeo.remove(receta)
-                            break
+                    self.servicio.borrar_receta(self.receta_actual.num)
 
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_recetas()
