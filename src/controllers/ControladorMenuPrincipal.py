@@ -4,12 +4,14 @@ import sys
 
 from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorMenus import ControladorMenus
+from controllers.ControladorMerma import ControladorMerma
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from views.VistaCompras import VistaCompras
 from views.VistaMenuPrincipal import VistaMenuPrincipal
 from views.VistaMenus import VistaMenus
+from views.VistaMerma import VistaMerma
 from views.VistaPlatillos import VistaPlatillos
 from views.VistaRecetas import VistaRecetas
 from views.VistaVentas import VistaVentas
@@ -33,6 +35,8 @@ class ControladorMenuPrincipal:
                 self.abrir_vista_menus()
             case "4":
                 self.abrir_vista_compras()
+            case "6":
+                self.abrir_vista_merma()
             case "7":
                 self.abrir_vista_ventas()
             case "8":
@@ -85,6 +89,15 @@ class ControladorMenuPrincipal:
         vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
         ControladorCompras(vista)
+
+    def abrir_vista_merma(self):
+        vista = VistaMerma(self.vista.console)
+
+        vista.input_menu_merma.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar_merma.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+
+        ControladorMerma(vista)
 
     def abrir_vista_ventas(self):
         vista = VistaVentas(self.vista.console)
