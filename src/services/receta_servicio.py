@@ -44,6 +44,18 @@ class RecetaServicio:
                 )
         return receta
 
+    def obtener_ingrediente_por_id(self, num_ing:int):
+        try:
+            return self._receta_dao.obtener_ingrediente_por_id(num_ing)
+        except IndexError as ie:
+            raise IndexError(f'Servicio: No existe el ingrediente. {ie}')
+
+    def obtener_ingrediente_por_nombre(self, nombre_ing:str):
+        try:
+            return self._receta_dao.obtener_ingrediente_por_nombre(nombre_ing)
+        except IndexError as ie:
+            raise IndexError(f'Servicio: No existe el ingrediente. {ie}')
+    
     def crear_receta(self, receta:Receta):
         '''Crear una receta.'''
 
@@ -79,25 +91,30 @@ class RecetaServicio:
 
 
         # obtiene lista ingredientes de la receta en la BD, para comparar
-        lista_ing = self._receta_dao.obtener_ingredientes_receta(receta.num)
+        lista_ing_receta_bd = self._receta_dao.obtener_ingredientes_receta(receta.num)
+        
         # si no hay ningun ingrediente en la receta en la BD, entonces ninguno existe en la BD y hay que crearlos
-        if not lista_ing:
+        if not lista_ing_receta_bd:
             # agrega todos los ingredientes a la receta
+            for li in receta.lista_ingredientes:
+                self._receta_dao.agregar_ingrediente_a_receta(receta.num,li)
+        else:
             for lista_ingrediente in receta.lista_ingredientes:
-                self._receta_dao.agregar_ingrediente_a_receta(receta.num,lista_ingrediente)
-
-        elif lista_ing:
-            for lista_ingrediente in receta.lista_ingredientes:
-                for registro in lista_ing:
-                    # para poder actualizar, primero se evalua si el ingrediente existe en la BD
-                    if lista_ingrediente.ingrediente.num == registro['NumIngre']:
+                # validando que el ingrediente exista en la BD, no se puede agregar un ingrediente que no existe
+                if not self.obtener_ingrediente_por_id(lista_ingrediente.ingrediente.num):
+                    continue # si no existe entonces pasamos a la siguiente iteracion
+                for registro in lista_ing_receta_bd:
+                    # para poder actualizar, primero se evalua si el ingrediente existe en la lista de ing de la receta en la BD
+                    if lista_ingrediente.ingrediente.num == int(registro['NumIngre']):
+                        
                         self._receta_dao.actualizar_ingrediente_receta(
                             num_receta=receta.num,
                             ingrediente_receta=lista_ingrediente
                         )
-                    else:
-                        ''' si el ingrediente no existe en la receta actual, entonces, hay que agregarla'''
-                        self._receta_dao.agregar_ingrediente_a_receta(receta.num,lista_ingrediente)
+                    #else:
+                    #    print(f'aqui toy -------{lista_ingrediente.ingrediente.num}--{registro['NumIngre']}')
+                    #    ''' si el ingrediente no existe en la receta actual, entonces, hay que agregarla'''
+                    #    self._receta_dao.agregar_ingrediente_a_receta(receta.num,lista_ingrediente)
 
         # obtiene todas instrucciones de la receta en la BD para comparar 
         instrucciones_actuales:dict[int,str] = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
