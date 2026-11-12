@@ -2,6 +2,10 @@ from models.receta import Receta, IngredientesReceta
 from models.ingrediente import Ingrediente
 from daos.receta_dao import RecetaDAO
 
+import mysql.connector
+from mysql.connector import Error
+
+
 from typing import List
 
 class RecetaServicio:
@@ -107,6 +111,26 @@ class RecetaServicio:
                     instruccion_nueva=instruccion
                     )
             else:
-                ''' si la instruccion no existe en el diccionario de instruciones...
+                '''si la instruccion no existe en el diccionario de instruciones...
                     de la receta actual, entonces, hay que crearla'''
                 self._receta_dao.agregar_instruccion_a_receta(receta.num,num,instruccion)
+
+    def borrar_receta(self, num_receta:int):
+        '''Borra la receta por numero. Solo usar si es estrictamente necesario.'''
+        # valida que la receta exista en la BD
+        try:
+            self._receta_dao.obtener_receta_por_id(num_receta)
+        except IndexError as ie:
+            raise IndexError(f'Servicio: La receta no existe. {ie}\n')
+
+        # valida que la receta no sea la receta de un ingrediente
+        if self._receta_dao.es_receta_de_ingrediente(num_receta):
+            raise ValueError('Servicio: No se puede eliminar una receta, la cual es receta de un ingrediente.\n')
+
+        # si se pasan las validaciones, se realiza la eliminacion.
+        try:
+            # retorna la cantidad de filas afectadas. 
+            return self._receta_dao.borrar_receta(num_receta)
+        except mysql.connector.Error as e:
+            raise ValueError(f'Servicio: {e}\n')
+

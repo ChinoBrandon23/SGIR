@@ -311,3 +311,63 @@ class RecetaDAO:
                 # devuelve el pool, incluso si hubo un error o un return antes
                 if connection.is_connected():
                     connection.close()
+
+
+    ''' FUNCIONES DE BORRADO '''
+
+    def borrar_receta(self, num_receta:int):
+        '''solo usar si es necesario. Solo si es una receta que necesita forzosamente ser eliminada.'''
+        connection = self.db.get_connection()
+
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                        DELETE FROM lista_ingredientes WHERE receta = %s;
+                        DELETE FROM instrucciones WHERE receta = %s;
+                        UPDATE platillo 
+                        SET receta = NULL WHERE receta = %s;
+                        DELETE FROM receta WHERE num = %s;
+                        '''
+                cursor.execute(sql,(num_receta,))
+                connection.commit()
+                # devuele el numero de filas que se actualizaron
+                return cursor.rowcount > 0
+        except mysql.connector.Error as err:
+            connection.rollback()
+            raise Error(f"DAO: Error al tratar de eliminar la receta.: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+
+    def es_receta_de_ingrediente(self, num_receta:int):
+        '''Valida que la receta no sea de un ingrediente.'''
+        connection = self.db.get_connection()
+
+        # validando que la receta no sea la receta de un ingrediente
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                        SELECT 
+                        i.num Ingrediente
+                        FROM ingrediente i
+                        INNER JOIN receta r ON i.receta = r.num
+                        WHERE r.num = %s'''
+                cursor.execute(sql,(num_receta,))
+                respuesta = cursor.fetchone()
+
+                ''' si es True, significa que se encontro un valor, y por ende, 
+                es receta de un ingrediente, asi que 
+                ''' 
+                if respuesta:
+                    return True
+                else:
+                    return False
+
+        except mysql.connector.Error as err:
+            connection.rollback()
+            # manejo de errores de base de datos
+            raise Error(f"Error al validar receta: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()

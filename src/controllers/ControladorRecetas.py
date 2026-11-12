@@ -30,13 +30,13 @@ class ControladorRecetas:
 
     def crear_recetas_testeo(self):
         receta1 = Receta(2, "Receta de Pizza", 4,
-                         {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
+                        {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
 
         Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
-                                                       stock=10, tipo_insumo=None, marca=None))
+                                                    stock=10, tipo_insumo=None, marca=None))
         receta1.agregarIngrediente(Ingrediente1, 2, "taza")
         receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
-                                                                     tipo_insumo=None, marca=None)), 1, "cucharada")
+                                                                    tipo_insumo=None, marca=None)), 1, "cucharada")
 
         return [Receta(1, "Pasta en salsa de tomate", 10, {}), receta1]
 
@@ -54,6 +54,7 @@ class ControladorRecetas:
         self.vista.mostrar_menu_recetas_prompt()
 
     def mostrar_detalles_receta(self, receta_num=None):
+        self.receta_actual = self.servicio.obtener_receta_por_id(receta_num) 
         if self.receta_actual is None:
             # Si no tenemos un receta actual, busca la receta por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
@@ -107,7 +108,7 @@ class ControladorRecetas:
                     self.receta_actual.lista_ingredientes.pop(idx)
 
                 self.receta_actual.agregarIngrediente(Ingrediente("1",
-                                                                  ing["nombre"]), ing["cantidad"], ing["unidad_m"])
+                                                                ing["nombre"]), ing["cantidad"], ing["unidad_m"])
 
         lista_num = [receta.num for receta in self.recetas_testeo]
 
