@@ -135,7 +135,6 @@ class ControladorMenus:
             #self.menus_testeo.pop(idx)
             #self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
         else:
-            # sigifica que el menu no existe y se agrega
             self.servicio.actualizar_menu(menu=self.menu_actual)
             #self.menus_testeo.append(copy.deepcopy(self.menu_actual))
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles

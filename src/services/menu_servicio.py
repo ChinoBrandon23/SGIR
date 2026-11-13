@@ -117,40 +117,40 @@ class MenuServicio:
         
         # actualiza solo menu sin platillos
         try:
-            self._menu_dao.actualizar_menu(menu_actualizado=menu)
+            self._menu_dao.actualizar_menu_completo(menu=menu)
         except mysql.connector.Error as err:
             raise ValueError(f'Servicio: Error al actualizar menu. {err}\n')
 
-        # obtenemos los platillos de este menu en la BD
-        try:
-            platillos_bd = self._menu_dao.obtener_platillos_de_menu(menu.num)
-        except mysql.connector.Error as err:
-            raise Error(f'Servicio: Error en la BD: {err}')
-
-        # crear lista de numeros de platillos para comparar
-        lista_numero_platillos_bd: List[int] = []
-        for detallePlat in platillos_bd:
-            lista_numero_platillos_bd.append(detallePlat.platillo.num)
-
-        # iteramos para saber cuales platillos son nuevos y cuales no
-        for numPlat in lista_numero_platillos_bd:
-            for detalleMenu in menu.detalles:
-                if not detalleMenu.platillo.num in lista_numero_platillos_bd:
-                    # significa que el platillo no existe en el menu y hay que agregarlo
-                    try:
-                        if not self.platillo_existe(detalleMenu.platillo.num):
-                            raise ValueError(f'El platillo {detalleMenu.platillo.num} que se desea agregar al menu, no existe.')
-                        self._menu_dao.agregar_platillo_menu(menu.num,detalleMenu)
-                    except mysql.connector.Error as err:
-                        raise Error(f'Servicio: Error en la BD. {err}\n')
-
-                if detalleMenu.platillo.num in lista_numero_platillos_bd:
-                    # significa que el platillo si esta en menu y hay que actualizar
-                    try:
-                        self._menu_dao.actualizar_platillo_de_menu(menu.num,detalleMenu)
-                    except mysql.connector.Error as err:
-                        raise Error(f'Servicio: Error en la BD. {err}\n')
-        
+        ## obtenemos los platillos de este menu en la BD
+        #try:
+        #    platillos_bd = self._menu_dao.obtener_platillos_de_menu(menu.num)
+        #except mysql.connector.Error as err:
+        #    raise Error(f'Servicio: Error en la BD: {err}')
+#
+        ## crear lista de numeros de platillos para comparar
+        #lista_numero_platillos_bd: List[int] = []
+        #for detallePlat in platillos_bd:
+        #    lista_numero_platillos_bd.append(detallePlat.platillo.num)
+#
+        ## iteramos para saber cuales platillos son nuevos y cuales no
+        #for numPlat in lista_numero_platillos_bd:
+        #    for detalleMenu in menu.detalles:
+        #        if not detalleMenu.platillo.num in lista_numero_platillos_bd:
+        #            # significa que el platillo no existe en el menu y hay que agregarlo
+        #            try:
+        #                if not self.platillo_existe(detalleMenu.platillo.num):
+        #                    raise ValueError(f'El platillo {detalleMenu.platillo.num} que se desea agregar al menu, no existe.')
+        #                self._menu_dao.agregar_platillo_menu(menu.num,detalleMenu)
+        #            except mysql.connector.Error as err:
+        #                raise Error(f'Servicio: Error en la BD. {err}\n')
+#
+        #        if detalleMenu.platillo.num in lista_numero_platillos_bd:
+        #            # significa que el platillo si esta en menu y hay que actualizar
+        #            try:
+        #                self._menu_dao.actualizar_platillo_de_menu(menu.num,detalleMenu)
+        #            except mysql.connector.Error as err:
+        #                raise Error(f'Servicio: Error en la BD. {err}\n')
+        #
 
     '''funciones de calculo'''
 

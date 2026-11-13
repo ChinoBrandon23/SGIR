@@ -212,40 +212,110 @@ class MenuDAO:
                 connection.close()
 
     ''' funciones de actualizacion '''
-    def actualizar_menu(self, menu_actualizado:Menu):
-        '''Actualiza el registro de un menu. Sin platillos'''
+    def actualizar_menu_completo(self, menu:Menu):
+        '''Actualiza el encabezado del menu y sincroniza todos sus platillos en una sola transaccion.'''
+            
+        #'''Actualiza el registro de un menu. Sin platillos'''
+        #connection = self.db.get_connection()
+        #try:
+        #    with connection.cursor(dictionary=True) as cursor:
+        #        # nombre, vigencia, platillos
+        #        sql = '''
+        #                UPDATE menu
+        #                SET 
+        #                menu.nombre = %s, 
+        #                menu.fechaInicial = %s, 
+        #                menu.fechaFinal = %s,
+        #                menu.cantidadPlatillos = %s
+        #                WHERE menu.num = %s;
+        #                '''
+        #        valores = (
+        #            menu_actualizado.nombre,
+        #            menu_actualizado.fecha_inicial,
+        #            menu_actualizado.fecha_final,
+        #            menu_actualizado.cantidad_platillos,
+        #            menu_actualizado.num
+        #        )
+        #        cursor.execute(sql,valores)
+        #        connection.commit()
+        #        
+        #except mysql.connector.Error as err:
+        #    connection.rollback()
+        #    # manejo de errores de base de datos
+        #    raise Error(f"DAO: Error al actualizar el menu: {err}")
+#
+        #finally:
+        #    # devuelve el pool, incluso si hubo un error o un return antes
+        #    if connection.is_connected():
+        #        connection.close()
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-                # nombre, vigencia, platillos
-                sql = '''
-                        UPDATE menu
-                        SET 
-                        menu.nombre = %s, 
-                        menu.fechaInicial = %s, 
-                        menu.fechaFinal = %s,
-                        menu.cantidadPlatillos = %s
-                        WHERE menu.num = %s;
-                        '''
-                valores = (
-                    menu_actualizado.nombre,
-                    menu_actualizado.fecha_inicial,
-                    menu_actualizado.fecha_final,
-                    menu_actualizado.cantidad_platillos,
-                    menu_actualizado.num
-                )
-                cursor.execute(sql,valores)
-                connection.commit()
-                
-        except mysql.connector.Error as err:
-            connection.rollback()
-            # manejo de errores de base de datos
-            raise Error(f"DAO: Error al actualizar el menu: {err}")
 
+                # actualiza los atributos basicos del menu
+                sql_menu = '''
+                    UPDATE menu
+                    SET nombre = %s, fechaInicial = %s, fechaFinal = %s, cantidadPlatillos = %s
+                    WHERE num = %s;
+                '''
+                cursor.execute(sql_menu, (
+                    menu.nombre,
+                    menu.fecha_inicial,
+                    menu.fecha_final,
+                    menu.cantidad_platillos,
+                    menu.num
+                ))
+
+                # consulta que platillos existen actualmente en la BD para este menu
+                sql_actuales = 'SELECT platillo FROM menu_platillo WHERE menu = %s;'
+                cursor.execute(sql_actuales, (menu.num,))
+                platillos_num_bd = [fila['platillo'] for fila in cursor.fetchall()]
+
+                # conjunto de ids que el usuario tiene ahora en el menu
+                ids_en_formulario = set()
+
+                # iteracion de inserts y updates (sobre la misma conexion y cursor)
+                for detalle in menu.detalles:
+                    plat_id = detalle.platillo.num
+                    ids_en_formulario.add(plat_id)
+
+                    if plat_id in platillos_num_bd:
+                        # si ya existia en la BD, se actualiza el precio
+                        sql_update = '''
+                            UPDATE menu_platillo 
+                            SET precio = %s 
+                            WHERE menu = %s AND platillo = %s;
+                        '''
+                        cursor.execute(sql_update, (detalle.precio, menu.num, plat_id))
+                    else:
+                        # si es nuevo en el menu, se inserta
+                        sql_insert = '''
+                            INSERT INTO menu_platillo (menu, platillo, precio) 
+                            VALUES (%s, %s, %s);
+                        '''
+                        cursor.execute(sql_insert, (menu.num, plat_id, detalle.precio))
+
+                # delete de los platillos que el usuario elimino
+                for plat_id in platillos_num_bd:
+                    if plat_id not in ids_en_formulario:
+                        sql_delete = '''
+                            DELETE FROM menu_platillo 
+                            WHERE menu = %s AND platillo = %s;
+                        '''
+                        cursor.execute(sql_delete, (menu.num, plat_id))
+
+                # solo un commit para todo
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                connection.commit()
+
+        except mysql.connector.Error as err:
+            # si cualquiera de los updates, inserts o select fallo:
+            connection.rollback()
+            raise Error(f"DAO: Error en la transaccion al actualizar menu: {err}")
         finally:
-            # devuelve el pool, incluso si hubo un error o un return antes
             if connection.is_connected():
                 connection.close()
+
 
     def actualizar_platillo_de_menu(self, num_menu:int, platillo_actualizado:DetalleMenu):
         '''Actualiza el platillo de un menu'''
@@ -277,7 +347,6 @@ class MenuDAO:
     def agregar_platillo_menu(self, num_menu:int, platillo_nuevo:DetalleMenu):
         '''Agrega un platillo a un menu'''
         pass
-
 
 
 

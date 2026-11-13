@@ -91,4 +91,4 @@ class DetalleMenu:
 
     @precio.setter
     def precio(self,value):
-        self.precio = value
+        self._precio = value
