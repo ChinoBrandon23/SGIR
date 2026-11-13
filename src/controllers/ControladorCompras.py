@@ -1,7 +1,6 @@
 import copy
 import datetime
 import math
-import time
 
 from models.compra import Compra
 from models.insumo import Insumo
