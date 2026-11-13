@@ -1,5 +1,6 @@
 import copy
 from datetime import date, datetime
+import datetime
 import time
 
 from models.categoria import Categoria
@@ -20,7 +21,7 @@ class ControladorMenus:
         self.formulario = {"platillos":[], "item_borrado":False}
         self.platillo_idx = {}
 
-        #self.platillos_testeo = self.crear_platillos_testeo()
+        self.platillos_testeo = self.servicio.obtener_platillos()
         self.menus_testeo = self.servicio.obtener_menus()
 
         self.configurar_listeners()
@@ -85,7 +86,7 @@ class ControladorMenus:
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_menus_prompt()
 
-    def mostrar_detalles_menu(self, menu_num):
+    def mostrar_detalles_menu(self, menu_num=None):
         if self.menu_actual is None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
@@ -125,14 +126,18 @@ class ControladorMenus:
     def guardar_editar_menu(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
-        lista_num = [menu.num for menu in self.menus_testeo]
+        #lista_num = [menu.num for menu in self.menus_testeo]
+        lista_num = [menu.num for menu in self.servicio.obtener_menus()]
 
         if self.menu_actual.num in lista_num:
-            idx = lista_num.index(self.menu_actual.num)
-            self.menus_testeo.pop(idx)
-            self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
+            #idx = lista_num.index(self.menu_actual.num)
+            self.servicio.actualizar_menu(menu=self.menu_actual)
+            #self.menus_testeo.pop(idx)
+            #self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
         else:
-            self.menus_testeo.append(copy.deepcopy(self.menu_actual))
+            # sigifica que el menu no existe y se agrega
+            self.servicio.actualizar_menu(menu=self.menu_actual)
+            #self.menus_testeo.append(copy.deepcopy(self.menu_actual))
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         menu_actual_num = str(self.menu_actual.num)
@@ -143,8 +148,8 @@ class ControladorMenus:
         # debería validar el formato de la fecha y usar un servicio y eso
         formato = "%d-%m-%Y"
 
-        self.menu_actual.fecha_inicial = datetime.date.strptime(fecha_inicial, formato)
-        self.menu_actual.fecha_final = datetime.date.strptime(fecha_final, formato)
+        self.menu_actual.fecha_inicial = datetime.datetime.strptime(fecha_inicial, formato).date()
+        self.menu_actual.fecha_final = datetime.datetime.strptime(fecha_final, formato).date()
 
         self.formulario["vigencia"] = True
 
@@ -278,7 +283,7 @@ class ControladorMenus:
                 # y NO es ya parte del menú para evitar añadir duplicados, estos son los platillos disponibles
                 lista_platillos_actuales = [pl.platillo.nombre for pl in self.menu_actual.detalles]
                 idx_plat_disp = {i + 1: self.platillos_testeo[i] for i in range(len(self.platillos_testeo)) if
-                                 self.platillos_testeo[i].nombre not in lista_platillos_actuales}
+                                self.platillos_testeo[i].nombre not in lista_platillos_actuales}
 
                 # hago una lista de solo los índices de los platillos disponibles para pasarla a la vista como
                 # opciones válidas de input para el usuario
