@@ -107,7 +107,10 @@ class MenuServicio:
 
     '''funciones de creacion'''
     def crear_menu(self, nuevo_menu: Menu):
-        pass
+        try:
+            self._menu_dao.crear_menu(menu=nuevo_menu)
+        except mysql.connector.Error as err:
+            raise Error(f'Error en crear menu en la BD - {err}')
 
     ''' funciones de actualizacion'''
     def actualizar_menu(self, menu:Menu):
@@ -123,10 +126,12 @@ class MenuServicio:
 
     ''' funciones de eliminacion'''
     def eliminar_menu(self, num_menu:int):
-        pass
+        try:
+            self._menu_dao.eliminar_menu(num_menu)
+        except mysql.connector.Error as err:
+            raise Error(f'Error en la al eliminar menu de la BD - {err}')
 
     '''funciones de calculo'''
-
 
     def calcular_num_platillos(self, menu:Menu) -> int:
         '''calcula el numero de platillos disponibles de un menu'''

@@ -324,12 +324,19 @@ class MenuDAO:
             with connection.cursor(dictionary=True) as cursor:
 
                 # actualiza los atributos basicos del menu
-                sql_menu = '''
+                sql_menu_platillo = '''
                     DELETE FROM menu_platillo WHERE menu = %s;
+                '''
+                cursor.execute(sql_menu_platillo,(num_menu,))    
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                sql_menu = '''
                     DELETE FROM menu WHERE num = %s;
                 '''
-                cursor.execute(sql_menu,(num_menu,num_menu))    
-                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                cursor.execute(sql_menu,(num_menu,))   
+
+                # reiniciar el autoinrement al siguiente disponible 
+                cursor.execute("ALTER TABLE menu AUTO_INCREMENT = 1")
+
                 connection.commit()
 
         except mysql.connector.Error as err:
