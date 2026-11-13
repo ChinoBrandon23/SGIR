@@ -19,8 +19,10 @@ from views.VistaVentas import VistaVentas
 
 from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
+from daos.menu_dao import MenuDAO
 
 from services.receta_servicio import RecetaServicio
+from services.menu_servicio import MenuServicio
 
 class ControladorMenuPrincipal:
     def __init__(self, vista: VistaMenuPrincipal, servicio=None):
@@ -86,7 +88,9 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorMenus(vista)
+        menu_dao = MenuDAO(DatabaseConnection)
+        menu_servicio = MenuServicio(menu_dao)
+        ControladorMenus(vista,menu_servicio)
 
     def abrir_vista_compras(self):
         vista = VistaCompras(self.vista.console)

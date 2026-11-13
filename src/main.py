@@ -17,10 +17,6 @@ from services.receta_servicio import RecetaServicio
 print('iniciando app...')
 
 def main():
-    
-    connection:DatabaseConnection = DatabaseConnection()
-    receta_dao = RecetaDAO(connection)
-    receta_servicio = RecetaServicio(receta_dao=receta_dao)
 
     _width, _height = shutil.get_terminal_size()
 
