@@ -59,7 +59,7 @@ class Menu:
 
     @fecha_inicial.setter
     def fecha_inicial(self, value):
-        self._nombre = value
+        self._fecha_inicial = value
 
     @property
     def fecha_final(self) -> str|date|None:
@@ -67,7 +67,7 @@ class Menu:
 
     @fecha_final.setter
     def fecha_final(self, value):
-        self._nombre = value
+        self._fecha_final = value
 
     def agregar_platillo(self, platillo:Platillo, precio:float):
         """metodo agreagacion para instanciar y guardar el detalle del menu"""
@@ -88,3 +88,7 @@ class DetalleMenu:
     @property
     def precio(self) -> float:
         return self._precio
+
+    @precio.setter
+    def precio(self,value):
+        self._precio = value

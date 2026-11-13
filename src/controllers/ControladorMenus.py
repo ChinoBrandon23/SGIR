@@ -1,4 +1,5 @@
 import copy
+from datetime import date, datetime
 import datetime
 import time
 
@@ -10,17 +11,18 @@ from models.platillo import Platillo
 from models.receta import Receta
 from views.VistaMenus import VistaMenus
 
+from services.menu_servicio import MenuServicio
 
 class ControladorMenus:
-    def __init__(self, vista:VistaMenus, servicio=None):
+    def __init__(self, vista:VistaMenus, servicio:MenuServicio):
         self.vista = vista
         self.servicio = servicio
         self.menu_actual = None
         self.formulario = {"platillos":[], "item_borrado":False}
         self.platillo_idx = {}
 
-        self.platillos_testeo = self.crear_platillos_testeo()
-        self.menus_testeo = self.crear_menus_testeo()
+        self.platillos_testeo = self.servicio.obtener_platillos()
+        self.menus_testeo = self.servicio.obtener_menus()
 
         self.configurar_listeners()
         self.mostrar_lista_menus()
@@ -32,44 +34,49 @@ class ControladorMenus:
         self.vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_editar_platillos)
 
-    def crear_platillos_testeo(self):
-        receta1 = Receta(2, "Receta de Pizza", 4,
-                         {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
+    #def crear_platillos_testeo(self):
+    #    receta1 = Receta(2, "Receta de Pizza", 4,
+    #                     {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
+#
+#    #    Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
+#    #                                                   stock=10, tipo_insumo=None, marca=None))
+#    #    receta1.agregarIngrediente(Ingrediente1, 2, "taza")
+#    #    receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
+#    #                                                                 tipo_insumo=None, marca=None)), 1, "cucharada")
+#    #    receta2 = Receta(1, "Pasta en salsa de tomate", 10, {})
+#
+#    #    categoria1 = Categoria("PFUE", "Platillo fuerte")
+#    #    categoria2 = Categoria("ENTR", "Entrada")
+#    #    categoria3 = Categoria("POST", "Postre")
+#    #    categoria4 = Categoria("BEBI", "Bebida")
+#
+#    #    platillo1 = Platillo(num=1, nombre="Pasta en salsa de tomate", categoria=categoria1,
+    #                         receta=receta2)
+    #    platillo2 = Platillo(num=2, nombre="Pizza de peperoni", categoria=categoria1, receta=receta1)
+#
+    #    return [platillo1, platillo2]
 
-        Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
-                                                       stock=10, tipo_insumo=None, marca=None))
-        receta1.agregarIngrediente(Ingrediente1, 2, "taza")
-        receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
-                                                                     tipo_insumo=None, marca=None)), 1, "cucharada")
-        receta2 = Receta(1, "Pasta en salsa de tomate", 10, {})
-
-        categoria1 = Categoria("PFUE", "Platillo fuerte")
-        categoria2 = Categoria("ENTR", "Entrada")
-        categoria3 = Categoria("POST", "Postre")
-        categoria4 = Categoria("BEBI", "Bebida")
-
-        platillo1 = Platillo(num=1, nombre="Pasta en salsa de tomate", categoria=categoria1,
-                             receta=receta2)
-        platillo2 = Platillo(num=2, nombre="Pizza de peperoni", categoria=categoria1, receta=receta1)
-
-        return [platillo1, platillo2]
-
-    def crear_menus_testeo(self):
-        fecha_inicio = datetime.date.today()
-        fecha_final = datetime.date.strptime("31-12-2027", "%d-%m-%Y")
-
-        menu1 = Menu(1, "Menú 2025", 0, fecha_inicio, fecha_final)
-        menu2 = Menu(2, "Menú 2026", 2, fecha_inicio, fecha_final)
-
-        for platillo in self.platillos_testeo:
-            menu2.agregar_platillo(platillo, 150)
-
-        return [menu1, menu2]
+    #def crear_menus_testeo(self):
+    #    fecha_inicio = datetime.date.today()
+    #    fecha_final = datetime.date.strptime("31-12-2027", "%d-%m-%Y")
+#
+    #    menu1 = Menu(1, "Menú 2025", 0, fecha_inicio, fecha_final)
+    #    menu2 = Menu(2, "Menú 2026", 2, fecha_inicio, fecha_final)
+#
+    #    for platillo in self.platillos_testeo:
+    #        menu2.agregar_platillo(platillo, 150)
+#
+    #    return [menu1, menu2]
 
     def mostrar_lista_menus(self):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
+        self.menus_testeo = self.servicio.obtener_menus()
+
+        #calcula el numero de recetas reales: se eliminara despues
+        for menu in self.menus_testeo:
+            menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
 
         self.vista.mostrar_todos_menus()
 
@@ -80,14 +87,15 @@ class ControladorMenus:
         self.vista.mostrar_menu_menus_prompt()
 
     def mostrar_detalles_menu(self, menu_num=None):
-        if self.menu_actual is None:
+        if self.menu_actual is None and menu_num is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
-            for menu in self.menus_testeo:
-                if str(menu.num) == menu_num:
-                    # El menú encontrado se convierte en el nuevo menú actual
-                    self.menu_actual = copy.deepcopy(menu)
-                    break
+            #for menu in self.menus_testeo:
+            #    if str(menu.num) == menu_num:
+            #        # El menú encontrado se convierte en el nuevo menú actual
+            #        self.menu_actual = copy.deepcopy(menu)
+            #        break
+            self.menu_actual = self.servicio.obtener_menu_por_id(num_menu=int(menu_num))
 
         self.mapear_detalle_platillo()
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
@@ -118,14 +126,13 @@ class ControladorMenus:
     def guardar_editar_menu(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
-        lista_num = [menu.num for menu in self.menus_testeo]
-
-        if self.menu_actual.num in lista_num:
-            idx = lista_num.index(self.menu_actual.num)
-            self.menus_testeo.pop(idx)
-            self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
-        else:
-            self.menus_testeo.append(copy.deepcopy(self.menu_actual))
+        #lista_num = [menu.num for menu in self.menus_testeo]
+            #idx = lista_num.index(self.menu_actual.num)
+        self.servicio.actualizar_menu(menu=self.menu_actual)
+            #self.menus_testeo.pop(idx)
+            #self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
+            #else:
+            #self.menus_testeo.append(copy.deepcopy(self.menu_actual))
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         menu_actual_num = str(self.menu_actual.num)
@@ -136,8 +143,8 @@ class ControladorMenus:
         # debería validar el formato de la fecha y usar un servicio y eso
         formato = "%d-%m-%Y"
 
-        self.menu_actual.fecha_inicial = datetime.date.strptime(fecha_inicial, formato)
-        self.menu_actual.fecha_final = datetime.date.strptime(fecha_final, formato)
+        self.menu_actual.fecha_inicial = datetime.datetime.strptime(fecha_inicial, formato).date()
+        self.menu_actual.fecha_final = datetime.datetime.strptime(fecha_final, formato).date()
 
         self.formulario["vigencia"] = True
 
@@ -184,8 +191,16 @@ class ControladorMenus:
 
                 if nombre:
                     # debería llamar al servicio para crear un menú nuevo
-                    num = len(self.menus_testeo) + 1
-                    self.menu_actual = copy.deepcopy(Menu(num, nombre, 0, datetime.date.today(), datetime.date.today()))
+                    #num = len(self.menus_testeo) + 1
+                    #self.menu_actual = copy.deepcopy(Menu(num, nombre, 0, datetime.date.today(), datetime.date.today()))
+                    #self.mostrar_formulario_crear_menu()
+
+                    # creamos un menu base (num puede ser 0 o None) y el servicio lo inserta en la BD
+                    nuevo_menu = Menu(num=0, nombre=nombre, cantidad_platillos=0, 
+                                    fecha_inicial=datetime.date.today(), 
+                                    fecha_final=datetime.date.today())
+                    # el servicio retorna el menu ya creado con su numero real en la BD
+                    self.menu_actual = self.servicio.crear_menu(nuevo_menu)
                     self.mostrar_formulario_crear_menu()
                 else:
                     self.mostrar_lista_menus()
@@ -209,12 +224,9 @@ class ControladorMenus:
                 self.vista.mostrar_opciones_editar_prompt()
             case "3":
                 borrar = self.vista.mostrar_prompt_eliminar_menu_prompt()
-                if borrar:
-                    for menu in self.menus_testeo:
-                        if menu.nombre == self.menu_actual.nombre:
-                            self.menus_testeo.remove(menu)
-                            break
-
+                if borrar and self.menu_actual:
+                    self.servicio.eliminar_menu(self.menu_actual.num)
+                
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_menus()
             case "m":
@@ -271,7 +283,7 @@ class ControladorMenus:
                 # y NO es ya parte del menú para evitar añadir duplicados, estos son los platillos disponibles
                 lista_platillos_actuales = [pl.platillo.nombre for pl in self.menu_actual.detalles]
                 idx_plat_disp = {i + 1: self.platillos_testeo[i] for i in range(len(self.platillos_testeo)) if
-                                 self.platillos_testeo[i].nombre not in lista_platillos_actuales}
+                                self.platillos_testeo[i].nombre not in lista_platillos_actuales}
 
                 # hago una lista de solo los índices de los platillos disponibles para pasarla a la vista como
                 # opciones válidas de input para el usuario
