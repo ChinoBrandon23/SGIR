@@ -87,7 +87,7 @@ class ControladorMenus:
         self.vista.mostrar_menu_menus_prompt()
 
     def mostrar_detalles_menu(self, menu_num=None):
-        if self.menu_actual is None:
+        if self.menu_actual is None and self.menu_actual is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
             #for menu in self.menus_testeo:
@@ -95,7 +95,7 @@ class ControladorMenus:
             #        # El menú encontrado se convierte en el nuevo menú actual
             #        self.menu_actual = copy.deepcopy(menu)
             #        break
-            self.menu_actual = self.servicio.obtener_menu_por_id(num_menu=menu_num)
+            self.menu_actual = self.servicio.obtener_menu_por_id(num_menu=int(menu_num))
 
         self.mapear_detalle_platillo()
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
@@ -127,15 +127,11 @@ class ControladorMenus:
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
         #lista_num = [menu.num for menu in self.menus_testeo]
-        lista_num = [menu.num for menu in self.servicio.obtener_menus()]
-
-        if self.menu_actual.num in lista_num:
             #idx = lista_num.index(self.menu_actual.num)
-            self.servicio.actualizar_menu(menu=self.menu_actual)
+        self.servicio.actualizar_menu(menu=self.menu_actual)
             #self.menus_testeo.pop(idx)
             #self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
-        else:
-            self.servicio.actualizar_menu(menu=self.menu_actual)
+            #else:
             #self.menus_testeo.append(copy.deepcopy(self.menu_actual))
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
@@ -195,8 +191,16 @@ class ControladorMenus:
 
                 if nombre:
                     # debería llamar al servicio para crear un menú nuevo
-                    num = len(self.menus_testeo) + 1
-                    self.menu_actual = copy.deepcopy(Menu(num, nombre, 0, datetime.date.today(), datetime.date.today()))
+                    #num = len(self.menus_testeo) + 1
+                    #self.menu_actual = copy.deepcopy(Menu(num, nombre, 0, datetime.date.today(), datetime.date.today()))
+                    #self.mostrar_formulario_crear_menu()
+
+                    # creamos un menu base (num puede ser 0 o None) y el servicio lo inserta en la BD
+                    nuevo_menu = Menu(num=0, nombre=nombre, cantidad_platillos=0, 
+                                    fecha_inicial=datetime.date.today(), 
+                                    fecha_final=datetime.date.today())
+                    # el servicio retorna el menu ya creado con su numero real en la BD
+                    self.menu_actual = self.servicio.crear_menu(nuevo_menu)
                     self.mostrar_formulario_crear_menu()
                 else:
                     self.mostrar_lista_menus()
@@ -220,12 +224,9 @@ class ControladorMenus:
                 self.vista.mostrar_opciones_editar_prompt()
             case "3":
                 borrar = self.vista.mostrar_prompt_eliminar_menu_prompt()
-                if borrar:
-                    for menu in self.menus_testeo:
-                        if menu.nombre == self.menu_actual.nombre:
-                            self.menus_testeo.remove(menu)
-                            break
-
+                if borrar and self.menu_actual:
+                    self.servicio.eliminar_menu(self.menu_actual.num)
+                
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_menus()
             case "m":

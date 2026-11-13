@@ -211,43 +211,41 @@ class MenuDAO:
             if connection.is_connected():
                 connection.close()
 
+    ''' funciones de creacion '''
+
+    def crear_menu(self, menu:Menu) -> Menu:
+        '''Crea un menu en la BD y regresa el menu de la actualizado de la BD.'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+
+                # actualiza los atributos basicos del menu
+                sql_menu = '''
+                    INSERT INTO menu (nombre, fechaInicial, fechaFinal, cantidadPlatillos)
+                    VALUES (%s, %s, %s, %s);
+                '''
+                cursor.execute(sql_menu, (
+                    menu.nombre,
+                    menu.fecha_inicial,
+                    menu.fecha_final,
+                    menu.cantidad_platillos,
+                ))
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                connection.commit()
+                menu.num = cursor.lastrowid
+                return menu.num
+
+        except mysql.connector.Error as err:
+            # si cualquiera de los updates, inserts o select fallo:
+            connection.rollback()
+            raise Error(f"DAO: Error en la transaccion al crear menu: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     ''' funciones de actualizacion '''
     def actualizar_menu_completo(self, menu:Menu):
         '''Actualiza el encabezado del menu y sincroniza todos sus platillos en una sola transaccion.'''
-            
-        #'''Actualiza el registro de un menu. Sin platillos'''
-        #connection = self.db.get_connection()
-        #try:
-        #    with connection.cursor(dictionary=True) as cursor:
-        #        # nombre, vigencia, platillos
-        #        sql = '''
-        #                UPDATE menu
-        #                SET 
-        #                menu.nombre = %s, 
-        #                menu.fechaInicial = %s, 
-        #                menu.fechaFinal = %s,
-        #                menu.cantidadPlatillos = %s
-        #                WHERE menu.num = %s;
-        #                '''
-        #        valores = (
-        #            menu_actualizado.nombre,
-        #            menu_actualizado.fecha_inicial,
-        #            menu_actualizado.fecha_final,
-        #            menu_actualizado.cantidad_platillos,
-        #            menu_actualizado.num
-        #        )
-        #        cursor.execute(sql,valores)
-        #        connection.commit()
-        #        
-        #except mysql.connector.Error as err:
-        #    connection.rollback()
-        #    # manejo de errores de base de datos
-        #    raise Error(f"DAO: Error al actualizar el menu: {err}")
-#
-        #finally:
-        #    # devuelve el pool, incluso si hubo un error o un return antes
-        #    if connection.is_connected():
-        #        connection.close()
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
@@ -317,42 +315,28 @@ class MenuDAO:
                 connection.close()
 
 
-    def actualizar_platillo_de_menu(self, num_menu:int, platillo_actualizado:DetalleMenu):
-        '''Actualiza el platillo de un menu'''
+    ''' funciones de eliminacion '''
+
+    def eliminar_menu(self, num_menu:int):
+        '''Elimina menu de la BD por su numero.'''
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-                # nombre, vigencia, platillos
-                sql = '''
-                        UPDATE menu_platillo mp
-                        SET 
-                        mp.precio = %s
-                        WHERE mp.menu = %s AND mp.platillo = %s;
-                        '''
-                valores = (
-                    platillo_actualizado.precio,
-                    num_menu,
-                    platillo_actualizado.platillo.num
-                )
-                cursor.execute(sql,valores)
+
+                # actualiza los atributos basicos del menu
+                sql_menu = '''
+                    DELETE FROM menu_platillo WHERE menu = %s;
+                    DELETE FROM menu WHERE num = %s;
+                '''
+                cursor.execute(sql_menu,(num_menu,num_menu))    
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
                 connection.commit()
 
         except mysql.connector.Error as err:
+            # si cualquiera de los updates, inserts o select fallo:
             connection.rollback()
-            raise Error(f"DAO: Error al actualizar el platillo {platillo_actualizado.platillo.nombre} del menu: {err}") 
+            raise Error(f"DAO: Error en la transaccion al eliminar menu: {err}")
         finally:
             if connection.is_connected():
                 connection.close()
-
-    def agregar_platillo_menu(self, num_menu:int, platillo_nuevo:DetalleMenu):
-        '''Agrega un platillo a un menu'''
-        pass
-
-
-
-
-
-
-
-
 
