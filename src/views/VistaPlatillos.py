@@ -2,6 +2,7 @@ import subprocess
 import os
 import time
 
+import rich
 from rich.align import Align
 from rich.layout import Layout
 from rich.panel import Panel
@@ -32,10 +33,11 @@ class VistaPlatillos(VistaBase):
         self.input_abrir_detalles = InputEmisor()
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
+        self.input_cambiar_pagina = InputEmisor()
 
-        self.layout["contenido"].split_column(Layout(name="main"), Layout(name="opciones"))
+        self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
-        self.mostrar_todos_platillos()
+        self.mostrar_todos_platillos(0, 0)
         self.crear_banda_opciones_principal()
 
     def resetear_vista(self):
@@ -49,10 +51,11 @@ class VistaPlatillos(VistaBase):
 
         self.crear_banda_opciones_principal()
 
-    def mostrar_todos_platillos(self):
+    def mostrar_todos_platillos(self, pag_actual, total_pag):
         self.resetear_vista()
 
         self.layout["main"].update(Align.center(self.tabla_platillos, vertical="top"))
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_platillos(self):
         columnas = ["#", "Nombre", "Categoria"]
@@ -155,6 +158,7 @@ class VistaPlatillos(VistaBase):
                     "[1] Ver detalles de platillo",
                     "[2] Crear platillo",
                     "[3] Filtrar búsqueda",
+                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -203,7 +207,7 @@ class VistaPlatillos(VistaBase):
 
     def mostrar_menu_platillos_prompt(self):
         self.input_menu_platillos.imprimir("Selecciona una opción",
-                                           choices=["1", "2", "m"],
+                                           choices=["1", "2", "4", "m"],
                                            show_choices=False)
 
         if self.input_menu_platillos.user_input is None:
@@ -315,18 +319,29 @@ class VistaPlatillos(VistaBase):
 
         return None
 
-    def paginar(self, items: list, num_pag: int):
-        lineas_disp = ((self.console.size[1] - 6) // 2) - 6
+    def mostrar_prompt_cambiar_pagina(self):
+        mov = self.input_cambiar_pagina.imprimir(
+            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
+            choices=[",", "."])
+        return mov
 
-        idx_inicio = (num_pag - 1) * lineas_disp
-        idx_final = idx_inicio + lineas_disp
+    def mostrar_conteo_paginas(self, pag_actual, pag_total):
+        paginas_columna = Columns()
+        paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
 
-        if idx_final < len(items) - 1:
-            prox_pag = True
-        else:
-            prox_pag = False
+        paginas_columna.expand = True
+        self.layout["banda_pagina"].size = 1
+        paginas_columna.add_renderable(Align.center(paginas))
 
-        return items[idx_inicio:idx_final], prox_pag
+        self.layout["banda_pagina"].update(paginas_columna)
+
+    def mostrar_mensaje_no_pagina_anterior(self):
+        rich.print("[bold green]Error: no hay página anterior")
+        time.sleep(2)
+
+    def mostrar_mensaje_no_pagina_siguiente(self):
+        rich.print("[bold green]Error: no hay página siguiente")
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:
