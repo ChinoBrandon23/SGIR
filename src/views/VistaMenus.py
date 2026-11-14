@@ -69,7 +69,7 @@ class VistaMenus(VistaBase):
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
         self.layout["panel_menu"].size = 4
 
-        nombre_menu = f"{menu.nombre}**" if "nombre" in datos_editados else menu.nombre
+        nombre_menu = f"{menu.nombre}" if "nombre" in datos_editados else menu.nombre
 
         if menu.fecha_inicial and menu.fecha_final:
             vigencia_menu = f"{datetime.datetime.strftime(menu.fecha_inicial, "%d-%m-%Y")} a {datetime.date.strftime(menu.fecha_final, "%d-%m-%Y")}"
@@ -79,9 +79,9 @@ class VistaMenus(VistaBase):
         panel = Panel(renderable=f"{"[bold red]" if "nombre" in datos_editados else "[bold yellow]"}"
                                  f"{nombre_menu}\n"
                                  f"{"[/bold red]" if "nombre" in datos_editados else "[/bold yellow]"}"
-                                 f"{"[bold red]" if "vigencia" in datos_editados else "[italic yellow]"}"
-                                 f"[bold white]Vigencia:[/bold white] {vigencia_menu}"
-                                 f"{"**[/bold red]" if "vigencia" in datos_editados else "[/italic yellow]"}")
+                                 f"{"[bold red]" if "vigencia" in datos_editados else "[yellow]"}"
+                                 f"[bold white]Vigencia:[/bold white] [italic]{vigencia_menu}[/italic]"
+                                 f"{"[/bold red]" if "vigencia" in datos_editados else "[yellow]"}")
 
         panel.height = 4
 

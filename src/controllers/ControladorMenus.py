@@ -28,7 +28,7 @@ class ControladorMenus:
         self.mostrar_lista_menus()
 
     def configurar_listeners(self):
-        self.vista.input_menu_menus.agregar_escuchante(self.evaluar_seleccion_menu_recetas)
+        self.vista.input_menu_menus.agregar_escuchante(self.evaluar_seleccion_menu_menus)
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_menu)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_seleccion_menu_editar)
@@ -149,7 +149,7 @@ class ControladorMenus:
         self.formulario["vigencia"] = True
 
     def cancelar_edicion_actual(self):
-        # resetea formulario y receta actual
+        # resetea formulario y menu actual
         self.menu_actual = None
         self.formulario = {"platillos":[], "item_borrado":False}
 
@@ -176,10 +176,10 @@ class ControladorMenus:
             lista_platillo = self.menu_actual.detalles
 
             for i in range(len(lista_platillo)):
-                # agregando al dict los ingredientes originales de la receta
+                # agregando al dict los ingredientes originales del menu
                 self.platillo_idx[i + 1] = lista_platillo[i].platillo.nombre
 
-    def evaluar_seleccion_menu_recetas(self, seleccion):
+    def evaluar_seleccion_menu_menus(self, seleccion):
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todos los menús y pasarlos
@@ -260,7 +260,7 @@ class ControladorMenus:
                 self.vista.mostrar_editar_platillos_menu_prompt()
 
             case "4":
-                # llama a la función para guardar receta
+                # llama a la función para guardar menu
                 self.guardar_editar_menu()
             case "5":
                 # cancela la edición actual y vuelve a detalles

@@ -71,9 +71,9 @@ class VistaVentas(VistaBase):
         self.layout["panel_venta"].size = 6
 
         panel = Panel(renderable=f"[bold yellow]Venta #{str(venta.num)}\n"
-                                 f"Fecha: {str(venta.fecha)}\n"
-                                 f"Comensales servidos: {str(venta.numero_comensales)}\n"
-                                 f"Monto total: ${str(venta.monto_total)}"
+                                 f"[bold white]Fecha:[/bold white] {str(venta.fecha)}\n"
+                                 f"[bold white]Comensales servidos:[/bold white] {str(venta.numero_comensales)}\n"
+                                 f"[bold white]Monto total:[/bold white] ${str(venta.monto_total)}"
                                  f"[/bold yellow]")
 
         panel.height = 6

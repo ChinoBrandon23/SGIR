@@ -76,9 +76,9 @@ class VistaMerma(VistaBase):
         self.layout["panel_merma"].size = 5
 
         panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma else ""}\n"
-                                 f"Fecha: {"[bold red]" if "fecha" in datos_editados else ""}"
+                                 f"[bold white]Fecha:[/bold white] {"[bold red]" if "fecha" in datos_editados else ""}"
                                  f"{(str(merma.fecha)) if merma else ""}{"[/bold red]" if "fecha" in datos_editados else ""}\n"
-                                 f"Tipo de merma: {"[bold red]" if "tipo" in datos_editados else ""}{(str(merma.tipo_merma.nombre)) if merma else ""}"
+                                 f"[bold white]Tipo de merma:[/bold white] {"[bold red]" if "tipo" in datos_editados else ""}{(str(merma.tipo_merma.nombre)) if merma else ""}"
                                  f"{"[/bold red]" if "tipo" in datos_editados else ""}")
 
         panel.height = 5

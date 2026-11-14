@@ -16,6 +16,6 @@ class InputEmisor:
         for listener in self.listeners:
             listener(self.user_input)
 
-    def imprimir(self, prompt: str, choices=None, show_choices=None, default=None):
+    def imprimir(self, prompt: str, choices=None, show_choices=False, default=None):
         self.user_input = Prompt.ask(prompt, choices=choices, show_choices=show_choices, default=default, case_sensitive=False)
         self.notificar()

@@ -1,5 +1,6 @@
 import copy
 import datetime
+import math
 import time
 
 from models.compra import Compra
@@ -18,6 +19,9 @@ class ControladorCompras:
         self.formulario = {"insumos":[], "item_borrado":False}
         self.insumo_idx = {}
 
+        self.pagina_actual_lista_compras = 1
+        self.pagina_actual_lista_detalles = 1
+
         self.proveedores_testeo = self.crear_proveedores_testeo()
         self.marcas_testeo = self.crear_marcas_testeo()
         self.tipos_insumo_testeo = self.crear_tipos_insumo_testeo()
@@ -33,6 +37,7 @@ class ControladorCompras:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_insumo.agregar_escuchante(self.evaluar_seleccion_editar_insumos)
+        self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_compras)
 
     def crear_proveedores_testeo(self):
         proveedor1 = Proveedor(1, "Calimax")
@@ -75,15 +80,20 @@ class ControladorCompras:
 
         return [compra1, compra2]
 
-    def mostrar_lista_compras(self):
+    def mostrar_lista_compras(self, lista_compras=None):
         """
         Conecta con la capa de servicios para obtener la lista de compras y crea un elemento de lista para cada una.
         """
 
-        self.vista.mostrar_todas_compras()
+        self.vista.mostrar_todas_compras(self.pagina_actual_lista_compras,
+                                         self.obtener_total_paginas(self.compras_testeo))
 
-        for menu in self.compras_testeo:
-            self.vista.crear_elemento_tabla_compras(menu)
+        if lista_compras is None:
+            lista_compras, hay_prox_pag = self.paginar_lista_compras(self.compras_testeo,
+                                                                     self.pagina_actual_lista_compras)
+
+        for compra in lista_compras:
+            self.vista.crear_elemento_tabla_compras(compra)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_compras_prompt()
@@ -219,6 +229,9 @@ class ControladorCompras:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
+            case "4":
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_prompt_cambiar_pagina()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -291,7 +304,7 @@ class ControladorCompras:
                     nombre, umbral = self.vista.mostrar_crear_insumo_prompt()
 
                     if nombre and umbral:
-                        self.vista.mostrar_tipos_insumo_disponibles(self.marcas_testeo)
+                        self.vista.mostrar_marcas_disponibles(self.marcas_testeo)
                         self.vista.refrescar_pantalla()
 
                         marca = None
@@ -486,7 +499,86 @@ class ControladorCompras:
                 self.mostrar_detalles_compra()
 
             case "6":
+                # editar marca
+                marca = None
+
+                opciones_insumo = [str(idx) for idx in self.insumo_idx]
+                opciones_marca = [str(marca.num) for marca in self.marcas_testeo]
+
+                num = self.vista.mostrar_editar_insumo_prompt(opciones_insumo)
+
+                self.vista.mostrar_marcas_disponibles(self.marcas_testeo)
+                self.vista.refrescar_pantalla()
+
+                marca_num = self.vista.mostrar_editar_marca_prompt(opciones_marca)
+
+                # Desviación para crear una marca nueva
+                if marca_num == "0":
+                    nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                    idx = len(self.marcas_testeo) + 1
+                    marca = Marca(idx, nueva_marca_nom)
+                    self.marcas_testeo.append(marca)
+                else:
+                    for marca_obj in self.marcas_testeo:
+                        if marca_obj.num == int(marca_num):
+                            marca = marca_obj
+
+                # si tenemos marca, ya sea nueva o no, ahora se asigna al detalleCompra correcto
+                if marca:
+                    for detalle in self.compra_actual.lista_compras:
+                        if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
+                            detalle.insumo.marca = marca
+                            self.agregar_edicion_insumos(copy.deepcopy(detalle))
+
+                self.mostrar_detalles_compra()
+            case "7":
                 # volver a menu editar principal
                 self.vista.crear_banda_opciones_editar()
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_opciones_editar_prompt()
+
+    def cambiar_pagina_lista_compras(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_compras == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_lista_compras()
+            else:
+                self.pagina_actual_lista_compras -= 1
+                pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_testeo,
+                                                                 self.pagina_actual_lista_compras)
+                self.mostrar_lista_compras(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_compras(self.compras_testeo, self.pagina_actual_lista_compras)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_lista_compras()
+            else:
+                self.pagina_actual_lista_compras += 1
+                pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_testeo,
+                                                                 self.pagina_actual_lista_compras)
+                self.mostrar_lista_compras(pagina)
+
+    def paginar_lista_compras(self, items: list, num_pag: int):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas(self, items: list):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        return math.ceil(len(items) / lineas_disp)

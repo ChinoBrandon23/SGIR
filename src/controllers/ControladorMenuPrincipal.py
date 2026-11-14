@@ -1,14 +1,15 @@
 import os
 import subprocess
-import sys
 
 from controllers.ControladorCompras import ControladorCompras
+from controllers.ControladorInventario import ControladorInventario
 from controllers.ControladorMenus import ControladorMenus
 from controllers.ControladorMerma import ControladorMerma
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from views.VistaCompras import VistaCompras
+from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
 from views.VistaMenus import VistaMenus
 from views.VistaMerma import VistaMerma
@@ -42,6 +43,8 @@ class ControladorMenuPrincipal:
                 self.abrir_vista_menus()
             case "4":
                 self.abrir_vista_compras()
+            case "5":
+                self.abrir_vista_inventario()
             case "6":
                 self.abrir_vista_merma()
             case "7":
@@ -51,7 +54,8 @@ class ControladorMenuPrincipal:
                     subprocess.run('cls' if os.name == 'nt' else 'clear')
                 except FileNotFoundError:
                     print(chr(27) + "[2J")
-                sys.exit()
+                finally:
+                    os._exit(0)
 
     def evaluar_redirigir_menu_principal(self, seleccion:str):
         if seleccion == "m" or seleccion == "M":
@@ -100,6 +104,15 @@ class ControladorMenuPrincipal:
         vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
         ControladorCompras(vista)
+
+    def abrir_vista_inventario(self):
+        vista = VistaInventario(self.vista.console)
+
+        vista.input_menu_inventario.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+        vista.input_menu_editar_inventario.agregar_escuchante(self.evaluar_redirigir_menu_principal)
+
+        ControladorInventario(vista)
 
     def abrir_vista_merma(self):
         vista = VistaMerma(self.vista.console)
