@@ -6,14 +6,23 @@ import os
 # Carga las variables del archivo .env
 load_dotenv(find_dotenv())
 
+# Validar que la contraseña exista para evitar sorpresas
+password = os.getenv("DB_PASSWORD")
+if not password:
+    raise ValueError(
+    "Falta configurar DB_PASSWORD en el archivo .env de esta rama"
+)
+
 # Configuracion de la base de datos
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
-    "database": os.getenv("DB_NAME", "sogir"),
+    "database": os.getenv("DB_NAME", ""),
     "user": os.getenv("DB_USER", "admin"),
-    "password": os.getenv("DB_PASSWORD", ""),
+    "password": os.getenv("DB_PASSWORD",""),
     "port": int(os.getenv("DB_PORT", 3306))
 }
+
+
 
 class DatabaseConnection:
     _pool = None
