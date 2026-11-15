@@ -59,7 +59,8 @@ class Compra:
     def agregar_insumo_compra(
                 self,
                 insumo:Insumo,
-                cantidad:float, 
+                cantidad_comprada:float, 
+                cantidad_actual: float,
                 unidad_medida:str,
                 importe:float,
                 monto_unitario:float,
@@ -68,7 +69,8 @@ class Compra:
                 ):
         #metodo de agregacion para  guardar el detalle de la orden de compra, es decir, una nueva compra de insumo
         nueva_compra = DetalleCompra(insumo,
-                                    cantidad, 
+                                    cantidad_comprada, 
+                                    cantidad_actual,
                                     unidad_medida,
                                     importe,
                                     monto_unitario,
@@ -81,7 +83,8 @@ class Compra:
 class DetalleCompra:
     def __init__(self,
                 insumo:Insumo,
-                cantidad:float,
+                cantidad_comprada:float,
+                cantidad_actual: float,
                 unidad_medida:str,
                 importe:float = 0.0,
                 monto_unitario:float=0.0,
@@ -89,7 +92,8 @@ class DetalleCompra:
                 fecha_compra: Optional[str|date] = None
                 ):
         self._insumo = insumo
-        self._cantidad = cantidad
+        self._cantidad_comprada = cantidad_comprada
+        self._cantidad_actual = cantidad_actual
         self._unidad_medida = unidad_medida
         self._importe = importe
         self._monto_unitario = monto_unitario  
@@ -106,12 +110,20 @@ class DetalleCompra:
         self._insumo = value
 
     @property
-    def cantidad(self) -> float:
-        return self._cantidad
+    def cantidad_comprada(self) -> float:
+        return self._cantidad_comprada
 
-    @cantidad.setter
-    def cantidad(self, value):
-        self._cantidad = value
+    @cantidad_comprada.setter
+    def cantidad_comprada(self, value):
+        self._cantidad_comprada = value
+
+    @property
+    def cantidad_actual(self) -> float:
+        return self._cantidad_actual
+    
+    @cantidad_actual.setter
+    def cantidad_actual(self, value):
+        self._cantidad_actual= value
 
     @property
     def unidad_medida(self) -> str:
