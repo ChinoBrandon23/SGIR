@@ -1,14 +1,18 @@
 from mysql.connector import pooling
 from mysql.connector.errors import PoolError
+from dotenv import load_dotenv, find_dotenv
 import os
 
+# Carga las variables del archivo .env
+load_dotenv(find_dotenv())
 
 # Configuracion de la base de datos
 DB_CONFIG = {
-    "host": os.environ.get("DB_HOST", "localhost"),
-    "database": os.environ.get("DB_NAME", "sogir"),
-    "user": os.environ.get("DB_USER", "admin"),
-    "password": os.environ.get("DB_PASSWORD", "")
+    "host": os.getenv("DB_HOST", "localhost"),
+    "database": os.getenv("DB_NAME", "sogir"),
+    "user": os.getenv("DB_USER", "admin"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "port": int(os.getenv("DB_PORT", 3306))
 }
 
 class DatabaseConnection:
