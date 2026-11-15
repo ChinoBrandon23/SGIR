@@ -1,4 +1,5 @@
 import copy
+import math
 from datetime import date, datetime
 import datetime
 import time
@@ -21,6 +22,9 @@ class ControladorMenus:
         self.formulario = {"platillos":[], "item_borrado":False}
         self.platillo_idx = {}
 
+        self.pagina_actual_lista_compras = 1
+        self.pagina_actual_lista_detalles = 1
+
         self.platillos_testeo = self.servicio.obtener_platillos()
         self.menus_testeo = self.servicio.obtener_menus()
 
@@ -33,6 +37,8 @@ class ControladorMenus:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_editar_platillos)
+        self.vista.input_cambiar_pagina_menus.agregar_escuchante(self.cambiar_pagina_lista_menus)
+        self.vista.input_cambiar_pagina_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
     #def crear_platillos_testeo(self):
     #    receta1 = Receta(2, "Receta de Pizza", 4,
@@ -68,7 +74,7 @@ class ControladorMenus:
 #
     #    return [menu1, menu2]
 
-    def mostrar_lista_menus(self):
+    def mostrar_lista_menus(self, lista_menus=None):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
@@ -78,9 +84,13 @@ class ControladorMenus:
         for menu in self.menus_testeo:
             menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
 
-        self.vista.mostrar_todos_menus()
+        self.vista.mostrar_todos_menus(self.pagina_actual_lista_compras,
+                                       self.obtener_total_paginas_lista_menus(self.menus_testeo))
 
-        for menu in self.menus_testeo:
+        if lista_menus is None:
+            lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+
+        for menu in lista_menus:
             self.vista.crear_elemento_tabla_menus(menu)
 
         self.vista.refrescar_pantalla()
@@ -98,8 +108,13 @@ class ControladorMenus:
             self.menu_actual = self.servicio.obtener_menu_por_id(num_menu=int(menu_num))
 
         self.mapear_detalle_platillo()
+
+        # agregando paginado
+        lista_detalles, prox_pag = self.paginar_lista_detalles(self.menu_actual.detalles, self.pagina_actual_lista_detalles)
+        total_paginas_detalles = self.obtener_total_paginas_detalles(self.menu_actual.detalles)
+
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
-        self.vista.mostrar_detalles_menu(self.menu_actual, datos_editados=copy.deepcopy(self.formulario), mapa_platillos=self.platillo_idx)
+        self.vista.mostrar_detalles_menu(self.menu_actual, lista_detalles, self.pagina_actual_lista_detalles, total_paginas_detalles, datos_editados=copy.deepcopy(self.formulario), mapa_platillos=self.platillo_idx)
 
         if self.usuario_esta_editando():
             # si actualmente el formulario tiene info, muestra las opciones de edicion y su prompt
@@ -207,6 +222,9 @@ class ControladorMenus:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
+            case "4":
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_prompt_cambiar_pagina_menus()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -229,6 +247,9 @@ class ControladorMenus:
                 
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_menus()
+            case "4":
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_prompt_cambiar_pagina_detalles()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
@@ -351,3 +372,87 @@ class ControladorMenus:
                 self.vista.crear_banda_opciones_editar()
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_opciones_editar_prompt()
+
+    def cambiar_pagina_lista_menus(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_compras == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_lista_menus()
+            else:
+                self.pagina_actual_lista_compras -= 1
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+                self.mostrar_lista_menus(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_lista_menus()
+            else:
+                self.pagina_actual_lista_compras += 1
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+                self.mostrar_lista_menus(pagina)
+
+    def paginar_lista_menus(self, items: list, num_pag: int):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def cambiar_pagina_lista_detalles(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_detalles == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_detalles_menu()
+            else:
+                self.pagina_actual_lista_detalles -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.menu_actual.detalles,
+                                                               self.pagina_actual_lista_detalles)
+                self.mostrar_detalles_menu(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(self.menu_actual.detalles, self.pagina_actual_lista_detalles)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_detalles_menu()
+            else:
+                self.pagina_actual_lista_detalles += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.menu_actual.detalles,
+                                                               self.pagina_actual_lista_detalles)
+                self.mostrar_detalles_menu(pagina)
+
+    def paginar_lista_detalles(self, items: list, num_pag: int):
+        lineas_disp = 9
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas_lista_menus(self, items: list):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        return math.ceil(len(items) / lineas_disp)
+
+    def obtener_total_paginas_detalles(self, items: list):
+        lineas_disp = 9
+
+        return math.ceil(len(items) / lineas_disp)
