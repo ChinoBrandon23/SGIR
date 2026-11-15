@@ -14,6 +14,8 @@ class MenuServicio:
     def __init__(self, menu_dao:MenuDAO):
         self._menu_dao = menu_dao
 
+    ''' funciones de evaluacion '''
+
     def menu_existe(self,num_menu:int) -> bool:
         try:
             menu = self._menu_dao.obtener_menu_por_numero(num_menu)
@@ -34,7 +36,8 @@ class MenuServicio:
         return False
 
     ''' funcione de consulta'''
-    def obtener_platillos(self):
+
+    def obtener_platillos(self) -> List[Platillo]:
         try:
             return self._menu_dao.obtener_platillos()
         except mysql.connector.Error as err:
@@ -92,6 +95,7 @@ class MenuServicio:
             raise ValueError(f'Ocurrio un error: {err}')
 
     def obtener_platillos_de_un_menu(self, num_menu:int) -> List[DetalleMenu]:
+        ''' Retorna los platillos de un menu '''
         try:
             # evalua que el menu especificado exista
             if not self._menu_dao.obtener_menu_por_numero(num_menu):
@@ -106,6 +110,7 @@ class MenuServicio:
             raise ValueError(f'Servicio: Ocurrio un error: {err}\n')
 
     '''funciones de creacion'''
+
     def crear_menu(self, nuevo_menu: Menu):
         try:
             self._menu_dao.crear_menu(menu=nuevo_menu)
@@ -113,6 +118,7 @@ class MenuServicio:
             raise Error(f'Error en crear menu en la BD - {err}')
 
     ''' funciones de actualizacion'''
+
     def actualizar_menu(self, menu:Menu):
         ''' Actualiza un menu y sus platillos.'''
         # actualizamos el numero de platilos del menu
@@ -125,6 +131,7 @@ class MenuServicio:
             raise ValueError(f'Servicio: Error al actualizar menu. {err}\n')
 
     ''' funciones de eliminacion'''
+
     def eliminar_menu(self, num_menu:int):
         try:
             self._menu_dao.eliminar_menu(num_menu)

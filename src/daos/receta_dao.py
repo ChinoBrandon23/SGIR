@@ -390,6 +390,7 @@ class RecetaDAO:
             if connection.is_connected():
                 connection.close()
 
+    ''' funciones de evaluacion '''
 
     def es_receta_de_ingrediente(self, num_receta:int):
         '''Valida que la receta no sea de un ingrediente.'''

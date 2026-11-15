@@ -17,8 +17,6 @@ from services.receta_servicio import RecetaServicio
 print('iniciando app...')
 
 def main():
-
-
     _width, _height = shutil.get_terminal_size()
 
     consola = Console()
