@@ -110,7 +110,7 @@ class VistaInventario(VistaBase):
 
     def llenar_tabla_detalles(self, lista_detalles:list[DetalleCompra]):
         for detalle in lista_detalles:
-            self.tabla_detalles.add_row(str(detalle.fecha_compra), str(detalle.cantidad), detalle.unidad_medida, str(detalle.fecha_caducidad), str(detalle.monto_unitario), str(detalle.importe))
+            self.tabla_detalles.add_row(str(detalle.fecha_compra), str(detalle.cantidad_comprada), detalle.unidad_medida, str(detalle.fecha_caducidad), str(detalle.monto_unitario), str(detalle.importe))
 
     def crear_banda_opciones_principal(self):
         opciones_columna = Columns()

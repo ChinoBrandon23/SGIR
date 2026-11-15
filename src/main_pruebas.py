@@ -19,6 +19,10 @@ from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
 from services.insumo_servicio import InsumoServicio
 
+from models.insumo import Insumo
+from models.insumo import TipoInsumo
+from models.insumo import Marca
+
 def main():
     '''
     _width, _height = shutil.get_terminal_size()
@@ -55,6 +59,8 @@ def testeando_crud_insumos():
             print(f'    - Insumo: {detalle.insumo.nombre} - Stock: {detalle.insumo.stock} {detalle.unidad_medida} Caducidad: {detalle.fecha_caducidad} Marca: {detalle.insumo.marca.nombre}') # type: ignore
             print()
 
+    print('---------ACTUALIZAR INSUMO')
+    insumo_servicio.actualizar_insumo(Insumo(15,'Queso Mozzarella',5,12,TipoInsumo('LAC',''),Marca(0,'')))
 
 if __name__ == "__main__":
     main()

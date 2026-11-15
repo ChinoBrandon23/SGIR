@@ -94,69 +94,30 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
+    def obtener_tipos_insumo(self) -> List[TipoInsumo]:
+        '''Obtiene una lista de todos los tipos de insumos disponibles.'''
+        return []
+    
     ''' FUNCIONES DE UPDATE '''
 
-    def actualizar_insumo(self, menu:Menu):
+    def actualizar_insumo(self, insumo:Insumo):
         '''Actualiza propiedades simples de un insumo..'''
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
 
                 # actualiza los atributos basicos del menu
-                sql_menu = '''
-                    UPDATE menu
-                    SET nombre = %s, fechaInicial = %s, fechaFinal = %s, cantidadPlatillos = %s
-                    WHERE num = %s;
+                sql_insumo = '''
+                    UPDATE insumo ins
+                    JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                    SET ins.nombre = %s, ins.umbral = %s, ins.tipo_insumo = %s
+                    WHERE ins.num = %s;
                 '''
-                cursor.execute(sql_menu, (
-                    menu.nombre,
-                    menu.fecha_inicial,
-                    menu.fecha_final,
-                    menu.cantidad_platillos,
-                    menu.num
-                ))
+                cursor.execute(sql_insumo, (insumo.nombre,
+                                            insumo.umbral,
+                                            insumo.tipo_insumo.clave,  # type: ignore
+                                            insumo.num))
 
-                # consulta que platillos existen actualmente en la BD para este menu
-                sql_actuales = 'SELECT platillo FROM menu_platillo WHERE menu = %s;'
-                cursor.execute(sql_actuales, (menu.num,))
-                # obtiene los numeros de platillo del menu en la BD en una lista 
-                platillos_num_bd = [fila['platillo'] for fila in cursor.fetchall()]
-
-                # conjunto de ids que el usuario tiene ahora en el menu (nuevos platillos)
-                ids_en_formulario = set()
-
-                # iteracion de inserts y updates
-                for detalle in menu.detalles:
-                    plat_id = detalle.platillo.num
-                    ids_en_formulario.add(plat_id)
-
-                    if plat_id in platillos_num_bd:
-                        # si ya existia en la BD, se actualiza el precio
-                        sql_update = '''
-                            UPDATE menu_platillo 
-                            SET precio = %s 
-                            WHERE menu = %s AND platillo = %s;
-                        '''
-                        cursor.execute(sql_update, (detalle.precio, menu.num, plat_id))
-                    else:
-                        # si es nuevo en el menu, se inserta
-                        sql_insert = '''
-                            INSERT INTO menu_platillo (menu, platillo, precio) 
-                            VALUES (%s, %s, %s);
-                        '''
-                        cursor.execute(sql_insert, (menu.num, plat_id, detalle.precio))
-
-                # delete de los platillos que el usuario elimino
-                for plat_id in platillos_num_bd:
-                    if plat_id not in ids_en_formulario:
-                        sql_delete = '''
-                            DELETE FROM menu_platillo 
-                            WHERE menu = %s AND platillo = %s;
-                        '''
-                        cursor.execute(sql_delete, (menu.num, plat_id))
-
-                # solo un commit para todo
-                # si se llego hasta aqui sin lanzar excepcion, todo salio bien:)
                 connection.commit()
 
         except mysql.connector.Error as err:
@@ -166,3 +127,7 @@ class InsumoDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
+
+
+            
