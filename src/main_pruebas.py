@@ -25,7 +25,15 @@ def main():
     vista_principal = VistaMenuPrincipal(consola)
     ControladorMenuPrincipal(vista=vista_principal)
     '''
-    testeando_crud_menus()
+    #testeando_crud_menus()
+
+    import os
+    from dotenv import find_dotenv, load_dotenv
+
+    load_dotenv(find_dotenv(), override=True)
+    print("Ruta del .env encontrado:", find_dotenv())
+    print("Usuario cargado:", os.getenv("DB_USER"))
+    print("Contraseña cargada:", os.getenv("DB_PASSWORD"))
 
 def testeando_crud_menus():
     connection:DatabaseConnection = DatabaseConnection()
