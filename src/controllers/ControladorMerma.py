@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 import datetime
 
@@ -21,6 +22,9 @@ class ControladorMerma:
         self.tipos_merma_testeo = self.crear_tipos_merma_testeo()
         self.merma_testeo = self.crear_mermas_testeo()
 
+        self.pagina_actual_lista_compras = 1
+        self.pagina_actual_lista_detalles = 1
+
         self.configurar_listeners()
         self.mostrar_lista_mermas()
 
@@ -29,6 +33,7 @@ class ControladorMerma:
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_merma)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_merma.agregar_escuchante(self.evaluar_seleccion_menu_editar)
+        self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_compras)
 
     def crear_tipos_merma_testeo(self):
         tipo1 = TipoMerma("EXPI", "Expirado")
@@ -60,15 +65,20 @@ class ControladorMerma:
 
         return [merma1, merma2]
 
-    def mostrar_lista_mermas(self):
+    def mostrar_lista_mermas(self, lista_compras=None):
         """
         Conecta con la capa de servicios para obtener la lista de platillos y crea un elemento de lista para cada una.
         """
 
-        self.vista.mostrar_toda_merma()
+        self.vista.mostrar_toda_merma(self.pagina_actual_lista_compras,
+                                         self.obtener_total_paginas(self.merma_testeo))
 
-        for merma in self.merma_testeo:
-            self.vista.crear_elemento_tabla_merma(merma)
+        if lista_compras is None:
+            lista_compras, hay_prox_pag = self.paginar_lista_compras(self.merma_testeo,
+                                                                     self.pagina_actual_lista_compras)
+
+        for compra in lista_compras:
+            self.vista.crear_elemento_tabla_merma(compra)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_merma_prompt()
@@ -196,6 +206,10 @@ class ControladorMerma:
                 # aquí debería haber filtros de búsqueda
                 pass
 
+            case "4":
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_prompt_cambiar_pagina()
+
             case "m":
                 # cancela la edicion actual antes de volver al menu
                 self.cancelar_edicion_actual()
@@ -310,3 +324,49 @@ class ControladorMerma:
             case "m":
                 # vuelve al menú
                 self.cancelar_edicion_actual()
+
+    def cambiar_pagina_lista_compras(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_compras == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_lista_mermas()
+            else:
+                self.pagina_actual_lista_compras -= 1
+                pagina, hay_sig_pag = self.paginar_lista_compras(self.merma_testeo,
+                                                                 self.pagina_actual_lista_compras)
+                self.mostrar_lista_mermas(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_compras(self.merma_testeo, self.pagina_actual_lista_compras)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_lista_mermas()
+            else:
+                self.pagina_actual_lista_compras += 1
+                pagina, hay_sig_pag = self.paginar_lista_compras(self.merma_testeo,
+                                                                 self.pagina_actual_lista_compras)
+                self.mostrar_lista_mermas(pagina)
+
+    def paginar_lista_compras(self, items: list, num_pag: int):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas(self, items: list):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        return math.ceil(len(items) / lineas_disp)

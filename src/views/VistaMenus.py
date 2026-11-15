@@ -33,10 +33,12 @@ class VistaMenus(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_menu = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
+        self.input_cambiar_pagina_menus = InputEmisor()
+        self.input_cambiar_pagina_detalles = InputEmisor()
 
-        self.layout["contenido"].split_column(Layout(name="main"), Layout(name="opciones"))
+        self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
-        self.mostrar_todos_menus()
+        self.mostrar_todos_menus(0, 0)
         self.crear_banda_opciones_principal()
 
     def resetear_vista(self):
@@ -49,10 +51,11 @@ class VistaMenus(VistaBase):
 
         self.crear_banda_opciones_principal()
 
-    def mostrar_todos_menus(self):
+    def mostrar_todos_menus(self, pag_actual, total_pag):
         self.resetear_vista()
 
         self.layout["main"].update(Align.center(self.tabla_menus, vertical="top"))
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_menus(self):
         columnas = ["#", "Nombre", "Cantidad de platillos"]
@@ -63,9 +66,10 @@ class VistaMenus(VistaBase):
     def crear_elemento_tabla_menus(self, menu: Menu):
         self.tabla_menus.add_row(str(menu.num), menu.nombre, str(menu.cantidad_platillos))
 
-    def mostrar_detalles_menu(self, menu: Menu | None, datos_editados, mapa_platillos):
+    def mostrar_detalles_menu(self, menu: Menu | None, pag_detalles_menu, pag_actual, total_pag, datos_editados, mapa_platillos):
         self.resetear_vista()
 
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
         self.layout["panel_menu"].size = 4
 
@@ -85,8 +89,8 @@ class VistaMenus(VistaBase):
 
         panel.height = 4
 
-        if menu and len(menu.detalles):
-            self.llenar_tabla_detalles_menu(menu.detalles, mapa_platillos, datos_editados["platillos"])
+        if menu and len(pag_detalles_menu):
+            self.llenar_tabla_detalles_menu(pag_detalles_menu, mapa_platillos, datos_editados["platillos"])
 
         self.layout["panel_menu"].update(panel)
         self.layout["tabla_detalles_menus"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
@@ -174,6 +178,7 @@ class VistaMenus(VistaBase):
                     "[1] Ver detalles de menú",
                     "[2] Crear menú",
                     "[3] Filtrar búsqueda",
+                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -191,6 +196,7 @@ class VistaMenus(VistaBase):
                     "[1] Volver a menús",
                     "[2] Editar menú",
                     "[3] Eliminar menú",
+                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -238,7 +244,7 @@ class VistaMenus(VistaBase):
 
     def mostrar_menu_menus_prompt(self):
         self.input_menu_menus.imprimir("Selecciona una opción",
-                                       choices=["1", "2", "m"],
+                                       choices=["1", "2", "4","m"],
                                        show_choices=False)
 
         if self.input_menu_menus.user_input is None:
@@ -256,7 +262,7 @@ class VistaMenus(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m"],
+                                          choices=["1", "2", "3", "4", "m"],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -390,18 +396,35 @@ class VistaMenus(VistaBase):
 
         return None
 
-    def paginar(self, items: list, num_pag: int):
-        lineas_disp = ((self.console.size[1] - 6) // 2) - 7
+    def mostrar_prompt_cambiar_pagina_menus(self):
+        mov = self.input_cambiar_pagina_menus.imprimir(
+            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
+            choices=[",", "."])
+        return mov
 
-        idx_inicio = (num_pag - 1) * lineas_disp
-        idx_final = idx_inicio + lineas_disp
+    def mostrar_prompt_cambiar_pagina_detalles(self):
+        mov = self.input_cambiar_pagina_detalles.imprimir(
+            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
+            choices=[",", "."])
+        return mov
 
-        if idx_final < len(items) - 1:
-            prox_pag = True
-        else:
-            prox_pag = False
+    def mostrar_conteo_paginas(self, pag_actual, pag_total):
+        paginas_columna = Columns()
+        paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
 
-        return items[idx_inicio:idx_final], prox_pag
+        paginas_columna.expand = True
+        self.layout["banda_pagina"].size = 1
+        paginas_columna.add_renderable(Align.center(paginas))
+
+        self.layout["banda_pagina"].update(paginas_columna)
+
+    def mostrar_mensaje_no_pagina_anterior(self):
+        rich.print("[bold green]Error: no hay página anterior")
+        time.sleep(2)
+
+    def mostrar_mensaje_no_pagina_siguiente(self):
+        rich.print("[bold green]Error: no hay página siguiente")
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:
