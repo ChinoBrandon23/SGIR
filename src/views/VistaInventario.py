@@ -101,7 +101,7 @@ class VistaInventario(VistaBase):
         self.layout["tabla_detalles_insumo"].update(Align.center(self.tabla_detalles, vertical="middle"))
 
     def configurar_tabla_detalles(self):
-        encabezados = ["Fecha de compra", "Cantidad", "Unidad de medida", "Fecha de caducidad", "Monto Unitario", "Importe"]
+        encabezados = ["Fecha de compra", "Cantidad actual", "Unidad de medida", "Fecha de caducidad", "Monto Unitario", "Importe"]
 
         self.tabla_detalles.show_lines = True
 
@@ -110,7 +110,7 @@ class VistaInventario(VistaBase):
 
     def llenar_tabla_detalles(self, lista_detalles:list[DetalleCompra]):
         for detalle in lista_detalles:
-            self.tabla_detalles.add_row(str(detalle.fecha_compra), str(detalle.cantidad), detalle.unidad_medida, str(detalle.fecha_caducidad), str(detalle.monto_unitario), str(detalle.importe))
+            self.tabla_detalles.add_row(str(detalle.fecha_compra), str(detalle.cantidad_actual), detalle.unidad_medida, str(detalle.fecha_caducidad), str(detalle.monto_unitario), str(detalle.importe))
 
     def crear_banda_opciones_principal(self):
         opciones_columna = Columns()
