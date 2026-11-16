@@ -96,8 +96,25 @@ class InsumoDAO:
 
     def obtener_tipos_insumo(self) -> List[TipoInsumo]:
         '''Obtiene una lista de todos los tipos de insumos disponibles.'''
-        return []
-    
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''SELECT clave cl, nombre nm FROM tipo_insumo;'''
+                cursor.execute(sql)
+                filas = cursor.fetchall()
+
+                tipos_insumos: List[TipoInsumo] = []
+
+                for fila in filas:
+                    tipos_insumos.append(TipoInsumo(clave=fila['clave'],nombre=fila['nm']))
+                
+                return tipos_insumos
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los insumos: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     ''' FUNCIONES DE UPDATE '''
 
     def actualizar_insumo(self, insumo:Insumo):
@@ -129,5 +146,3 @@ class InsumoDAO:
                 connection.close()
 
 
-
-            
