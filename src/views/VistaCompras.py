@@ -278,7 +278,7 @@ class VistaCompras(VistaBase):
                     "[1] Por fecha",
                     "[2] Por proveedor",
                     "[3] Mostrar todo",
-                    "[M] Volver a menús"]
+                    "[4] Volver a menús"]
 
         opciones_columna.expand = True
 
