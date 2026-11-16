@@ -271,10 +271,6 @@ class ControladorMenus:
 
                 # aquí definitivamente se debería validar que sean fechas válidas
 
-                # convirtiendo str a date
-                fecha_inicial = datetime.datetime.strptime(fecha_inicial, "%d-%m-%Y").date()
-                fecha_final = datetime.datetime.strptime(fecha_final, "%d-%m-%Y").date()
-
                 # Lo mismo de arriba aplica aquí, busca por el rango de fechas provisto en uns servicio y asigna a
                 # self.menus_testeo
 
