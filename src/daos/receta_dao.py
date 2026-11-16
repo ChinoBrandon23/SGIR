@@ -119,7 +119,7 @@ class RecetaDAO:
 
         except mysql.connector.Error as err:
             # manejo de errores de base de datos
-            print(f"Error al obtener recetas: {err}")
+            raise Error(f"DAO: Error al obtener recetas: {err}")
 
         finally:
             # devuelve el pool, incluso si hubo un error o un return antes
