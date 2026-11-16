@@ -32,7 +32,6 @@ class VistaMerma(VistaBase):
         self.input_abrir_detalles = InputEmisor()
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_merma = InputEmisor()
-        self.input_cambiar_pagina = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -160,7 +159,6 @@ class VistaMerma(VistaBase):
                     "[1] Ver detalles de merma",
                     "[2] Registrar merma",
                     "[3] Filtrar búsqueda",
-                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -210,8 +208,8 @@ class VistaMerma(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_merma_prompt(self):
-        self.input_menu_merma.imprimir("Selecciona una opción",
-                                       choices=["1", "2", "4", "m"],
+        self.input_menu_merma.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                       choices=["1", "2", "m", ",", "."],
                                        show_choices=False)
 
         if self.input_menu_merma.user_input is None:
@@ -365,12 +363,6 @@ class VistaMerma(VistaBase):
             return num
         else:
             return None
-
-    def mostrar_prompt_cambiar_pagina(self):
-        mov = self.input_cambiar_pagina.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()

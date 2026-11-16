@@ -33,7 +33,9 @@ class ControladorMerma:
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_merma)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_merma.agregar_escuchante(self.evaluar_seleccion_menu_editar)
-        self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_compras)
+
+        # Para cambiar página
+        self.vista.input_menu_merma.agregar_escuchante(self.cambiar_pagina_lista_compras)
 
     def crear_tipos_merma_testeo(self):
         tipo1 = TipoMerma("EXPI", "Expirado")
@@ -205,10 +207,6 @@ class ControladorMerma:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
-
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina()
 
             case "m":
                 # cancela la edicion actual antes de volver al menu

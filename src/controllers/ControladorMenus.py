@@ -37,8 +37,13 @@ class ControladorMenus:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_editar_platillos)
-        self.vista.input_cambiar_pagina_menus.agregar_escuchante(self.cambiar_pagina_lista_menus)
-        self.vista.input_cambiar_pagina_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+
+        # Para cambiar página
+        self.vista.input_menu_menus.agregar_escuchante(self.cambiar_pagina_lista_menus)
+        self.vista.input_abrir_detalles.agregar_escuchante(self.cambiar_pagina_lista_menus)
+        self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_menu.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_platillo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
     #def crear_platillos_testeo(self):
     #    receta1 = Receta(2, "Receta de Pizza", 4,
@@ -222,9 +227,6 @@ class ControladorMenus:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina_menus()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -247,9 +249,6 @@ class ControladorMenus:
                 
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_menus()
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina_detalles()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()

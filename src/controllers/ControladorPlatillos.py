@@ -33,7 +33,9 @@ class ControladorPlatillos:
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_platillo)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_menu_editar)
-        self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_platillos)
+
+        # Para cambio de páginas
+        self.vista.input_menu_platillos.agregar_escuchante(self.cambiar_pagina_lista_platillos)
 
     def crear_categorias_testeo(self):
         categoria1 = Categoria("PFUE", "Platillo fuerte")
@@ -178,9 +180,6 @@ class ControladorPlatillos:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina()
             case "m":
                 # cancela la edicion actual antes de volver al menu
                 self.cancelar_edicion_actual()

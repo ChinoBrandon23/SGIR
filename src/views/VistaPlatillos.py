@@ -33,7 +33,6 @@ class VistaPlatillos(VistaBase):
         self.input_abrir_detalles = InputEmisor()
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
-        self.input_cambiar_pagina = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -158,7 +157,6 @@ class VistaPlatillos(VistaBase):
                     "[1] Ver detalles de platillo",
                     "[2] Crear platillo",
                     "[3] Filtrar búsqueda",
-                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -206,8 +204,8 @@ class VistaPlatillos(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_platillos_prompt(self):
-        self.input_menu_platillos.imprimir("Selecciona una opción",
-                                           choices=["1", "2", "4", "m"],
+        self.input_menu_platillos.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                           choices=["1", "2", "m", ".", ","],
                                            show_choices=False)
 
         if self.input_menu_platillos.user_input is None:
@@ -318,12 +316,6 @@ class VistaPlatillos(VistaBase):
             return nombre
 
         return None
-
-    def mostrar_prompt_cambiar_pagina(self):
-        mov = self.input_cambiar_pagina.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()

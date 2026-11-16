@@ -33,8 +33,6 @@ class VistaMenus(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_menu = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
-        self.input_cambiar_pagina_menus = InputEmisor()
-        self.input_cambiar_pagina_detalles = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -178,7 +176,6 @@ class VistaMenus(VistaBase):
                     "[1] Ver detalles de menú",
                     "[2] Crear menú",
                     "[3] Filtrar búsqueda",
-                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -196,7 +193,6 @@ class VistaMenus(VistaBase):
                     "[1] Volver a menús",
                     "[2] Editar menú",
                     "[3] Eliminar menú",
-                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -243,8 +239,8 @@ class VistaMenus(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_menus_prompt(self):
-        self.input_menu_menus.imprimir("Selecciona una opción",
-                                       choices=["1", "2", "4","m"],
+        self.input_menu_menus.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                       choices=["1", "2", "4", "m", ",", "."],
                                        show_choices=False)
 
         if self.input_menu_menus.user_input is None:
@@ -261,8 +257,8 @@ class VistaMenus(VistaBase):
             self.mostrar_abrir_detalles_prompt(lista_menus)
 
     def mostrar_opciones_detalles_prompt(self):
-        self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "4", "m"],
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                          choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -279,8 +275,8 @@ class VistaMenus(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
-        self.input_menu_editar_menu.imprimir("Selecciona una opción",
-                                               choices=["1", "2", "3", "4", "5", "m"],
+        self.input_menu_editar_menu.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                               choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                show_choices=False)
 
         if self.input_menu_editar_menu.user_input is None:
@@ -319,8 +315,8 @@ class VistaMenus(VistaBase):
         return None, None
 
     def mostrar_editar_platillos_menu_prompt(self):
-        self.input_menu_editar_platillo.imprimir("Selecciona una opción",
-                                                 choices=["1","2","3","4"], show_choices=False)
+        self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                                 choices=["1","2","3","4", ",", "."], show_choices=False)
 
     def mostrar_agregar_platillo_prompt(self, opciones):
         if len(opciones) == 0:
@@ -398,12 +394,6 @@ class VistaMenus(VistaBase):
 
     def mostrar_prompt_cambiar_pagina_menus(self):
         mov = self.input_cambiar_pagina_menus.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
-
-    def mostrar_prompt_cambiar_pagina_detalles(self):
-        mov = self.input_cambiar_pagina_detalles.imprimir(
             "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
             choices=[",", "."])
         return mov

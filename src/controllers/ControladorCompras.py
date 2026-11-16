@@ -36,7 +36,13 @@ class ControladorCompras:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_insumo.agregar_escuchante(self.evaluar_seleccion_editar_insumos)
-        self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_compras)
+
+        # Para cambiar de página
+        self.vista.input_menu_compras.agregar_escuchante(self.cambiar_pagina_lista_compras)
+        # detalles a partir de aquí, serán añadidos próximamente...
+        # self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        # self.vista.input_menu_editar_compra.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        # self.vista.input_menu_editar_insumo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
     def crear_proveedores_testeo(self):
         proveedor1 = Proveedor(1, "Calimax")
@@ -85,7 +91,7 @@ class ControladorCompras:
         """
 
         self.vista.mostrar_todas_compras(self.pagina_actual_lista_compras,
-                                         self.obtener_total_paginas(self.compras_testeo))
+                                         self.obtener_total_paginas_lista_compras(self.compras_testeo))
 
         if lista_compras is None:
             lista_compras, hay_prox_pag = self.paginar_lista_compras(self.compras_testeo,
@@ -228,9 +234,6 @@ class ControladorCompras:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -574,10 +577,50 @@ class ControladorCompras:
 
         return items[idx_inicio:idx_final], prox_pag
 
-    def obtener_total_paginas(self, items: list):
+    def cambiar_pagina_lista_detalles(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_detalles == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_detalles_compra()
+            else:
+                self.pagina_actual_lista_detalles -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.detalles,
+                                                               self.pagina_actual_lista_detalles)
+                self.mostrar_detalles_compra(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(self.compra_actual.detalles, self.pagina_actual_lista_detalles)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_detalles_compra()
+            else:
+                self.pagina_actual_lista_detalles += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.detalles,
+                                                               self.pagina_actual_lista_detalles)
+                self.mostrar_detalles_compra(pagina)
+
+    def paginar_lista_detalles(self, items: list, num_pag: int):
+        lineas_disp = 9
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas_lista_compras(self, items: list):
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
         lineas_disp = size_sin_prompt - 7
+
+        return math.ceil(len(items) / lineas_disp)
+
+    def obtener_total_paginas_detalles(self, items: list):
+        lineas_disp = 9
 
         return math.ceil(len(items) / lineas_disp)

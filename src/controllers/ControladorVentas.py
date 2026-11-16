@@ -36,7 +36,13 @@ class ControladorVentas:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_consumo.agregar_escuchante(self.evaluar_seleccion_menu_editar_consumo)
-        self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_ventas)
+
+        # Para cambiar página
+        self.vista.input_menu_ventas.agregar_escuchante(self.cambiar_pagina_lista_ventas)
+        # para detalles, próximamente
+        # self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        # self.vista.input_menu_editar.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        # self.vista.input_menu_editar_consumo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
     def crear_categorias_testeo(self):
         categoria1 = Categoria("PFUE", "Platillo fuerte")
@@ -85,7 +91,7 @@ class ControladorVentas:
         """
 
         self.vista.mostrar_todas_ventas(self.pagina_actual_lista_compras,
-                                         self.obtener_total_paginas(self.ventas_testeo))
+                                        self.obtener_total_paginas_lista_ventas(self.ventas_testeo))
 
         if lista_ventas is None:
             lista_ventas, hay_prox_pag = self.paginar_lista_ventas(self.ventas_testeo, self.pagina_actual_lista_compras)
@@ -218,9 +224,6 @@ class ControladorVentas:
             case "3":
                 # aquí debería haber filtros de búsqueda
                 pass
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina()
             case "m":
                 # cancela la edicion actual antes de volver al menu
                 self.cancelar_edicion_actual()
@@ -415,10 +418,50 @@ class ControladorVentas:
 
         return items[idx_inicio:idx_final], prox_pag
 
-    def obtener_total_paginas(self, items: list):
+    def cambiar_pagina_lista_detalles(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_detalles == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_detalles_venta()
+            else:
+                self.pagina_actual_lista_detalles -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.venta_actual.detalles,
+                                                               self.pagina_actual_lista_detalles)
+                self.mostrar_detalles_venta(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(self.venta_actual.detalles, self.pagina_actual_lista_detalles)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_detalles_venta()
+            else:
+                self.pagina_actual_lista_detalles += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.venta_actual.detalles,
+                                                               self.pagina_actual_lista_detalles)
+                self.mostrar_detalles_venta(pagina)
+
+    def paginar_lista_detalles(self, items: list, num_pag: int):
+        lineas_disp = 9
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas_lista_ventas(self, items: list):
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
         lineas_disp = size_sin_prompt - 7
+
+        return math.ceil(len(items) / lineas_disp)
+
+    def obtener_total_paginas_detalles(self, items: list):
+        lineas_disp = 9
 
         return math.ceil(len(items) / lineas_disp)
