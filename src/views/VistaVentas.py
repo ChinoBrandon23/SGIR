@@ -33,6 +33,7 @@ class VistaVentas(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar = InputEmisor()
         self.input_menu_editar_consumo = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -198,6 +199,22 @@ class VistaVentas(VistaBase):
 
         self.layout["opciones"].update(opciones_columna)
 
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por rango de fecha",
+                    "[2] Mostrar todo",
+                    "[3] Volver a menús"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
     def crear_banda_opciones_editar(self):
         opciones_columna = Columns()
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
@@ -234,7 +251,7 @@ class VistaVentas(VistaBase):
 
     def mostrar_menu_ventas_prompt(self):
         self.input_menu_ventas.imprimir("Selecciona una opción o cambia de página [',' '.']",
-                                        choices=["1", "2", "m", ",", "."],
+                                        choices=["1", "2", "3", "m", ",", "."],
                                         show_choices=False)
 
         if self.input_menu_ventas.user_input is None:
@@ -254,6 +271,15 @@ class VistaVentas(VistaBase):
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3"],
+                                         show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
             self.refrescar_pantalla()
@@ -403,6 +429,20 @@ class VistaVentas(VistaBase):
                          show_choices=False)
 
         return num
+
+    def mostrar_buscar_por_rango_fecha_prompt(self):
+        fecha_inicial = ""
+        fecha_final = ""
+
+        while len(fecha_inicial) == 0:
+            self.refrescar_pantalla()
+            fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        while len(fecha_final) == 0:
+            self.refrescar_pantalla()
+            fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        return fecha_inicial, fecha_final
 
     def mostrar_prompt_crear_venta(self):
         fecha = ""

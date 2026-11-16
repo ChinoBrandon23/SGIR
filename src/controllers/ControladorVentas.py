@@ -36,6 +36,7 @@ class ControladorVentas:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_consumo.agregar_escuchante(self.evaluar_seleccion_menu_editar_consumo)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
 
         # Para cambiar página
         self.vista.input_menu_ventas.agregar_escuchante(self.cambiar_pagina_lista_ventas)
@@ -222,8 +223,10 @@ class ControladorVentas:
                 else:
                     self.mostrar_lista_ventas()
             case "3":
-                # aquí debería haber filtros de búsqueda
-                pass
+                self.vista.crear_banda_opciones_busqueda_av()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
+
             case "m":
                 # cancela la edicion actual antes de volver al menu
                 self.cancelar_edicion_actual()
@@ -252,6 +255,27 @@ class ControladorVentas:
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # por rango de fecha
+                fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_rango_fecha_prompt()
+
+                # busca con un servicio asigna a self.ventas_testeo
+                self.mostrar_lista_ventas()
+
+            case "2":
+                # buscar todas las ventas
+                # con un servicio busca todas las ventas y asígnalas a self.ventas_testeo
+
+                self.mostrar_lista_ventas()
+
+            case "3":
+                # volver a lista de ventas
+                self.mostrar_lista_ventas()
+
+
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
