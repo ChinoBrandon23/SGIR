@@ -36,6 +36,7 @@ class ControladorCompras:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_insumo.agregar_escuchante(self.evaluar_seleccion_editar_insumos)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
 
         # Para cambiar de página
         self.vista.input_menu_compras.agregar_escuchante(self.cambiar_pagina_lista_compras)
@@ -232,8 +233,10 @@ class ControladorCompras:
 
                 self.mostrar_detalles_compra()
             case "3":
-                # aquí debería haber filtros de búsqueda
-                pass
+                self.vista.crear_banda_opciones_busqueda_av()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
+
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -263,6 +266,42 @@ class ControladorCompras:
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # buscar por fecha
+                fecha = self.vista.mostrar_buscar_por_fecha_prompt()
+
+                # se requiere validar fecha aquí
+                # se busca la fecha validada con un servicio y se asigna esa lista resultante a self.compras_testo
+
+                self.mostrar_lista_compras()
+
+            case "2":
+                # buscar por proveedor
+                self.vista.mostrar_proveedores_disponibles(self.proveedores_testeo)
+                self.vista.refrescar_pantalla()
+
+                opciones_prov = [str(proveedor.num) for proveedor in self.proveedores_testeo]
+                prov_num = self.vista.mostrar_buscar_por_proveedor(opciones_prov)
+
+                # usa el prov_num para buscar compras por proveedor, y se asigna a self.compras_testeo como arriba
+
+                self.mostrar_lista_compras()
+
+            case "3":
+                # buscar todos (restaurar búsqueda)
+
+                # con un servicio asigna a self.compras_testo todos los menús como:
+                # self.compras_testo = self.servicio.obtener_compras()
+
+                self.mostrar_lista_compras()
+
+            case "4":
+                # volver a lista de compras
+                # aquí no se hace nada
+                self.mostrar_lista_compras()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
