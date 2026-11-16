@@ -72,8 +72,8 @@ class ControladorCompras:
         compra1 = Compra(1, fecha1, proveedor=self.proveedores_testeo[0])
         compra2 = Compra(2, fecha2, proveedor=self.proveedores_testeo[1])
 
-        compra1.agregar_insumo_compra(self.insumos_testeo[0], 10, "kilos", 500, 50, fecha2, fecha1)
-        compra1.agregar_insumo_compra(self.insumos_testeo[1], 20, "kilos", 750, 37.5, fecha2, fecha1)
+        compra1.agregar_insumo_compra(self.insumos_testeo[0], 10, 10, "kilos", 500, 50, fecha2, fecha1)
+        compra1.agregar_insumo_compra(self.insumos_testeo[1], 20, 20, "kilos", 750, 37.5, fecha2, fecha1)
 
         compra1.total_bruto = 500 + 750
 
@@ -370,7 +370,7 @@ class ControladorCompras:
 
                             importe = float(monto_unitario) * float(cantidad)
 
-                            self.compra_actual.agregar_insumo_compra(insumo, float(cantidad), unidad_medida,
+                            self.compra_actual.agregar_insumo_compra(insumo, float(cantidad), float(cantidad), unidad_medida,
                                                                     float(importe), float(monto_unitario),
                                                                     fecha_caducidad, fecha_compra)
                             self.agregar_edicion_insumos(copy.deepcopy(self.compra_actual.lista_compras[-1]))
@@ -419,15 +419,15 @@ class ControladorCompras:
     def evaluar_seleccion_editar_insumos(self, seleccion):
         match seleccion:
             case "1":
-                # editar cantidad
+                # editar cantidad comprada
                 opciones = [str(idx) for idx in self.insumo_idx]
                 num, cantidad = self.vista.mostrar_editar_cantidad_insumo_prompt(opciones)
 
                 if num and cantidad:
                     for detalle in self.compra_actual.lista_compras:
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
-                            # asigna la nueva cantidad y recalcula el importe del insumo
-                            detalle.cantidad = float(cantidad)
+                            # asigna la nueva cantidad comprada y recalcula el importe del insumo
+                            detalle.cantidad_comprada = float(cantidad)
                             detalle.importe = float(cantidad) * detalle.monto_unitario
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
@@ -456,7 +456,7 @@ class ControladorCompras:
                         # asigna el nuevo monto unitario y actualiza el importe del insumo
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
                             detalle.monto_unitario = float(monto_u)
-                            detalle.importe = float(monto_u) * detalle.cantidad
+                            detalle.importe = float(monto_u) * detalle.cantidad_comprada
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()
