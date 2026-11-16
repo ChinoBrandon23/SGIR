@@ -37,6 +37,7 @@ class ControladorMenus:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_editar_platillos)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
 
         # Para cambiar página
         self.vista.input_menu_menus.agregar_escuchante(self.cambiar_pagina_lista_menus)
@@ -225,8 +226,9 @@ class ControladorMenus:
                 else:
                     self.mostrar_lista_menus()
             case "3":
-                # aquí debería haber filtros de búsqueda
-                pass
+                self.vista.crear_banda_opciones_busqueda_av()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -252,6 +254,44 @@ class ControladorMenus:
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # buscar por nombre
+                nombre = self.vista.mostrar_buscar_por_nombre_prompt()
+
+                # Aquí un servicio debería buscar por nombre y asignarlo a self.menus_testeo, si es que se va a mantener
+                # esa variable, básicamente lo que comenté en a partir de la línea 215 en controlador platillos
+
+                self.mostrar_lista_menus()
+
+            case "2":
+                # buscar por vigencia
+                fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_vigencia_prompt()
+
+                # aquí definitivamente se debería validar que sean fechas válidas
+
+                # convirtiendo str a date
+                fecha_inicial = datetime.datetime.strptime(fecha_inicial, "%d-%m-%Y").date()
+                fecha_final = datetime.datetime.strptime(fecha_final, "%d-%m-%Y").date()
+
+                # Lo mismo de arriba aplica aquí, busca por el rango de fechas provisto en uns servicio y asigna a
+                # self.menus_testeo
+
+                self.mostrar_lista_menus()
+
+            case "3":
+                # mostrar todos los menús
+
+                # Aquí debería haber algo como lo sig para restaurar la búsqueda
+                # self.menus_testeo = self.servicio.obtener_todos_menus()
+                self.mostrar_lista_menus()
+
+            case "4":
+                # volver a lista de menús
+                # Aquí no se mueve nada
+                self.mostrar_lista_menus()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
