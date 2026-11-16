@@ -84,7 +84,6 @@ class ControladorMenus:
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
-        self.menus_testeo = self.servicio.obtener_menus()
 
         #calcula el numero de recetas reales: se eliminara despues
         for menu in self.menus_testeo:
@@ -284,8 +283,7 @@ class ControladorMenus:
             case "3":
                 # mostrar todos los menús
 
-                # Aquí debería haber algo como lo sig para restaurar la búsqueda
-                # self.menus_testeo = self.servicio.obtener_todos_menus()
+                self.menus_testeo = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
 
             case "4":
@@ -324,7 +322,7 @@ class ControladorMenus:
                 self.guardar_editar_menu()
             case "5":
                 # cancela la edición actual y vuelve a detalles
-                if self.menu_actual.num in [menu.num for menu in self.menus_testeo]:
+                if self.menu_actual.num in [menu.num for menu in self.servicio.obtener_menus()]:
                     self.cancelar_edicion_actual()
                     self.mostrar_detalles_menu(self.vista.input_abrir_detalles.user_input)
                 else:
