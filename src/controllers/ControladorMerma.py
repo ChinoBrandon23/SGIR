@@ -33,6 +33,7 @@ class ControladorMerma:
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_merma)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_merma.agregar_escuchante(self.evaluar_seleccion_menu_editar)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
 
         # Para cambiar página
         self.vista.input_menu_merma.agregar_escuchante(self.cambiar_pagina_lista_compras)
@@ -205,8 +206,9 @@ class ControladorMerma:
                 self.mostrar_lista_mermas()
 
             case "3":
-                # aquí debería haber filtros de búsqueda
-                pass
+                self.vista.crear_banda_opciones_busqueda_av()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
 
             case "m":
                 # cancela la edicion actual antes de volver al menu
@@ -236,6 +238,54 @@ class ControladorMerma:
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # por rango de fecha
+                fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_rango_fecha_prompt()
+
+                # se debe validar las fechas
+                # con las fechas ahora se buscan las mermas registradas en el rango y la lista que resulta
+                # se asigna a self.mermas_testeo
+
+                self.mostrar_lista_mermas()
+            case "2":
+                # por tipo de merma
+                self.vista.mostrar_tipos_merma_disponibles(self.tipos_merma_testeo)
+                self.vista.refrescar_pantalla()
+
+                opciones_tipo = {str(idx+1):self.tipos_merma_testeo[idx] for idx in range(len(self.tipos_merma_testeo))}
+                opciones_tipo_lista = [key for key in opciones_tipo.keys()]
+
+                tipo_num = self.vista.mostrar_buscar_por_tipo_insumo_prompt(opciones_tipo_lista)
+                tipo_clave = opciones_tipo[tipo_num]
+
+                # con el tipo_clave se puede hacer la búsqueda en un servicio, la lista resultante se guarda en
+                # self.merma_testeo
+
+                self.mostrar_lista_mermas()
+            case "3":
+                # por insumo
+                self.vista.mostrar_insumos_disponibles(self.insumos_testeo)
+                self.vista.refrescar_pantalla()
+
+                opciones_insumo = [str(insumo.num) for insumo in self.insumos_testeo]
+
+                insumo_num = self.vista.mostrar_buscar_por_insumo_prompt(opciones_insumo)
+
+                # busca con el insumo_num en un servicio y asigna la lista resultante en self.merma_testeo
+
+                self.mostrar_lista_mermas()
+            case "4":
+                # buscar todos
+                # asigna el valor a self.mermas_testeo la lista de todas las mermas con un servicio
+
+                self.mostrar_lista_mermas()
+            case "5":
+                # volver a menú principal
+                # aquí no se hace nada
+                self.mostrar_lista_mermas()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
