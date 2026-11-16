@@ -93,7 +93,7 @@ class VistaCompras(VistaBase):
         self.layout["tabla_detalles_compra"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
 
     def configurar_tabla_detalles_compra(self):
-        encabezados = ["#", "Insumo", "Marca", "Cantidad", "Unidad de medida", "Monto unitario", "Importe", "Fecha de compra", "Caducidad"]
+        encabezados = ["#", "Insumo", "Marca", "Cantidad comprada", "Unidad de medida", "Monto unitario", "Importe", "Fecha de compra", "Caducidad"]
 
         self.tabla_detalles_menu.show_lines = True
 
@@ -118,7 +118,7 @@ class VistaCompras(VistaBase):
                     self.tabla_detalles_menu.add_row(f"[bold red]{str(idx_insumo)}[/bold red]",
                                                     f"[bold red]{nombre_insumo}[/bold red]",
                                                     f"[bold red]{valor_editado.insumo.marca.nombre}[/bold red]",
-                                                    f"[bold red]{str(valor_editado.cantidad)}[/bold red]",
+                                                    f"[bold red]{str(valor_editado.cantidad_comprada)}[/bold red]",
                                                     f"[bold red]{valor_editado.unidad_medida}[/bold red]",
                                                     f"[bold red]${str(valor_editado.monto_unitario)}[/bold red]",
                                                     f"[bold red]${str(valor_editado.importe)}[/bold red]",
@@ -130,7 +130,7 @@ class VistaCompras(VistaBase):
             self.tabla_detalles_menu.add_row(str(idx_insumo),
                                              nombre_insumo,
                                              detalle_compra.insumo.marca.nombre,
-                                             str(detalle_compra.cantidad),
+                                             str(detalle_compra.cantidad_comprada),
                                              detalle_compra.unidad_medida,
                                              f"${detalle_compra.monto_unitario}",
                                              f"${detalle_compra.importe}",
@@ -145,7 +145,7 @@ class VistaCompras(VistaBase):
                 self.tabla_detalles_menu.add_row(f"[bold red]{str(idx_insumo)}[/bold red]",
                                                     f"[bold red]{nombre_insumo}[/bold red]",
                                                     f"[bold red]{detalle_compra.insumo.marca.nombre}[/bold red]",
-                                                    f"[bold red]{str(detalle_compra.cantidad)}[/bold red]",
+                                                    f"[bold red]{str(detalle_compra.cantidad_comprada)}[/bold red]",
                                                     f"[bold red]{detalle_compra.unidad_medida}[/bold red]"
                                                     f"[bold red]#{detalle_compra.monto_unitario}[/bold red]",
                                                     f"[bold red]${str(detalle_compra.importe)}[/bold red]",
@@ -297,7 +297,7 @@ class VistaCompras(VistaBase):
     def crear_banda_opciones_editar_insumos(self):
         opciones_columna = Columns()
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
-                    "[1] Editar cantidad",
+                    "[1] Editar cantidad comprada",
                     "[2] Editar unidad de medida",
                     "[3] Editar monto unitario",
                     "[4] Editar fecha de compra",
@@ -658,7 +658,7 @@ class VistaCompras(VistaBase):
 
         while len(cantidad) == 0:
             self.refrescar_pantalla()
-            cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad para este insumo[/bold yellow]")
+            cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad comprada para este insumo[/bold yellow]")
 
             if len(cantidad):
                 confirmacion = Prompt.ask(f"[bold yellow]Confirma la nueva cantidad: [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])

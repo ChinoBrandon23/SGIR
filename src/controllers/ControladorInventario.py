@@ -52,9 +52,9 @@ class ControladorInventario:
 
         fecha_hoy = datetime.date.strftime(datetime.date.today(), "%d-%m-%Y")
 
-        detalle1 = DetalleCompra(self.insumos_testeo[0], 10, "kilos", 500, 50, fecha1, fecha_hoy)
-        detalle2 = DetalleCompra(self.insumos_testeo[0], 5, "kilos", 495, 49.5, fecha2, fecha_hoy)
-        detalle3 = DetalleCompra(self.insumos_testeo[1], 500, "gramos", 150, 0.3, fecha1, fecha_hoy)
+        detalle1 = DetalleCompra(self.insumos_testeo[0], 10, 8, "kilos", 500, 50, fecha1, fecha_hoy)
+        detalle2 = DetalleCompra(self.insumos_testeo[0], 5, 1,"kilos", 495, 49.5, fecha2, fecha_hoy)
+        detalle3 = DetalleCompra(self.insumos_testeo[1], 500, 300, "gramos", 150, 0.3, fecha1, fecha_hoy)
 
         return [detalle1, detalle2, detalle3]
 
