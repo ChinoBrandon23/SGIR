@@ -33,6 +33,7 @@ class ControladorPlatillos:
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_platillo)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_menu_editar)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
 
         # Para cambio de páginas
         self.vista.input_menu_platillos.agregar_escuchante(self.cambiar_pagina_lista_platillos)
@@ -179,7 +180,9 @@ class ControladorPlatillos:
                     self.mostrar_lista_platillos()
             case "3":
                 # aquí debería haber filtros de búsqueda
-                pass
+                self.vista.crear_banda_opciones_busqueda_av()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
             case "m":
                 # cancela la edicion actual antes de volver al menu
                 self.cancelar_edicion_actual()
@@ -208,6 +211,48 @@ class ControladorPlatillos:
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # buscar por nombre
+                nombre = self.vista.mostrar_buscar_por_nombre_prompt()
+
+                # Digamos que por aquí se valída o algo así, la vdd no sé si se deba validar siendo una búsqueda
+                # no creo que un empleado quiera hacer una inyección sql (??)
+
+                # Teniendo el nombre a buscar, se debería buscar con un servicio todos los platillos
+                # que tengan dicho nombre. Luego la var self.platillos_testeo deberá tomar esa lista como valor
+                # para que si el usuario vuelve a la vista anterior, no se pierdan los resultados de esta búsqueda
+                # Es decir, algo como:
+                # self.platillos_testeo = self.servicio.buscar_platillos_por_nombre(nombre)
+                # Creo que literal eso es lo único que se necesita insertar aquí debajo
+
+                # esta línea se queda aquí
+                self.mostrar_lista_platillos()
+            case "2":
+                # buscar por categoría
+                self.vista.mostrar_categorias_disponibles(self.categorias_testeo)
+                self.vista.refrescar_pantalla()
+
+                opciones = [str(i + 1) for i in range(len(self.categorias_testeo))]
+                num_cat = self.vista.mostrar_buscar_por_categoria_prompt(opciones)
+
+                categoria_clave = [self.categorias_testeo[i] for i in range(len(self.categorias_testeo)) if i == int(num_cat) - 1][0].clave
+
+                # mismas instrucciones que arriba básicamente
+
+                self.mostrar_lista_platillos()
+
+            case "3":
+                # Restablece los resultados para mostrarlos todos, algo como así:
+                # self.platillos_testeo = self.servicio.obtener_todos_platillos()
+
+                self.mostrar_lista_platillos()
+
+            case "4":
+                # aquí no se debe hacer nada extra, es solo para volver a la vista principal de platillos
+                self.mostrar_lista_platillos()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
