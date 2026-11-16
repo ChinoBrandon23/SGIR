@@ -331,7 +331,7 @@ class VistaCompras(VistaBase):
 
     def mostrar_menu_compras_prompt(self):
         self.input_menu_compras.imprimir("Selecciona una opción o cambia de página [',' '.']",
-                                         choices=["1", "2", "4", "m", ",", "."],
+                                         choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_compras.user_input is None:
