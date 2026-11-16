@@ -33,7 +33,7 @@ class VistaPlatillos(VistaBase):
         self.input_abrir_detalles = InputEmisor()
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
-        self.input_cambiar_pagina = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -112,7 +112,10 @@ class VistaPlatillos(VistaBase):
         for i in range(len(lista_categorias)):
             tabla.add_row(str(i+1), lista_categorias[i].nombre)
 
-        self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
+        try:
+            self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
+        except KeyError:
+            self.layout["main"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_recetas_disponibles(self, lista_recetas:list[Receta]):
         columnas = ["#", "Nombre"]
@@ -157,8 +160,7 @@ class VistaPlatillos(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Ver detalles de platillo",
                     "[2] Crear platillo",
-                    "[3] Filtrar búsqueda",
-                    "[4] Cambiar de página",
+                    "[3] Búsqueda avanzada",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -177,6 +179,23 @@ class VistaPlatillos(VistaBase):
                     "[2] Editar platillo",
                     "[3] Eliminar platillo",
                     "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por nombre",
+                    "[2] Por categoría",
+                    "[3] Mostrar todo",
+                    "[4] Volver a platillos"]
 
         opciones_columna.expand = True
 
@@ -206,8 +225,8 @@ class VistaPlatillos(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_platillos_prompt(self):
-        self.input_menu_platillos.imprimir("Selecciona una opción",
-                                           choices=["1", "2", "4", "m"],
+        self.input_menu_platillos.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                           choices=["1", "2", "3", "m", ".", ","],
                                            show_choices=False)
 
         if self.input_menu_platillos.user_input is None:
@@ -226,6 +245,15 @@ class VistaPlatillos(VistaBase):
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m"],
+                                          show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                          choices=["1", "2", "3", "4"],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -319,11 +347,19 @@ class VistaPlatillos(VistaBase):
 
         return None
 
-    def mostrar_prompt_cambiar_pagina(self):
-        mov = self.input_cambiar_pagina.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
+    def mostrar_buscar_por_nombre_prompt(self):
+        nombre = ""
+
+        while len(nombre) == 0:
+            self.refrescar_pantalla()
+            nombre = Prompt.ask("[bold yellow]Ingresa el nombre a buscar[/bold yellow]")
+
+        return nombre
+
+    def mostrar_buscar_por_categoria_prompt(self, opciones):
+        cat_num = Prompt.ask("[bold yellow]Ingresa índice de la categoría a buscar[/bold yellow]", choices=opciones, show_choices=False)
+
+        return cat_num
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()

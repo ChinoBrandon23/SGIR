@@ -33,8 +33,7 @@ class VistaMenus(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_menu = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
-        self.input_cambiar_pagina_menus = InputEmisor()
-        self.input_cambiar_pagina_detalles = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -177,8 +176,7 @@ class VistaMenus(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Ver detalles de menú",
                     "[2] Crear menú",
-                    "[3] Filtrar búsqueda",
-                    "[4] Cambiar de página",
+                    "[3] Búsqueda avanzada",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -196,8 +194,24 @@ class VistaMenus(VistaBase):
                     "[1] Volver a menús",
                     "[2] Editar menú",
                     "[3] Eliminar menú",
-                    "[4] Cambiar de página",
                     "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por nombre",
+                    "[2] Por vigencia",
+                    "[3] Mostrar todo",
+                    "[M] Volver a menús"]
 
         opciones_columna.expand = True
 
@@ -243,8 +257,8 @@ class VistaMenus(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_menus_prompt(self):
-        self.input_menu_menus.imprimir("Selecciona una opción",
-                                       choices=["1", "2", "4","m"],
+        self.input_menu_menus.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                       choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
 
         if self.input_menu_menus.user_input is None:
@@ -260,9 +274,18 @@ class VistaMenus(VistaBase):
             self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_menus)
 
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3", "4"],
+                                         show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
     def mostrar_opciones_detalles_prompt(self):
-        self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "4", "m"],
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                          choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -279,8 +302,8 @@ class VistaMenus(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
-        self.input_menu_editar_menu.imprimir("Selecciona una opción",
-                                               choices=["1", "2", "3", "4", "5", "m"],
+        self.input_menu_editar_menu.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                               choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                show_choices=False)
 
         if self.input_menu_editar_menu.user_input is None:
@@ -319,8 +342,8 @@ class VistaMenus(VistaBase):
         return None, None
 
     def mostrar_editar_platillos_menu_prompt(self):
-        self.input_menu_editar_platillo.imprimir("Selecciona una opción",
-                                                 choices=["1","2","3","4"], show_choices=False)
+        self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                                 choices=["1","2","3","4", ",", "."], show_choices=False)
 
     def mostrar_agregar_platillo_prompt(self, opciones):
         if len(opciones) == 0:
@@ -384,6 +407,29 @@ class VistaMenus(VistaBase):
 
         return None
 
+    def mostrar_buscar_por_nombre_prompt(self):
+        nombre = ""
+
+        while len(nombre) == 0:
+            self.refrescar_pantalla()
+            nombre = Prompt.ask("[bold yellow]Ingresa el nombre a buscar[/bold yellow]")
+
+        return nombre
+
+    def mostrar_buscar_por_vigencia_prompt(self):
+        fecha_inicial = ""
+        fecha_final = ""
+
+        while len(fecha_inicial) == 0:
+            self.refrescar_pantalla()
+            fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial de búsqueda en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        while len(fecha_final) == 0:
+            self.refrescar_pantalla()
+            fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final de búsqueda en el sigueinte formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        return fecha_inicial, fecha_final
+
     def mostrar_prompt_crear_menu(self):
         nombre = Prompt.ask("Para comenzar, ingresa el nombre del nuevo menú o 0 para cancelar")
 
@@ -398,12 +444,6 @@ class VistaMenus(VistaBase):
 
     def mostrar_prompt_cambiar_pagina_menus(self):
         mov = self.input_cambiar_pagina_menus.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
-
-    def mostrar_prompt_cambiar_pagina_detalles(self):
-        mov = self.input_cambiar_pagina_detalles.imprimir(
             "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
             choices=[",", "."])
         return mov

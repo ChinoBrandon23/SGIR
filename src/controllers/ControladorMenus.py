@@ -37,8 +37,14 @@ class ControladorMenus:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_editar_platillos)
-        self.vista.input_cambiar_pagina_menus.agregar_escuchante(self.cambiar_pagina_lista_menus)
-        self.vista.input_cambiar_pagina_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
+
+        # Para cambiar página
+        self.vista.input_menu_menus.agregar_escuchante(self.cambiar_pagina_lista_menus)
+        self.vista.input_abrir_detalles.agregar_escuchante(self.cambiar_pagina_lista_menus)
+        self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_menu.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_platillo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
     #def crear_platillos_testeo(self):
     #    receta1 = Receta(2, "Receta de Pizza", 4,
@@ -78,7 +84,6 @@ class ControladorMenus:
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
-        self.menus_testeo = self.servicio.obtener_menus()
 
         #calcula el numero de recetas reales: se eliminara despues
         for menu in self.menus_testeo:
@@ -220,11 +225,9 @@ class ControladorMenus:
                 else:
                     self.mostrar_lista_menus()
             case "3":
-                # aquí debería haber filtros de búsqueda
-                pass
-            case "4":
+                self.vista.crear_banda_opciones_busqueda_av()
                 self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina_menus()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -247,12 +250,42 @@ class ControladorMenus:
                 
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_menus()
-            case "4":
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_prompt_cambiar_pagina_detalles()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # buscar por nombre
+                nombre = self.vista.mostrar_buscar_por_nombre_prompt()
+
+                # Aquí un servicio debería buscar por nombre y asignarlo a self.menus_testeo, si es que se va a mantener
+                # esa variable, básicamente lo que comenté en a partir de la línea 215 en controlador platillos
+
+                self.mostrar_lista_menus()
+
+            case "2":
+                # buscar por vigencia
+                fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_vigencia_prompt()
+
+                # aquí definitivamente se debería validar que sean fechas válidas
+
+                # Lo mismo de arriba aplica aquí, busca por el rango de fechas provisto en uns servicio y asigna a
+                # self.menus_testeo
+
+                self.mostrar_lista_menus()
+
+            case "3":
+                # mostrar todos los menús
+
+                self.menus_testeo = self.servicio.obtener_menus()
+                self.mostrar_lista_menus()
+
+            case "4":
+                # volver a lista de menús
+                # Aquí no se mueve nada
+                self.mostrar_lista_menus()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
@@ -285,7 +318,7 @@ class ControladorMenus:
                 self.guardar_editar_menu()
             case "5":
                 # cancela la edición actual y vuelve a detalles
-                if self.menu_actual.num in [menu.num for menu in self.menus_testeo]:
+                if self.menu_actual.num in [menu.num for menu in self.servicio.obtener_menus()]:
                     self.cancelar_edicion_actual()
                     self.mostrar_detalles_menu(self.vista.input_abrir_detalles.user_input)
                 else:

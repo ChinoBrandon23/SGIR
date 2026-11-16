@@ -36,7 +36,7 @@ class VistaCompras(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_compra = InputEmisor()
         self.input_menu_editar_insumo = InputEmisor()
-        self.input_cambiar_pagina = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -243,8 +243,7 @@ class VistaCompras(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Ver detalles de compra",
                     "[2] Registrar compra",
-                    "[3] Filtrar búsqueda",
-                    "[4] Cambiar de página",
+                    "[3] Búsqueda avanzada",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -263,6 +262,23 @@ class VistaCompras(VistaBase):
                     "[2] Editar compra",
                     "[3] Eliminar compra",
                     "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por fecha",
+                    "[2] Por proveedor",
+                    "[3] Mostrar todo",
+                    "[4] Volver a menús"]
 
         opciones_columna.expand = True
 
@@ -314,8 +330,8 @@ class VistaCompras(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_compras_prompt(self):
-        self.input_menu_compras.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "4", "m"],
+        self.input_menu_compras.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                         choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_compras.user_input is None:
@@ -331,9 +347,18 @@ class VistaCompras(VistaBase):
             self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_compras)
 
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3", "4"],
+                                         show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m"],
+                                          choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -351,7 +376,7 @@ class VistaCompras(VistaBase):
 
     def mostrar_opciones_editar_prompt(self):
         self.input_menu_editar_compra.imprimir("Selecciona una opción",
-                                               choices=["1", "2", "3", "4", "5", "6","m"],
+                                               choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
 
         if self.input_menu_editar_compra.user_input is None:
@@ -420,7 +445,7 @@ class VistaCompras(VistaBase):
 
     def mostrar_editar_insumos_menu_prompt(self):
         self.input_menu_editar_insumo.imprimir("Selecciona una opción",
-                                               choices=["1","2","3","4","5","6","7"], show_choices=False)
+                                               choices=["1","2","3","4","5","6","7", ",", "."], show_choices=False)
 
     def mostrar_seleccionar_insumo_prompt(self, opciones):
         opciones.append("0")
@@ -764,6 +789,20 @@ class VistaCompras(VistaBase):
                 else:
                     return None, None
 
+    def mostrar_buscar_por_fecha_prompt(self):
+        fecha = ""
+
+        while len(fecha) == 0:
+            self.refrescar_pantalla()
+            fecha = Prompt.ask("[bold yellow]Ingresa la fecha a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        return fecha
+
+    def mostrar_buscar_por_proveedor(self, opciones):
+        prov_num = Prompt.ask("Selecciona el proveedor a buscar", choices=opciones, show_choices=False)
+
+        return prov_num
+
     def mostrar_prompt_registrar_compra(self):
         proveedor = Prompt.ask("Para comenzar, ingresa el índice del proveedor de la compra o 0 para registrar uno nuevo")
 
@@ -771,12 +810,6 @@ class VistaCompras(VistaBase):
             return proveedor
 
         return proveedor
-
-    def mostrar_prompt_cambiar_pagina(self):
-        mov = self.input_cambiar_pagina.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
