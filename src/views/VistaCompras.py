@@ -794,7 +794,7 @@ class VistaCompras(VistaBase):
 
         while len(fecha) == 0:
             self.refrescar_pantalla()
-            fecha = Prompt.ask("[bold yellow]Ingresa la fecha a buscar[/bold yellow]")
+            fecha = Prompt.ask("[bold yellow]Ingresa la fecha a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
         return fecha
 
