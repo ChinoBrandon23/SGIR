@@ -7,20 +7,21 @@ from models.insumo import Insumo
 from models.marca import Marca
 from models.receta import Receta
 from models.tipo_insumo import TipoInsumo
+from services.insumo_servicio import InsumoServicio
 from views.VistaRecetas import VistaRecetas
 
 from services.receta_servicio import RecetaServicio
 
 class ControladorRecetas:
-    def __init__(self, vista:VistaRecetas, servicio:RecetaServicio):
+    def __init__(self, vista:VistaRecetas, servicio_receta:RecetaServicio, servicio_insumo:InsumoServicio):
         self.vista = vista
-        self.servicio = servicio
+        self.servicio_receta = servicio_receta
+        self.servicio_insumo = servicio_insumo
         self.receta_actual = None
         self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
         self.ing_idx = {}
 
-        self.recetas_testeo = self.servicio.obtener_recetas()
-        self.insumos_testeo = self.crear_insumos_testeo()
+        self.recetas_testeo = self.servicio_receta.obtener_recetas()
 
         self.configurar_listeners()
         self.mostrar_lista_recetas()
@@ -33,23 +34,11 @@ class ControladorRecetas:
         self.vista.input_menu_editar_ing.agregar_escuchante(self.evaluar_seleccion_editar_ing)
         self.vista.input_menu_editar_inst.agregar_escuchante(self.evaluar_seleccion_editar_inst)
 
-    def crear_insumos_testeo(self):
-        marca1 = Marca(1, "El Rosal")
-        marca2 = Marca(2, "Tradi-Pan")
-
-        tipo1 = TipoInsumo("HARI", "Harinas")
-        tipo2 = TipoInsumo("PANA", "Panadería")
-
-        insumo1 = Insumo(1, "Harina de Trigo", umbral=5, stock=10, tipo_insumo=tipo1, marca=marca1)
-        insumo2 = Insumo(2, "Levadura", umbral=5, stock=10, tipo_insumo=tipo2, marca=marca2)
-
-        return [insumo1, insumo2]
-
     def mostrar_lista_recetas(self):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
-        self.recetas_testeo = self.servicio.obtener_recetas()
+        self.recetas_testeo = self.servicio_receta.obtener_recetas()
         self.vista.mostrar_todas_recetas()
 
         for receta in self.recetas_testeo:
@@ -61,7 +50,7 @@ class ControladorRecetas:
     def mostrar_detalles_receta(self, receta_num = None):
         if self.receta_actual is None:
             # Si no tenemos un receta actual, busca la receta por el num pasado como arg
-            self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+            self.receta_actual = self.servicio_receta.obtener_receta_por_id(receta_num)
         self.mapear_ingredientes()
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
         self.vista.mostrar_detalles_receta(self.receta_actual, datos_editados=self.formulario, mapa_idx_ing=self.ing_idx)
@@ -90,47 +79,15 @@ class ControladorRecetas:
 
     def guardar_editar_receta(self):
         # Cambia los datos del formulario en el objeto actual
-        # para testeo, aquí debería llamar a un servicio
-        if "nombre" in self.formulario:
-            self.receta_actual.nombre = self.formulario["nombre"]
+        # para testeo, aquí debería llamar a un servicio_receta
 
-        if "porciones" in self.formulario:
-            self.receta_actual.num_porciones = self.formulario["porciones"]
+        self.servicio_receta.actualizar_receta(self.receta_actual)
 
-        if len(self.formulario["ingredientes"]):
-            for ing in self.formulario["ingredientes"]:
-                receta_lista_nombre = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
-                if ing["nombre"] in receta_lista_nombre:
-                    # ing duplicado
-                    idx = receta_lista_nombre.index(ing["nombre"])
-                    self.receta_actual.lista_ingredientes.pop(idx)
-
-                self.receta_actual.agregarIngrediente(Ingrediente("1",
-                                                                  ing["nombre"]), ing["cantidad"], ing["unidad_m"])
-
-        lista_num = [receta.num for receta in self.recetas_testeo]
-
-        if self.receta_actual.num in lista_num:
-            idx = lista_num.index(self.receta_actual.num)
-            self.recetas_testeo.pop(idx)
-            self.recetas_testeo.insert(idx, copy.deepcopy(self.receta_actual))
-        else:
-            self.recetas_testeo.append(copy.deepcopy(self.receta_actual))
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         receta_actual_num = str(self.receta_actual.num)
         self.cancelar_edicion_actual()
         self.mostrar_detalles_receta(receta_actual_num)
-
-    def agregar_edicion_ingrediente(self, dict_ing):
-        lista_ing_editados_nombre = [ing["nombre"] for ing in self.formulario["ingredientes"]]
-
-        if dict_ing["nombre"] in lista_ing_editados_nombre:
-            # checa si un ingrediente ya fue editado antes y remueve esa edicion para agregar la nueva
-            obj = [ing for ing in self.formulario["ingredientes"] if ing["nombre"] == dict_ing["nombre"]][0]
-            self.formulario["ingredientes"].remove(obj)
-
-        self.formulario["ingredientes"].append(dict_ing)
 
     def agregar_edicion_instruccion(self, dic_inst):
         lista_inst_editadas_idx = [next(iter(inst)) for inst in self.formulario["instrucciones"]]
@@ -143,7 +100,7 @@ class ControladorRecetas:
         self.formulario["instrucciones"].append(dic_inst)
 
     def mapear_ingredientes(self):
-        # toma los ingredientes de la receta y los potenciales ing de el formulario
+        # toma los ingredientes de la receta
         # itera sobre cada uno y les asigna un número para mostrar en la tabla de la vista
         if self.receta_actual:
             self.ing_idx = {}
@@ -152,24 +109,10 @@ class ControladorRecetas:
             for i in range(len(lista_ing)):
                 # agregando al dict los ingredientes originales de la receta
                 self.ing_idx[i + 1] = lista_ing[i].ingrediente.nombre
-            if len(self.formulario["ingredientes"]) > 0:
-                for ing_dict in self.formulario["ingredientes"]:
-                    nombre = ing_dict["nombre"]
-
-                    if nombre in self.ing_idx.values():
-                        # ingrediente repetido, omitir el mapeo
-                        continue
-                    else:
-                        try:
-                            # encuentra el idx que sigue de acuerdo a los valores actuales
-                            idx = int(list(self.ing_idx.keys())[-1]) + 1
-                        except IndexError:
-                            idx = 1
-                        self.ing_idx[idx] = ing_dict["nombre"]
 
     def usuario_esta_editando(self):
         # checa si el usuario ha hecho cambios desde que entró a la vista de detalles
-        if len(self.formulario.items()) > 3 or len(self.formulario["ingredientes"]) or len(self.formulario["instrucciones"]):
+        if len(self.formulario.items()) > 3 or len(self.formulario["ingredientes"]) or len(self.formulario["instrucciones"]) or self.formulario["item_borrado"]:
             return True
         return False
 
@@ -181,17 +124,17 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las recetas y pasarlas
-                self.recetas_testeo = self.servicio.obtener_recetas()
+                self.recetas_testeo = self.servicio_receta.obtener_recetas()
                 self.vista.mostrar_abrir_detalles_prompt(self.recetas_testeo)
             case "2":
                 # Aquí crea receta
                 self.mostrar_formulario_crear_receta()
                 nombre, porciones = self.vista.mostrar_prompt_crear_receta()
                 if nombre is not None and porciones is not None:
-                    # debería llamar al servicio para crear una receta nueva
+                    # debería llamar al servicio_receta para crear una receta nueva
                     num = len(self.recetas_testeo) + 1
                     self.receta_actual = Receta(num, nombre, porciones, {})
-                    self.servicio.crear_receta(receta=self.receta_actual)
+                    self.servicio_receta.crear_receta(receta=self.receta_actual)
                     self.mapear_ingredientes()
                     self.mostrar_formulario_crear_receta()
                 else:
@@ -217,7 +160,7 @@ class ControladorRecetas:
             case "3":
                 borrar = self.vista.mostrar_prompt_eliminar_receta_prompt()
                 if borrar:
-                    self.servicio.borrar_receta(self.receta_actual.num)
+                    self.servicio_receta.borrar_receta(self.receta_actual.num)
 
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_recetas()
@@ -232,6 +175,7 @@ class ControladorRecetas:
                 nombre = self.vista.mostrar_editar_nombre_prompt()
                 # checa que haya una respuesta del usuario y si es así lo debe validar
                 if nombre is not None:
+                    self.receta_actual.nombre = nombre
                     self.formulario["nombre"] = nombre
                 self.mostrar_detalles_receta()
 
@@ -240,6 +184,7 @@ class ControladorRecetas:
                 porciones = self.vista.mostrar_editar_porciones_prompt()
                 # checa que haya un valor y luego valida el num de porciones
                 if porciones is not None:
+                    self.receta_actual.num_porciones = porciones
                     self.formulario["porciones"] = porciones
                 self.mostrar_detalles_receta()
 
@@ -276,31 +221,53 @@ class ControladorRecetas:
                 seleccion_ingrediente = self.vista.mostrar_crear_ingrediente_prompt()
 
                 if seleccion_ingrediente == "1":
-                    # creando ingrediente basado en insumo
-                    # aquí debería obtener la lista de insumos existentes y que no se repiten ya en la receta actual
-                    # para evitar ingredientes duplicados
-                    for ing in self.receta_actual.lista_ingredientes:
-                        if ing.ingrediente.insumo != None:
-                            print(f"ingrediente de insumo {ing.ingrediente.insumo.nombre}")
-                        elif ing.ingrediente.receta != None:
-                            print(f"ingrediente receta {ing.ingrediente.receta.nombre}")
-                        else:
-                            print("ninguno")
+                    # seleccionando ingrediente basado en insumo
+                    # aquí debería obtener la lista de ingredientes existentes y que no se repiten ya en la receta actual
+                    # para evitar duplicados
+                    lista_todos_ing = self.servicio_receta.obtener_ingredientes_basados_en_insumo()
 
-                    lista_insumos_actuales = [ing.ingrediente.insumo.nombre for ing in self.receta_actual.lista_ingredientes]
-                    idx_ins_disp = {i + 1: self.insumos_testeo[i] for i in range(len(self.insumos_testeo)) if
-                                    self.insumos_testeo[i].nombre not in lista_insumos_actuales}
-                    opciones = [str(i) for i in idx_ins_disp]
-                    lista_ins_disp = [idx_ins_disp[idx] for idx in idx_ins_disp]
+                    lista_ing_utilizados = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
 
-                    self.vista.mostrar_insumos_disponibles(lista_ins_disp)
-                    sys.exit()
+                    ing_disponibles = [ing for ing in lista_todos_ing if ing.nombre not in lista_ing_utilizados]
+                    opciones = [str(i + 1) for i in range(len(ing_disponibles))]
 
-                else:
-                    # creando ingrediente basado en receta
-                    # aquí debería sacar la lista de todas las recetas, tomando en cuenta que sean únicamente aquellas
-                    # que se componen de ingredientes simples (basados en insumos) para evitar mucha recursión
-                    pass
+                    self.vista.mostrar_ingredientes_disponibles(ing_disponibles)
+                    self.vista.refrescar_pantalla()
+
+                    ins_num = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
+                    ing_obj = ing_disponibles[int(ins_num)-1]
+
+                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+
+                    unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+
+                    self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=cantidad, unidad_medida=unidad_medida)
+
+                    self.formulario["ingredientes"].append(ing_obj.nombre)
+
+                if seleccion_ingrediente == "2":
+                    # seleccionando ingrediente basado en receta
+                    lista_todos_ing = self.servicio_receta.obtener_ingredientes_basados_en_receta()
+
+                    lista_ing_utilizados = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
+
+                    ing_disponibles = [ing for ing in lista_todos_ing if ing.nombre not in lista_ing_utilizados]
+                    opciones = [str(i + 1) for i in range(len(ing_disponibles))]
+
+                    self.vista.mostrar_ingredientes_disponibles(ing_disponibles)
+                    self.vista.refrescar_pantalla()
+
+                    ins_num = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
+                    ing_obj = ing_disponibles[int(ins_num) - 1]
+
+                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+
+                    unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+
+                    self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=cantidad,
+                                                          unidad_medida=unidad_medida)
+
+                    self.formulario["ingredientes"].append(ing_obj.nombre)
 
                 self.mostrar_detalles_receta()
 
@@ -308,20 +275,21 @@ class ControladorRecetas:
                 # modificar ingrediente
                 opciones_idx = [str(ing) for ing in self.ing_idx]
 
-                num_ing, detalles_ingrediente_raw = self.vista.mostrar_modificar_ingrediente_prompt(opciones_idx)
+                num_ing, cantidad, unidad_m = self.vista.mostrar_modificar_ingrediente_prompt(opciones_idx)
 
-                if detalles_ingrediente_raw is not None:
-                    # busca el ing con el num y valída los nuevos datos
-                    detalles_ingrediente_raw = [ing.strip() for ing in detalles_ingrediente_raw.split(",")]
-                    nombre = self.ing_idx[int(num_ing)]
+                if cantidad is not None and unidad_m is not None:
+                    # busca el ing con el num y asigna los datos
+                    self.receta_actual.lista_ingredientes[int(num_ing)-1].cantidad = cantidad
+                    self.receta_actual.lista_ingredientes[int(num_ing) - 1].unidad_medida = unidad_m
 
-                    ingrediente_dict = {"nombre": nombre,
-                                        "cantidad": detalles_ingrediente_raw[0],
-                                        "unidad_m": detalles_ingrediente_raw[1]}
-                    self.agregar_edicion_ingrediente(ingrediente_dict)
+                    nombre = self.receta_actual.lista_ingredientes[int(num_ing)-1].ingrediente.nombre
+
+                    self.formulario["ingredientes"].append(nombre)
+
                 self.mostrar_detalles_receta()
 
             case "3":
+                #borra ingrediente
                 opciones_idx = [str(ing) for ing in self.ing_idx]
                 num_ing = self.vista.mostrar_borrar_ingrediente_prompt(opciones_idx)
                 # debería validar aquí
@@ -334,6 +302,7 @@ class ControladorRecetas:
                     self.formulario["item_borrado"] = True
 
                 self.mostrar_detalles_receta()
+
             case "4":
                 # volver a menu editar principal
                 self.vista.crear_banda_opciones_editar()
@@ -351,9 +320,11 @@ class ControladorRecetas:
                         idx = lista_indices[-1] + 1
                     else:
                         idx = 1
+
                     self.receta_actual.instrucciones[idx] = instruccion
                     self.agregar_edicion_instruccion({idx:instruccion})
                 self.mostrar_detalles_receta()
+
             case "2":
                 opciones = [str(idx) for idx in self.receta_actual.instrucciones]
                 idx, instruccion = self.vista.mostrar_editar_instruccion_prompt(opciones)
@@ -363,6 +334,7 @@ class ControladorRecetas:
                     self.agregar_edicion_instruccion({idx:instruccion})
 
                 self.mostrar_detalles_receta()
+
             case "3":
                 opciones = [str(idx) for idx in self.receta_actual.instrucciones]
                 idx = self.vista.mostrar_borrar_instruccion_prompt(opciones)
