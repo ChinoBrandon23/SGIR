@@ -14,7 +14,7 @@ class InsumoServicio:
         self._insumo_dao = insumo_dao
 
 
-    def obtener_insumos(self) -> List[Compra]:
+    def obtener_compras(self) -> List[Compra]:
         try:
             return self._insumo_dao.obtener_compras()
         except mysql.connector.Error as err:
@@ -23,12 +23,25 @@ class InsumoServicio:
     def obtener_insumo_por_nombre(self, nombre_ins:str):
         pass
 
+    def obtener_insumos(self) -> List[Insumo]:
+        ''' Obtiene todos los insumos.'''
+        try:
+            return self._insumo_dao.obtener_insumos()
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al consultar insumos. {err}')
+
     def obtener_tipos_insumo(self) -> List[TipoInsumo]:
         try:
             return self._insumo_dao.obtener_tipos_insumo()
         except mysql.connector.Error as err:
             raise IndexError(f"Servicio: Error al consultar los tipos insumos: {err}")
 
+    def obtener_marcas(self) -> List[Marca]:
+            try:
+                return self._insumo_dao.obtener_marcas()
+            except mysql.connector.Error as err:
+                raise IndexError(f"Servicio: Error al consultar las marcas: {err}")
+        
     def actualizar_insumo(self, insumo_act:Insumo):
         try:
             self._insumo_dao.actualizar_insumo(insumo=insumo_act)
