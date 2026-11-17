@@ -12,12 +12,14 @@ from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
 from daos.menu_dao import MenuDAO
 from daos.insumo_dao import InsumoDAO
+from daos.compra_dao import CompraDAO
 
 from datetime import date
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
 from services.insumo_servicio import InsumoServicio
+
 
 from models.insumo import Insumo
 from models.insumo import TipoInsumo
@@ -51,7 +53,7 @@ def testeando_crud_menus():
 def testeando_crud_insumos():
     connection:DatabaseConnection = DatabaseConnection()
     insumo_dao = InsumoDAO(connection)
-    insumo_servicio = InsumoServicio(insumo_dao=insumo_dao)
+    insumo_servicio = InsumoServicio(insumo_dao=insumo_dao,compra_dao=CompraDAO(connection))
 
     for compra in insumo_servicio.obtener_compras():
         print(f'Compra: {compra.num} - Fecha Compra: {compra.fecha_creacion}')

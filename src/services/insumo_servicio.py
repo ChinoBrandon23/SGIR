@@ -2,6 +2,7 @@
 import mysql.connector
 from mysql.connector import Error
 from daos.insumo_dao import InsumoDAO
+from daos.compra_dao import CompraDAO
 from models.marca import Marca
 from models.tipo_insumo import TipoInsumo
 from models.insumo import Insumo
@@ -10,15 +11,15 @@ from models.compra import Compra, DetalleCompra
 from typing import List
 
 class InsumoServicio:
-    def __init__(self, insumo_dao:InsumoDAO):
+    def __init__(self, insumo_dao:InsumoDAO, compra_dao:CompraDAO):
         self._insumo_dao = insumo_dao
-
+        self._compra_dao = compra_dao
 
     def obtener_compras(self) -> List[Compra]:
         try:
-            return self._insumo_dao.obtener_compras()
+            return self._compra_dao.obtener_compras()
         except mysql.connector.Error as err:
-            raise IndexError(f'Servicio: Error al obtener los insumos. {err}')
+            raise IndexError(f'Servicio: Error al obtener las compras. {err}')
 
     def obtener_insumo_por_nombre(self, nombre_ins:str):
         pass
