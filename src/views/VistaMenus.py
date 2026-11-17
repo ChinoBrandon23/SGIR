@@ -33,10 +33,11 @@ class VistaMenus(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_menu = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
-        self.layout["contenido"].split_column(Layout(name="main"), Layout(name="opciones"))
+        self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
-        self.mostrar_todos_menus()
+        self.mostrar_todos_menus(0, 0)
         self.crear_banda_opciones_principal()
 
     def resetear_vista(self):
@@ -49,10 +50,11 @@ class VistaMenus(VistaBase):
 
         self.crear_banda_opciones_principal()
 
-    def mostrar_todos_menus(self):
+    def mostrar_todos_menus(self, pag_actual, total_pag):
         self.resetear_vista()
 
         self.layout["main"].update(Align.center(self.tabla_menus, vertical="top"))
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_menus(self):
         columnas = ["#", "Nombre", "Cantidad de platillos"]
@@ -63,13 +65,14 @@ class VistaMenus(VistaBase):
     def crear_elemento_tabla_menus(self, menu: Menu):
         self.tabla_menus.add_row(str(menu.num), menu.nombre, str(menu.cantidad_platillos))
 
-    def mostrar_detalles_menu(self, menu: Menu | None, datos_editados, mapa_platillos):
+    def mostrar_detalles_menu(self, menu: Menu | None, pag_detalles_menu, pag_actual, total_pag, datos_editados, mapa_platillos):
         self.resetear_vista()
 
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
         self.layout["panel_menu"].size = 4
 
-        nombre_menu = f"{menu.nombre}**" if "nombre" in datos_editados else menu.nombre
+        nombre_menu = f"{menu.nombre}" if "nombre" in datos_editados else menu.nombre
 
         if menu.fecha_inicial and menu.fecha_final:
             vigencia_menu = f"{datetime.datetime.strftime(menu.fecha_inicial, "%d-%m-%Y")} a {datetime.date.strftime(menu.fecha_final, "%d-%m-%Y")}"
@@ -79,14 +82,14 @@ class VistaMenus(VistaBase):
         panel = Panel(renderable=f"{"[bold red]" if "nombre" in datos_editados else "[bold yellow]"}"
                                  f"{nombre_menu}\n"
                                  f"{"[/bold red]" if "nombre" in datos_editados else "[/bold yellow]"}"
-                                 f"{"[bold red]" if "vigencia" in datos_editados else "[italic yellow]"}"
-                                 f"[bold white]Vigencia:[/bold white] {vigencia_menu}"
-                                 f"{"**[/bold red]" if "vigencia" in datos_editados else "[/italic yellow]"}")
+                                 f"{"[bold red]" if "vigencia" in datos_editados else "[yellow]"}"
+                                 f"[bold white]Vigencia:[/bold white] [italic]{vigencia_menu}[/italic]"
+                                 f"{"[/bold red]" if "vigencia" in datos_editados else "[yellow]"}")
 
         panel.height = 4
 
-        if menu and len(menu.detalles):
-            self.llenar_tabla_detalles_menu(menu.detalles, mapa_platillos, datos_editados["platillos"])
+        if menu and len(pag_detalles_menu):
+            self.llenar_tabla_detalles_menu(pag_detalles_menu, mapa_platillos, datos_editados["platillos"])
 
         self.layout["panel_menu"].update(panel)
         self.layout["tabla_detalles_menus"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
@@ -173,7 +176,7 @@ class VistaMenus(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Ver detalles de menú",
                     "[2] Crear menú",
-                    "[3] Filtrar búsqueda",
+                    "[3] Búsqueda avanzada",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -192,6 +195,23 @@ class VistaMenus(VistaBase):
                     "[2] Editar menú",
                     "[3] Eliminar menú",
                     "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por nombre",
+                    "[2] Por vigencia",
+                    "[3] Mostrar todo",
+                    "[M] Volver a menús"]
 
         opciones_columna.expand = True
 
@@ -237,8 +257,8 @@ class VistaMenus(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_menus_prompt(self):
-        self.input_menu_menus.imprimir("Selecciona una opción",
-                                       choices=["1", "2", "m"],
+        self.input_menu_menus.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                       choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
 
         if self.input_menu_menus.user_input is None:
@@ -254,9 +274,18 @@ class VistaMenus(VistaBase):
             self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_menus)
 
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3", "4"],
+                                         show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
     def mostrar_opciones_detalles_prompt(self):
-        self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m"],
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                          choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -273,8 +302,8 @@ class VistaMenus(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
-        self.input_menu_editar_menu.imprimir("Selecciona una opción",
-                                               choices=["1", "2", "3", "4", "5", "m"],
+        self.input_menu_editar_menu.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                               choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                show_choices=False)
 
         if self.input_menu_editar_menu.user_input is None:
@@ -313,8 +342,8 @@ class VistaMenus(VistaBase):
         return None, None
 
     def mostrar_editar_platillos_menu_prompt(self):
-        self.input_menu_editar_platillo.imprimir("Selecciona una opción",
-                                                 choices=["1","2","3","4"], show_choices=False)
+        self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                                 choices=["1","2","3","4", ",", "."], show_choices=False)
 
     def mostrar_agregar_platillo_prompt(self, opciones):
         if len(opciones) == 0:
@@ -378,6 +407,29 @@ class VistaMenus(VistaBase):
 
         return None
 
+    def mostrar_buscar_por_nombre_prompt(self):
+        nombre = ""
+
+        while len(nombre) == 0:
+            self.refrescar_pantalla()
+            nombre = Prompt.ask("[bold yellow]Ingresa el nombre a buscar[/bold yellow]")
+
+        return nombre
+
+    def mostrar_buscar_por_vigencia_prompt(self):
+        fecha_inicial = ""
+        fecha_final = ""
+
+        while len(fecha_inicial) == 0:
+            self.refrescar_pantalla()
+            fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial de búsqueda en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        while len(fecha_final) == 0:
+            self.refrescar_pantalla()
+            fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final de búsqueda en el sigueinte formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        return fecha_inicial, fecha_final
+
     def mostrar_prompt_crear_menu(self):
         nombre = Prompt.ask("Para comenzar, ingresa el nombre del nuevo menú o 0 para cancelar")
 
@@ -390,18 +442,29 @@ class VistaMenus(VistaBase):
 
         return None
 
-    def paginar(self, items: list, num_pag: int):
-        lineas_disp = ((self.console.size[1] - 6) // 2) - 7
+    def mostrar_prompt_cambiar_pagina_menus(self):
+        mov = self.input_cambiar_pagina_menus.imprimir(
+            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
+            choices=[",", "."])
+        return mov
 
-        idx_inicio = (num_pag - 1) * lineas_disp
-        idx_final = idx_inicio + lineas_disp
+    def mostrar_conteo_paginas(self, pag_actual, pag_total):
+        paginas_columna = Columns()
+        paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
 
-        if idx_final < len(items) - 1:
-            prox_pag = True
-        else:
-            prox_pag = False
+        paginas_columna.expand = True
+        self.layout["banda_pagina"].size = 1
+        paginas_columna.add_renderable(Align.center(paginas))
 
-        return items[idx_inicio:idx_final], prox_pag
+        self.layout["banda_pagina"].update(paginas_columna)
+
+    def mostrar_mensaje_no_pagina_anterior(self):
+        rich.print("[bold green]Error: no hay página anterior")
+        time.sleep(2)
+
+    def mostrar_mensaje_no_pagina_siguiente(self):
+        rich.print("[bold green]Error: no hay página siguiente")
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:

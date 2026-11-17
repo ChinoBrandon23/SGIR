@@ -119,7 +119,7 @@ class RecetaDAO:
 
         except mysql.connector.Error as err:
             # manejo de errores de base de datos
-            print(f"Error al obtener recetas: {err}")
+            raise Error(f"DAO: Error al obtener recetas: {err}")
 
         finally:
             # devuelve el pool, incluso si hubo un error o un return antes
@@ -390,6 +390,7 @@ class RecetaDAO:
             if connection.is_connected():
                 connection.close()
 
+    ''' funciones de evaluacion '''
 
     def es_receta_de_ingrediente(self, num_receta:int):
         '''Valida que la receta no sea de un ingrediente.'''

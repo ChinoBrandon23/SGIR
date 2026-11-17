@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 import time
 
@@ -17,6 +18,9 @@ class ControladorPlatillos:
         self.platillo_actual = None
         self.formulario = {}
 
+        self.pagina_actual_lista_compras = 1
+        self.pagina_actual_lista_detalles = 1
+
         self.recetas_testeo = None
         self.categorias_testeo = self.crear_categorias_testeo()
         self.platillos_testeo = self.crear_platillos_testeo()
@@ -29,6 +33,10 @@ class ControladorPlatillos:
         self.vista.input_abrir_detalles.agregar_escuchante(self.mostrar_detalles_platillo)
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_seleccion_menu_editar)
+        self.vista.input_menu_filtros.agregar_escuchante(self.evaluar_seleccion_busqueda_av)
+
+        # Para cambio de páginas
+        self.vista.input_menu_platillos.agregar_escuchante(self.cambiar_pagina_lista_platillos)
 
     def crear_categorias_testeo(self):
         categoria1 = Categoria("PFUE", "Platillo fuerte")
@@ -58,15 +66,20 @@ class ControladorPlatillos:
 
         return [platillo1, platillo2]
 
-    def mostrar_lista_platillos(self):
+    def mostrar_lista_platillos(self, lista_compras=None):
         """
         Conecta con la capa de servicios para obtener la lista de platillos y crea un elemento de lista para cada una.
         """
 
-        self.vista.mostrar_todos_platillos()
+        self.vista.mostrar_todos_platillos(self.pagina_actual_lista_compras,
+                                         self.obtener_total_paginas(self.platillos_testeo))
 
-        for platillo in self.platillos_testeo:
-            self.vista.crear_elemento_tabla_platillos(platillo)
+        if lista_compras is None:
+            lista_compras, hay_prox_pag = self.paginar_lista_platillos(self.platillos_testeo,
+                                                                       self.pagina_actual_lista_compras)
+
+        for compra in lista_compras:
+            self.vista.crear_elemento_tabla_platillos(compra)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_platillos_prompt()
@@ -167,7 +180,9 @@ class ControladorPlatillos:
                     self.mostrar_lista_platillos()
             case "3":
                 # aquí debería haber filtros de búsqueda
-                pass
+                self.vista.crear_banda_opciones_busqueda_av()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_opciones_busqueda_av_prompt()
             case "m":
                 # cancela la edicion actual antes de volver al menu
                 self.cancelar_edicion_actual()
@@ -196,6 +211,48 @@ class ControladorPlatillos:
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
+
+    def evaluar_seleccion_busqueda_av(self, seleccion):
+        match seleccion:
+            case "1":
+                # buscar por nombre
+                nombre = self.vista.mostrar_buscar_por_nombre_prompt()
+
+                # Digamos que por aquí se valída o algo así, la vdd no sé si se deba validar siendo una búsqueda
+                # no creo que un empleado quiera hacer una inyección sql (??)
+
+                # Teniendo el nombre a buscar, se debería buscar con un servicio todos los platillos
+                # que tengan dicho nombre. Luego la var self.platillos_testeo deberá tomar esa lista como valor
+                # para que si el usuario vuelve a la vista anterior, no se pierdan los resultados de esta búsqueda
+                # Es decir, algo como:
+                # self.platillos_testeo = self.servicio.buscar_platillos_por_nombre(nombre)
+                # Creo que literal eso es lo único que se necesita insertar aquí debajo
+
+                # esta línea se queda aquí
+                self.mostrar_lista_platillos()
+            case "2":
+                # buscar por categoría
+                self.vista.mostrar_categorias_disponibles(self.categorias_testeo)
+                self.vista.refrescar_pantalla()
+
+                opciones = [str(i + 1) for i in range(len(self.categorias_testeo))]
+                num_cat = self.vista.mostrar_buscar_por_categoria_prompt(opciones)
+
+                categoria_clave = [self.categorias_testeo[i] for i in range(len(self.categorias_testeo)) if i == int(num_cat) - 1][0].clave
+
+                # mismas instrucciones que arriba básicamente
+
+                self.mostrar_lista_platillos()
+
+            case "3":
+                # Restablece los resultados para mostrarlos todos, algo como así:
+                # self.platillos_testeo = self.servicio.obtener_todos_platillos()
+
+                self.mostrar_lista_platillos()
+
+            case "4":
+                # aquí no se debe hacer nada extra, es solo para volver a la vista principal de platillos
+                self.mostrar_lista_platillos()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
         match seleccion:
@@ -261,3 +318,49 @@ class ControladorPlatillos:
             case "m":
                 # vuelve al menú
                 self.cancelar_edicion_actual()
+
+    def cambiar_pagina_lista_platillos(self, mov):
+        if mov == ",":
+            if self.pagina_actual_lista_compras == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+                self.mostrar_lista_platillos()
+            else:
+                self.pagina_actual_lista_compras -= 1
+                pagina, hay_sig_pag = self.paginar_lista_platillos(self.platillos_testeo,
+                                                                   self.pagina_actual_lista_compras)
+                self.mostrar_lista_platillos(pagina)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_platillos(self.platillos_testeo, self.pagina_actual_lista_compras)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+                self.mostrar_lista_platillos()
+            else:
+                self.pagina_actual_lista_compras += 1
+                pagina, hay_sig_pag = self.paginar_lista_platillos(self.platillos_testeo,
+                                                                   self.pagina_actual_lista_compras)
+                self.mostrar_lista_platillos(pagina)
+
+    def paginar_lista_platillos(self, items: list, num_pag: int):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items) - 1:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas(self, items: list):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 7
+
+        return math.ceil(len(items) / lineas_disp)

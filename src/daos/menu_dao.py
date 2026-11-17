@@ -214,7 +214,8 @@ class MenuDAO:
     ''' funciones de creacion '''
 
     def crear_menu(self, menu:Menu) -> Menu:
-        '''Crea un menu en la BD y regresa el menu de la actualizado de la BD.'''
+        '''Crea un menu vacio en la BD y 
+        regresa el numero de menu de lo actualizado de la BD.'''
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
@@ -244,6 +245,7 @@ class MenuDAO:
                 connection.close()
 
     ''' funciones de actualizacion '''
+
     def actualizar_menu_completo(self, menu:Menu):
         '''Actualiza el encabezado del menu y sincroniza todos sus platillos en una sola transaccion.'''
         connection = self.db.get_connection()
@@ -267,12 +269,13 @@ class MenuDAO:
                 # consulta que platillos existen actualmente en la BD para este menu
                 sql_actuales = 'SELECT platillo FROM menu_platillo WHERE menu = %s;'
                 cursor.execute(sql_actuales, (menu.num,))
+                # obtiene los numeros de platillo del menu en la BD en una lista 
                 platillos_num_bd = [fila['platillo'] for fila in cursor.fetchall()]
 
-                # conjunto de ids que el usuario tiene ahora en el menu
+                # conjunto de ids que el usuario tiene ahora en el menu (nuevos platillos)
                 ids_en_formulario = set()
 
-                # iteracion de inserts y updates (sobre la misma conexion y cursor)
+                # iteracion de inserts y updates
                 for detalle in menu.detalles:
                     plat_id = detalle.platillo.num
                     ids_en_formulario.add(plat_id)
@@ -303,7 +306,7 @@ class MenuDAO:
                         cursor.execute(sql_delete, (menu.num, plat_id))
 
                 # solo un commit para todo
-                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien:)
                 connection.commit()
 
         except mysql.connector.Error as err:
@@ -340,7 +343,7 @@ class MenuDAO:
                 connection.commit()
 
         except mysql.connector.Error as err:
-            # si cualquiera de los updates, inserts o select fallo:
+            # si cualquiera de los updates, inserts o select fallo
             connection.rollback()
             raise Error(f"DAO: Error en la transaccion al eliminar menu: {err}")
         finally:

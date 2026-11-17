@@ -1,9 +1,12 @@
 import copy
+import sys
 import time
 
 from models.ingrediente import Ingrediente
 from models.insumo import Insumo
+from models.marca import Marca
 from models.receta import Receta
+from models.tipo_insumo import TipoInsumo
 from views.VistaRecetas import VistaRecetas
 
 from services.receta_servicio import RecetaServicio
@@ -17,6 +20,7 @@ class ControladorRecetas:
         self.ing_idx = {}
 
         self.recetas_testeo = self.servicio.obtener_recetas()
+        self.insumos_testeo = self.crear_insumos_testeo()
 
         self.configurar_listeners()
         self.mostrar_lista_recetas()
@@ -28,6 +32,18 @@ class ControladorRecetas:
         self.vista.input_menu_editar_receta.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_menu_editar_ing.agregar_escuchante(self.evaluar_seleccion_editar_ing)
         self.vista.input_menu_editar_inst.agregar_escuchante(self.evaluar_seleccion_editar_inst)
+
+    def crear_insumos_testeo(self):
+        marca1 = Marca(1, "El Rosal")
+        marca2 = Marca(2, "Tradi-Pan")
+
+        tipo1 = TipoInsumo("HARI", "Harinas")
+        tipo2 = TipoInsumo("PANA", "Panadería")
+
+        insumo1 = Insumo(1, "Harina de Trigo", umbral=5, stock=10, tipo_insumo=tipo1, marca=marca1)
+        insumo2 = Insumo(2, "Levadura", umbral=5, stock=10, tipo_insumo=tipo2, marca=marca2)
+
+        return [insumo1, insumo2]
 
     def mostrar_lista_recetas(self):
         """
@@ -151,6 +167,16 @@ class ControladorRecetas:
                             idx = 1
                         self.ing_idx[idx] = ing_dict["nombre"]
 
+    def usuario_esta_editando(self):
+        # checa si el usuario ha hecho cambios desde que entró a la vista de detalles
+        if len(self.formulario.items()) > 3 or len(self.formulario["ingredientes"]) or len(self.formulario["instrucciones"]):
+            return True
+        return False
+
+    def cancelar_edicion_actual(self):
+        self.receta_actual = None
+        self.formulario = {"ingredientes": [], "instrucciones": [], "item_borrado": False}
+
     def evaluar_seleccion_menu_recetas(self, seleccion):
         match seleccion:
             case "1":
@@ -247,15 +273,34 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # crear nuevo ingrediente
-                ingrediente_raw = self.vista.mostrar_crear_ingrediente_prompt()
-                if ingrediente_raw is not None:
-                    #  válida y convierte str a dict
-                    ingrediente_raw = [ing.strip() for ing in ingrediente_raw.split(",")]
-                    ingrediente_dict = {"nombre": ingrediente_raw[0],
-                                        "cantidad": ingrediente_raw[1],
-                                        "unidad_m": ingrediente_raw[2]}
+                seleccion_ingrediente = self.vista.mostrar_crear_ingrediente_prompt()
 
-                    self.agregar_edicion_ingrediente(ingrediente_dict)
+                if seleccion_ingrediente == "1":
+                    # creando ingrediente basado en insumo
+                    # aquí debería obtener la lista de insumos existentes y que no se repiten ya en la receta actual
+                    # para evitar ingredientes duplicados
+                    for ing in self.receta_actual.lista_ingredientes:
+                        if ing.ingrediente.insumo != None:
+                            print(f"ingrediente de insumo {ing.ingrediente.insumo.nombre}")
+                        elif ing.ingrediente.receta != None:
+                            print(f"ingrediente receta {ing.ingrediente.receta.nombre}")
+                        else:
+                            print("ninguno")
+
+                    lista_insumos_actuales = [ing.ingrediente.insumo.nombre for ing in self.receta_actual.lista_ingredientes]
+                    idx_ins_disp = {i + 1: self.insumos_testeo[i] for i in range(len(self.insumos_testeo)) if
+                                    self.insumos_testeo[i].nombre not in lista_insumos_actuales}
+                    opciones = [str(i) for i in idx_ins_disp]
+                    lista_ins_disp = [idx_ins_disp[idx] for idx in idx_ins_disp]
+
+                    self.vista.mostrar_insumos_disponibles(lista_ins_disp)
+                    sys.exit()
+
+                else:
+                    # creando ingrediente basado en receta
+                    # aquí debería sacar la lista de todas las recetas, tomando en cuenta que sean únicamente aquellas
+                    # que se componen de ingredientes simples (basados en insumos) para evitar mucha recursión
+                    pass
 
                 self.mostrar_detalles_receta()
 

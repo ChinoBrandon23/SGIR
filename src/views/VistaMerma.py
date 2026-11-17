@@ -1,6 +1,8 @@
 import subprocess
 import os
+import time
 
+import rich
 from rich.align import Align
 from rich.layout import Layout
 from rich.panel import Panel
@@ -30,10 +32,11 @@ class VistaMerma(VistaBase):
         self.input_abrir_detalles = InputEmisor()
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_merma = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
-        self.layout["contenido"].split_column(Layout(name="main"), Layout(name="opciones"))
+        self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
-        self.mostrar_toda_merma()
+        self.mostrar_toda_merma(0, 0)
         self.crear_banda_opciones_principal()
 
     def resetear_vista(self):
@@ -47,10 +50,11 @@ class VistaMerma(VistaBase):
 
         self.crear_banda_opciones_principal()
 
-    def mostrar_toda_merma(self):
+    def mostrar_toda_merma(self, pag_actual, total_pag):
         self.resetear_vista()
 
         self.layout["main"].update(Align.center(self.tabla_merma, vertical="top"))
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_merma(self):
         columnas = ["#", "Fecha", "Cantidad", "Unidad de medida", "Insumo", "Tipo de merma"]
@@ -76,9 +80,9 @@ class VistaMerma(VistaBase):
         self.layout["panel_merma"].size = 5
 
         panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma else ""}\n"
-                                 f"Fecha: {"[bold red]" if "fecha" in datos_editados else ""}"
+                                 f"[bold white]Fecha:[/bold white] {"[bold red]" if "fecha" in datos_editados else ""}"
                                  f"{(str(merma.fecha)) if merma else ""}{"[/bold red]" if "fecha" in datos_editados else ""}\n"
-                                 f"Tipo de merma: {"[bold red]" if "tipo" in datos_editados else ""}{(str(merma.tipo_merma.nombre)) if merma else ""}"
+                                 f"[bold white]Tipo de merma:[/bold white] {"[bold red]" if "tipo" in datos_editados else ""}{(str(merma.tipo_merma.nombre)) if merma else ""}"
                                  f"{"[/bold red]" if "tipo" in datos_editados else ""}")
 
         panel.height = 5
@@ -110,7 +114,10 @@ class VistaMerma(VistaBase):
         for i in range(len(lista_tipo_merma)):
             tabla.add_row(str(i+1), lista_tipo_merma[i].nombre)
 
-        self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
+        try:
+            self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
+        except KeyError:
+            self.layout["main"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_insumos_disponibles(self, lista_insumos:list[Insumo]):
         columnas = ["#", "Nombre"]
@@ -155,7 +162,7 @@ class VistaMerma(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Ver detalles de merma",
                     "[2] Registrar merma",
-                    "[3] Filtrar búsqueda",
+                    "[3] Búsqueda avanzada",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -173,6 +180,24 @@ class VistaMerma(VistaBase):
                     "[1] Volver a mermas",
                     "[2] Editar merma",
                     "[3] Eliminar merma",
+                    "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por rango de fecha",
+                    "[2] Por tipo de merma",
+                    "[3] Por insumo",
+                    "[4] Eliminar merma",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -205,8 +230,8 @@ class VistaMerma(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_merma_prompt(self):
-        self.input_menu_merma.imprimir("Selecciona una opción",
-                                       choices=["1", "2", "m"],
+        self.input_menu_merma.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                       choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
 
         if self.input_menu_merma.user_input is None:
@@ -226,6 +251,15 @@ class VistaMerma(VistaBase):
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m"],
                                           show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3", "4"],
+                                         show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
             self.refrescar_pantalla()
@@ -346,6 +380,30 @@ class VistaMerma(VistaBase):
             else:
                 return None
 
+    def mostrar_buscar_por_rango_fecha_prompt(self):
+        fecha_inicial = ""
+        fecha_final = ""
+
+        while len(fecha_inicial) == 0:
+            self.refrescar_pantalla()
+            fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        while len(fecha_final) == 0:
+            self.refrescar_pantalla()
+            fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        return fecha_inicial, fecha_final
+
+    def mostrar_buscar_por_tipo_insumo_prompt(self, opciones):
+        tipo_num = Prompt.ask("Selecciona el tipo de insumo a buscar", choices=opciones, show_choices=False)
+
+        return tipo_num
+
+    def mostrar_buscar_por_insumo_prompt(self, opciones):
+        insumo_num = Prompt.ask("Selecciona el tipo de insumo a buscar", choices=opciones, show_choices=False)
+
+        return insumo_num
+
     def mostrar_prompt_registrar_insumo_merma(self, opciones):
         self.refrescar_pantalla()
 
@@ -361,18 +419,23 @@ class VistaMerma(VistaBase):
         else:
             return None
 
-    def paginar(self, items: list, num_pag: int):
-        lineas_disp = ((self.console.size[1] - 6) // 2) - 6
+    def mostrar_conteo_paginas(self, pag_actual, pag_total):
+        paginas_columna = Columns()
+        paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
 
-        idx_inicio = (num_pag - 1) * lineas_disp
-        idx_final = idx_inicio + lineas_disp
+        paginas_columna.expand = True
+        self.layout["banda_pagina"].size = 1
+        paginas_columna.add_renderable(Align.center(paginas))
 
-        if idx_final < len(items) - 1:
-            prox_pag = True
-        else:
-            prox_pag = False
+        self.layout["banda_pagina"].update(paginas_columna)
 
-        return items[idx_inicio:idx_final], prox_pag
+    def mostrar_mensaje_no_pagina_anterior(self):
+        rich.print("[bold green]Error: no hay página anterior")
+        time.sleep(2)
+
+    def mostrar_mensaje_no_pagina_siguiente(self):
+        rich.print("[bold green]Error: no hay página siguiente")
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:

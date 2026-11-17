@@ -15,10 +15,10 @@ class RecetaServicio:
     def obtener_recetas(self):
         '''Obtiene todas las receteas del sistema.'''
         lista_recetas: List[Receta] = []
-        lista_recetas = self._receta_dao.obtener_recetas()  # pyright: ignore[reportAssignmentType]
+        lista_recetas = self._receta_dao.obtener_recetas()  
         for receta in lista_recetas:
             receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
-            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):  # pyright: ignore[reportOptionalIterable]
+            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):  
                 receta.agregarIngrediente(
                     ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],insumo=None,receta=None),
                     cantidad=fila['Cantidad'],

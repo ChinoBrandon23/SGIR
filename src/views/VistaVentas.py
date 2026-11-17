@@ -33,10 +33,11 @@ class VistaVentas(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar = InputEmisor()
         self.input_menu_editar_consumo = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
-        self.layout["contenido"].split_column(Layout(name="main"), Layout(name="opciones"))
+        self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
-        self.mostrar_todas_ventas()
+        self.mostrar_todas_ventas(0, 0)
         self.crear_banda_opciones_principal()
 
     def resetear_vista(self):
@@ -49,10 +50,11 @@ class VistaVentas(VistaBase):
 
         self.crear_banda_opciones_principal()
 
-    def mostrar_todas_ventas(self):
+    def mostrar_todas_ventas(self, pag_actual, total_pag):
         self.resetear_vista()
 
         self.layout["main"].update(Align.center(self.tabla_ventas, vertical="top"))
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_ventas(self):
         columnas = ["#", "Fecha", "Número de comensales", "Monto total"]
@@ -71,9 +73,9 @@ class VistaVentas(VistaBase):
         self.layout["panel_venta"].size = 6
 
         panel = Panel(renderable=f"[bold yellow]Venta #{str(venta.num)}\n"
-                                 f"Fecha: {str(venta.fecha)}\n"
-                                 f"Comensales servidos: {str(venta.numero_comensales)}\n"
-                                 f"Monto total: ${str(venta.monto_total)}"
+                                 f"[bold white]Fecha:[/bold white] {str(venta.fecha)}\n"
+                                 f"[bold white]Comensales servidos:[/bold white] {str(venta.numero_comensales)}\n"
+                                 f"[bold white]Monto total:[/bold white] ${str(venta.monto_total)}"
                                  f"[/bold yellow]")
 
         panel.height = 6
@@ -197,6 +199,22 @@ class VistaVentas(VistaBase):
 
         self.layout["opciones"].update(opciones_columna)
 
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por rango de fecha",
+                    "[2] Mostrar todo",
+                    "[3] Volver a menús"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
     def crear_banda_opciones_editar(self):
         opciones_columna = Columns()
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
@@ -232,8 +250,8 @@ class VistaVentas(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_ventas_prompt(self):
-        self.input_menu_ventas.imprimir("Selecciona una opción",
-                                        choices=["1", "2", "m"],
+        self.input_menu_ventas.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                        choices=["1", "2", "3", "m", ",", "."],
                                         show_choices=False)
 
         if self.input_menu_ventas.user_input is None:
@@ -251,8 +269,17 @@ class VistaVentas(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m"],
+                                          choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3"],
+                                         show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
             self.refrescar_pantalla()
@@ -269,7 +296,7 @@ class VistaVentas(VistaBase):
 
     def mostrar_opciones_editar_prompt(self):
         self.input_menu_editar.imprimir("Selecciona una opción",
-                                        choices=["1", "2", "3", "4", "5", "m"],
+                                        choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                         show_choices=False)
 
         if self.input_menu_editar.user_input is None:
@@ -278,7 +305,7 @@ class VistaVentas(VistaBase):
 
     def mostrar_opciones_editar_consumo_prompt(self):
         self.input_menu_editar_consumo.imprimir("Selecciona una opción",
-                                        choices=["1", "2", "3", "4"],
+                                        choices=["1", "2", "3", "4", ",", "."],
                                         show_choices=False)
 
         if self.input_menu_editar.user_input is None:
@@ -403,6 +430,20 @@ class VistaVentas(VistaBase):
 
         return num
 
+    def mostrar_buscar_por_rango_fecha_prompt(self):
+        fecha_inicial = ""
+        fecha_final = ""
+
+        while len(fecha_inicial) == 0:
+            self.refrescar_pantalla()
+            fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        while len(fecha_final) == 0:
+            self.refrescar_pantalla()
+            fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+        return fecha_inicial, fecha_final
+
     def mostrar_prompt_crear_venta(self):
         fecha = ""
         num_comensales = ""
@@ -421,18 +462,23 @@ class VistaVentas(VistaBase):
 
         return fecha, num_comensales
 
-    def paginar(self, items: list, num_pag: int):
-        lineas_disp = ((self.console.size[1] - 6) // 2) - 6
+    def mostrar_conteo_paginas(self, pag_actual, pag_total):
+        paginas_columna = Columns()
+        paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
 
-        idx_inicio = (num_pag - 1) * lineas_disp
-        idx_final = idx_inicio + lineas_disp
+        paginas_columna.expand = True
+        self.layout["banda_pagina"].size = 1
+        paginas_columna.add_renderable(Align.center(paginas))
 
-        if idx_final < len(items) - 1:
-            prox_pag = True
-        else:
-            prox_pag = False
+        self.layout["banda_pagina"].update(paginas_columna)
 
-        return items[idx_inicio:idx_final], prox_pag
+    def mostrar_mensaje_no_pagina_anterior(self):
+        rich.print("[bold green]Error: no hay página anterior")
+        time.sleep(2)
+
+    def mostrar_mensaje_no_pagina_siguiente(self):
+        rich.print("[bold green]Error: no hay página siguiente")
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         subprocess.run('cls' if os.name == 'nt' else 'clear')
