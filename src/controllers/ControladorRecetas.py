@@ -24,7 +24,7 @@ class ControladorRecetas:
         self.pagina_actual_lista_compras = 1
         self.pagina_actual_lista_detalles = 1
 
-        self.recetas_testeo = None
+        self.recetas_a_mostrar = None
 
         self.configurar_listeners()
         self.mostrar_lista_recetas()
@@ -41,22 +41,22 @@ class ControladorRecetas:
         # Para cambiar de página
         self.vista.input_menu_recetas.agregar_escuchante(self.cambiar_pagina_lista_recetas)
 
-    def mostrar_lista_recetas(self, lista_recetas=None):
+    def mostrar_lista_recetas(self, pag_lista_recetas=None):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
 
         """
-        if self.recetas_testeo is None:
-            self.recetas_testeo = self.servicio.obtener_recetas()
+        if self.recetas_a_mostrar is None:
+            self.recetas_a_mostrar = self.servicio.obtener_recetas()
 
         self.vista.mostrar_todas_recetas(self.pagina_actual_lista_compras,
-                                         self.obtener_total_paginas_lista_compras(self.recetas_testeo))
+                                         self.obtener_total_paginas_lista_compras(self.recetas_a_mostrar))
 
-        if lista_recetas is None:
-            lista_recetas, hay_prox_pag = self.paginar_lista_recetas(self.recetas_testeo,
-                                                                     self.pagina_actual_lista_compras)
+        if pag_lista_recetas is None:
+            pag_lista_recetas, hay_prox_pag = self.paginar_lista_recetas(self.recetas_a_mostrar,
+                                                                         self.pagina_actual_lista_compras)
 
-        for receta in lista_recetas:
+        for receta in pag_lista_recetas:
             self.vista.crear_elemento_tabla_recetas(receta)
 
         self.vista.refrescar_pantalla()
@@ -101,7 +101,7 @@ class ControladorRecetas:
         else:
             self.servicio.crear_receta(self.receta_actual)
             receta_actual_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
-            self.recetas_testeo = self.servicio.obtener_recetas()
+            self.recetas_a_mostrar = self.servicio.obtener_recetas()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
@@ -143,8 +143,8 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las recetas y pasarlas
-                self.recetas_testeo = self.servicio.obtener_recetas()
-                self.vista.mostrar_abrir_detalles_prompt(self.recetas_testeo)
+                self.recetas_a_mostrar = self.servicio.obtener_recetas()
+                self.vista.mostrar_abrir_detalles_prompt(self.recetas_a_mostrar)
             case "2":
                 # Aquí crea receta
                 self.mostrar_formulario_crear_receta()
@@ -194,22 +194,19 @@ class ControladorRecetas:
                 # buscar por nombre
                 nombre = self.vista.mostrar_buscar_por_nombre_prompt()
 
-                # busca el nombre validado con un servicio y la lista resultante se asigna a self.recetas_testeo
-
+                self.recetas_a_mostrar = self.servicio.obtener_recetas_por_match_nombre(nombre)
                 self.mostrar_lista_recetas()
 
             case "2":
                 # buscar por num porciones
                 num_porciones = self.vista.mostrar_buscar_por_porciones_prompt()
 
-                # usa el num_porciones para buscar por num de porciones, y se asigna a self.compras_testeo como arriba
-
+                self.recetas_a_mostrar = self.servicio.obtener_recetas_por_num_porciones(int(num_porciones))
                 self.mostrar_lista_recetas()
 
             case "3":
                 # buscar todos (restaurar búsqueda)
-                self.recetas_testeo = self.servicio.obtener_recetas()
-
+                self.recetas_a_mostrar = self.servicio.obtener_recetas()
                 self.mostrar_lista_recetas()
 
             case "4":
@@ -253,7 +250,7 @@ class ControladorRecetas:
                 self.guardar_receta()
             case "6":
                 # cancela la edición actual y vuelve a detalles
-                if self.receta_actual.num in [receta.num for receta in self.recetas_testeo]:
+                if self.receta_actual.num in [receta.num for receta in self.recetas_a_mostrar]:
                     self.cancelar_edicion_actual()
                     self.mostrar_detalles_receta(self.vista.input_abrir_detalles.user_input)
                 else:
@@ -419,17 +416,17 @@ class ControladorRecetas:
                 self.mostrar_lista_recetas()
             else:
                 self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_testeo, self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_compras)
                 self.mostrar_lista_recetas(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_recetas(self.recetas_testeo, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_compras)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_recetas()
             else:
                 self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_testeo, self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_compras)
                 self.mostrar_lista_recetas(pagina)
 
     def paginar_lista_recetas(self, items: list, num_pag: int):

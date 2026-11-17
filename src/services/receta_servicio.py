@@ -16,7 +16,7 @@ class RecetaServicio:
         self._receta_dao = receta_dao
 
     def obtener_recetas(self):
-        '''Obtiene todas las receteas del sistema.'''
+        '''Obtiene todas las recetas del sistema.'''
         lista_recetas: List[Receta] = []
         lista_recetas = self._receta_dao.obtener_recetas()  
         for receta in lista_recetas:
@@ -206,3 +206,38 @@ class RecetaServicio:
         lista_ingredientes = self._receta_dao.obtener_ingredientes_basados_en_receta()
 
         return lista_ingredientes
+
+    def obtener_recetas_por_match_nombre(self, nombre_receta:str):
+        lista_recetas: List[Receta] = []
+        lista_recetas = self._receta_dao.obtener_recetas_por_match_nombre(nombre_receta)
+        for receta in lista_recetas:
+            receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
+            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):
+                receta.agregarIngrediente(
+                    ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                            insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila[
+                                                'NumInsumo'] else None,
+                                            receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila[
+                                                'NumRecetaIngrediente'] else None),
+                    cantidad=fila['Cantidad'],
+                    unidad_medida=fila['uniMedida']
+                )
+        return lista_recetas
+
+    def obtener_recetas_por_num_porciones(self, num_porciones:int):
+        lista_recetas: List[Receta] = []
+        lista_recetas = self._receta_dao.obtener_recetas_por_num_porciones(num_porciones)
+
+        for receta in lista_recetas:
+            receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
+            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):
+                receta.agregarIngrediente(
+                    ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                            insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila[
+                                                'NumInsumo'] else None,
+                                            receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila[
+                                                'NumRecetaIngrediente'] else None),
+                    cantidad=fila['Cantidad'],
+                    unidad_medida=fila['uniMedida']
+                )
+        return lista_recetas

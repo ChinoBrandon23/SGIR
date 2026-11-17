@@ -152,6 +152,60 @@ class RecetaDAO:
             if connection.is_connected():
                 connection.close()
 
+    def obtener_recetas_por_match_nombre(self, nombre_receta):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = f"SELECT num NumReceta, nombre NomReceta, numPorciones NumPor FROM receta WHERE nombre LIKE ('{nombre_receta}%')"
+                cursor.execute(sql)
+                filas = cursor.fetchall()
+
+                lista_recetas: List[Receta] = []
+                for fila in filas:
+                    nueva_receta = Receta(
+                        num=fila['NumReceta'],
+                        nombre=fila['NomReceta'],
+                        num_porciones=fila['NumPor'],
+                        instrucciones={})
+                    lista_recetas.append(nueva_receta)
+                return lista_recetas
+
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al obtener recetas: {err}")
+
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_recetas_por_num_porciones(self, num_porciones):
+        connection = self.db.get_connection()
+
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''SELECT num NumReceta, 
+                                nombre NomReceta, 
+                                numPorciones NumPor 
+                         FROM receta WHERE numPorciones = %s'''
+                cursor.execute(sql, (num_porciones,))
+                filas = cursor.fetchall()
+
+                lista_recetas: List[Receta] = []
+                for fila in filas:
+                    nueva_receta = Receta(
+                        num=fila['NumReceta'],
+                        nombre=fila['NomReceta'],
+                        num_porciones=fila['NumPor'],
+                        instrucciones={})
+                    lista_recetas.append(nueva_receta)
+                return lista_recetas
+
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al obtener recetas: {err}")
+
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     def obtener_instrucion_receta_por_id(self, num_receta:int):
         """Obtiene todas las instrucciones de una receta."""
         connection = self.db.get_connection()
