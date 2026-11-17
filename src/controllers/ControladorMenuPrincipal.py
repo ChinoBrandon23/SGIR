@@ -8,6 +8,9 @@ from controllers.ControladorMerma import ControladorMerma
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
+from daos.compra_dao import CompraDAO
+from daos.insumo_dao import InsumoDAO
+from services.insumo_servicio import InsumoServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
@@ -74,7 +77,8 @@ class ControladorMenuPrincipal:
 
         receta_dao = RecetaDAO(DatabaseConnection)
         receta_servicio = RecetaServicio(receta_dao=receta_dao)
-        ControladorRecetas(vista,servicio=receta_servicio)
+
+        ControladorRecetas(vista, servicio_receta=receta_servicio)
 
     def abrir_vista_platillos(self):
         vista = VistaPlatillos(self.vista.console)
@@ -112,7 +116,10 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_inventario.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorInventario(vista)
+        insumo_dao = InsumoDAO(DatabaseConnection)
+        compra_dao = CompraDAO(DatabaseConnection)
+        insumo_servicio = InsumoServicio(insumo_dao=insumo_dao, compra_dao=compra_dao)
+        ControladorInventario(vista, insumo_servicio)
 
     def abrir_vista_merma(self):
         vista = VistaMerma(self.vista.console)
