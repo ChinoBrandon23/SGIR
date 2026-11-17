@@ -8,7 +8,7 @@ from models.insumo import Insumo
 from models.marca import Marca
 from models.receta import Receta
 from models.tipo_insumo import TipoInsumo
-from services.insumo_servicio import InsumoServicio
+from services.inventario_servicio import InventarioServicio 
 from views.VistaRecetas import VistaRecetas
 
 from services.receta_servicio import RecetaServicio
