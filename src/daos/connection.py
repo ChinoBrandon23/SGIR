@@ -1,17 +1,10 @@
+import os
+from dotenv import load_dotenv
 from mysql.connector import pooling
 from mysql.connector.errors import PoolError
-from dotenv import load_dotenv, find_dotenv
-import os
 
-# Carga las variables del archivo .env
-load_dotenv(find_dotenv())
-
-# Validar que la contraseña exista para evitar sorpresas
-password = os.getenv("DB_PASSWORD")
-if not password:
-    raise ValueError(
-    "Falta configurar DB_PASSWORD en el archivo .env de esta rama"
-)
+# Esto busca el archivo .env y carga las variables
+load_dotenv()
 
 # Configuracion de la base de datos
 DB_CONFIG = {
@@ -21,8 +14,6 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD",""),
     "port": int(os.getenv("DB_PORT", 3306))
 }
-
-
 
 class DatabaseConnection:
     _pool = None
