@@ -194,15 +194,29 @@ class ControladorRecetas:
                 # buscar por nombre
                 nombre = self.vista.mostrar_buscar_por_nombre_prompt()
 
-                self.recetas_a_mostrar = self.servicio.obtener_recetas_por_match_nombre(nombre)
-                self.mostrar_lista_recetas()
+                recetas_encontradas = self.servicio.obtener_recetas_por_match_nombre(nombre)
+
+                if len(recetas_encontradas):
+                    self.recetas_a_mostrar = recetas_encontradas
+                    self.mostrar_lista_recetas()
+                else:
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
             case "2":
                 # buscar por num porciones
                 num_porciones = self.vista.mostrar_buscar_por_porciones_prompt()
 
-                self.recetas_a_mostrar = self.servicio.obtener_recetas_por_num_porciones(int(num_porciones))
-                self.mostrar_lista_recetas()
+                recetas_encontradas = self.servicio.obtener_recetas_por_num_porciones(int(num_porciones))
+
+                if len(recetas_encontradas):
+                    self.recetas_a_mostrar = recetas_encontradas
+                    self.mostrar_lista_recetas()
+                else:
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
             case "3":
                 # buscar todos (restaurar búsqueda)

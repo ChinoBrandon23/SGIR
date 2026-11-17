@@ -567,6 +567,10 @@ class VistaRecetas(VistaBase):
         rich.print("[bold green]Error: no hay página siguiente")
         time.sleep(2)
 
+    def mostrar_mensaje_no_resultados_busqueda_av(self):
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
+
     def refrescar_pantalla(self):
         try:
             subprocess.run('cls' if os.name == 'nt' else 'clear')
