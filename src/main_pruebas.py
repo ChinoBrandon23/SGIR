@@ -76,3 +76,5 @@ def testeando_crud_insumos():
 
 if __name__ == "__main__":
     main()
+
+
