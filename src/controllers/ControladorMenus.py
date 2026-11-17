@@ -19,7 +19,7 @@ class ControladorMenus:
         self.pagina_actual_lista_compras = 1
         self.pagina_actual_lista_detalles = 1
 
-        self.menus_testeo = self.servicio.obtener_menus()
+        self.menus_testeo = None
 
         self.configurar_listeners()
         self.mostrar_lista_menus()
@@ -39,24 +39,29 @@ class ControladorMenus:
         self.vista.input_menu_editar_menu.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
-    def mostrar_lista_menus(self, lista_menus=None):
+    def mostrar_lista_menus(self, pag_lista_menus=None):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
 
         #calcula el numero de recetas reales: se eliminara despues
-        self.menus_testeo = self.servicio.obtener_menus()
+        if self.menus_testeo is None:
+            self.menus_testeo = self.servicio.obtener_menus()
 
         for menu in self.menus_testeo:
             menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
 
+        # esta función en la vista resetea la vista y crea los layouts para mostrar la lista de menús
+        # se pasan como arg el núm de pág actual y el total de páginas para mostrar en el panel
         self.vista.mostrar_todos_menus(self.pagina_actual_lista_compras,
                                        self.obtener_total_paginas_lista_menus(self.menus_testeo))
 
-        if lista_menus is None:
-            lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+        # checa si tenemos pag_lista_menus actual para mostrar, si no, se obtiene la página actual
+        if pag_lista_menus is None:
+            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
 
-        for menu in lista_menus:
+        # se agregan a la tabla únicamente los elementos de la página actual
+        for menu in pag_lista_menus:
             self.vista.crear_elemento_tabla_menus(menu)
 
         self.vista.refrescar_pantalla()
