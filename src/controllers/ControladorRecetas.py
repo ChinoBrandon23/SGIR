@@ -92,15 +92,19 @@ class ControladorRecetas:
 
         self.vista.refrescar_pantalla()
 
-    def guardar_editar_receta(self):
+    def guardar_receta(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
-
-        self.servicio.actualizar_receta(self.receta_actual)
+        if self.servicio.receta_existe(self.receta_actual.num):
+            self.servicio.actualizar_receta(self.receta_actual)
+            receta_actual_num = self.receta_actual.num
+        else:
+            self.servicio.crear_receta(self.receta_actual)
+            receta_actual_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
+            self.recetas_testeo = self.servicio.obtener_recetas()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-        receta_actual_num = str(self.receta_actual.num)
         self.cancelar_edicion_actual()
         self.mostrar_detalles_receta(receta_actual_num)
 
@@ -147,9 +151,7 @@ class ControladorRecetas:
                 nombre, porciones = self.vista.mostrar_prompt_crear_receta()
                 if nombre is not None and porciones is not None:
                     # debería llamar al servicio para crear una receta nueva
-                    num = len(self.recetas_testeo) + 1
-                    self.receta_actual = Receta(num, nombre, porciones, {})
-                    self.servicio.crear_receta(receta=self.receta_actual)
+                    self.receta_actual = Receta(0, nombre, porciones, {})
                     self.mapear_ingredientes()
                     self.mostrar_formulario_crear_receta()
                 else:
@@ -248,7 +250,7 @@ class ControladorRecetas:
                 self.vista.mostrar_opciones_editar_inst_prompt()
             case "5":
                 # llama a la función para guardar receta
-                self.guardar_editar_receta()
+                self.guardar_receta()
             case "6":
                 # cancela la edición actual y vuelve a detalles
                 if self.receta_actual.num in [receta.num for receta in self.recetas_testeo]:
