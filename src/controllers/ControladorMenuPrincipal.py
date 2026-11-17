@@ -78,11 +78,7 @@ class ControladorMenuPrincipal:
         receta_dao = RecetaDAO(DatabaseConnection)
         receta_servicio = RecetaServicio(receta_dao=receta_dao)
 
-        insumo_dao = InsumoDAO(DatabaseConnection)
-        compra_dao = CompraDAO(DatabaseConnection)
-
-        insumo_servicio = InsumoServicio(insumo_dao=insumo_dao, compra_dao=compra_dao)
-        ControladorRecetas(vista, servicio_receta=receta_servicio, servicio_insumo=insumo_servicio)
+        ControladorRecetas(vista, servicio_receta=receta_servicio)
 
     def abrir_vista_platillos(self):
         vista = VistaPlatillos(self.vista.console)

@@ -13,10 +13,9 @@ from views.VistaRecetas import VistaRecetas
 from services.receta_servicio import RecetaServicio
 
 class ControladorRecetas:
-    def __init__(self, vista:VistaRecetas, servicio_receta:RecetaServicio, servicio_insumo:InsumoServicio):
+    def __init__(self, vista:VistaRecetas, servicio_receta:RecetaServicio):
         self.vista = vista
         self.servicio_receta = servicio_receta
-        self.servicio_insumo = servicio_insumo
         self.receta_actual = None
         self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
         self.ing_idx = {}
