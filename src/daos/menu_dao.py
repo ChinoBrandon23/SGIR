@@ -35,7 +35,7 @@ class MenuDAO:
             if connection.is_connected():
                 connection.close()
 
-    def obtener_menu_por_numero(self, num_menu:int) -> Menu:
+    def obtener_menu_por_numero(self, num_menu:int) -> Menu|None:
         '''obtiene un menu por su numero, justamente con sus platillos.'''
         connection = self.db.get_connection()
         try:
@@ -52,6 +52,10 @@ class MenuDAO:
                 '''
                 cursor.execute(sql,(num_menu,))
                 fila = cursor.fetchone()
+
+                if fila is None:
+                    return fila
+
                 lista_menus: List[Menu] = []
                 menu = Menu(
                         num=fila['numMenu'],
@@ -63,6 +67,43 @@ class MenuDAO:
                 try:
                     # agregando sus respectivos platillos al menu
                     for detalleMenu in self.obtener_platillos_de_menu(num_menu):
+                        menu.agregar_platillo(detalleMenu.platillo,detalleMenu.precio)
+                except mysql.connector.Error as err:
+                    raise Error(f'DAO: Error generico en la BD: {err}')
+                return menu
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error generico de mysql menus: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_menu_por_nombre(self, nombre_menu:str) -> Menu:
+        '''obtiene un menu por su nombre'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                    SELECT 
+                    m.num numMenu,
+                    m.nombre nombreMenu,
+                    m.cantidadPlatillos cantPlatillos,
+                    m.fechaInicial fechaInicial,
+                    m.fechaFinal fechaFinal
+                    FROM menu m
+                    WHERE m.nombre = %s;
+                '''
+                cursor.execute(sql, (nombre_menu,))
+                fila = cursor.fetchone()
+                lista_menus: List[Menu] = []
+                menu = Menu(
+                        num=fila['numMenu'],
+                        nombre=fila['nombreMenu'],
+                        cantidad_platillos=fila['cantPlatillos'],
+                        fecha_inicial=fila['fechaInicial'],
+                        fecha_final=fila['fechaFinal']
+                        )
+                try:
+                    for detalleMenu in self.obtener_platillos_de_menu(fila['numMenu']):
                         menu.agregar_platillo(detalleMenu.platillo,detalleMenu.precio)
                 except mysql.connector.Error as err:
                     raise Error(f'DAO: Error generico en la BD: {err}')
