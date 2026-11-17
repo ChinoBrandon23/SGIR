@@ -36,10 +36,11 @@ class VistaRecetas(VistaBase):
         self.input_menu_editar_receta = InputEmisor()
         self.input_menu_editar_ing = InputEmisor()
         self.input_menu_editar_inst = InputEmisor()
+        self.input_menu_filtros = InputEmisor()
 
-        self.layout["contenido"].split_column(Layout(name="main"), Layout(name="opciones"))
+        self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
-        self.mostrar_todas_recetas()
+        self.mostrar_todas_recetas(0, 0)
         self.crear_banda_opciones_principal()
 
     def resetear_vista(self):
@@ -54,10 +55,11 @@ class VistaRecetas(VistaBase):
 
         self.crear_banda_opciones_principal()
 
-    def mostrar_todas_recetas(self):
+    def mostrar_todas_recetas(self, pag_actual, total_pag):
         self.resetear_vista()
 
         self.layout["main"].update(Align.center(self.tabla_recetas, vertical="top"))
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_recetas(self):
         columnas = ["#", "Nombre"]
@@ -169,7 +171,7 @@ class VistaRecetas(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Ver detalles de receta",
                     "[2] Crear receta",
-                    "[3] Filtrar búsqueda",
+                    "[3] Búsqueda avanzada",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -188,6 +190,23 @@ class VistaRecetas(VistaBase):
                     "[2] Editar receta",
                     "[3] Eliminar receta",
                     "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_busqueda_av(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Por nombre",
+                    "[2] Por número de porciones",
+                    "[3] Mostrar todo",
+                    "[4] Volver a menús"]
 
         opciones_columna.expand = True
 
@@ -251,7 +270,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_menu_recetas_prompt(self):
         self.input_menu_recetas.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "m"],
+                                         choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_recetas.user_input is None:
@@ -271,6 +290,15 @@ class VistaRecetas(VistaBase):
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m"],
                                           show_choices=False)
+
+        if self.input_menu_detalles.user_input is None:
+            self.refrescar_pantalla()
+            self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_opciones_busqueda_av_prompt(self):
+        self.input_menu_filtros.imprimir("Selecciona una opción",
+                                         choices=["1", "2", "3", "4"],
+                                         show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
             self.refrescar_pantalla()
@@ -486,6 +514,24 @@ class VistaRecetas(VistaBase):
             else:
                 return None
 
+    def mostrar_buscar_por_nombre_prompt(self):
+        nombre = ""
+
+        while len(nombre) == 0:
+            self.refrescar_pantalla()
+            nombre = Prompt.ask("[bold yellow]Ingresa el nombre a buscar[/bold yellow]")
+
+        return nombre
+
+    def mostrar_buscar_por_porciones_prompt(self):
+        num_porciones = ""
+
+        while len(num_porciones) == 0:
+            self.refrescar_pantalla()
+            num_porciones = Prompt.ask("[bold yellow]Ingresa el número de porciones a buscar[/bold yellow]")
+
+        return num_porciones
+
     def mostrar_prompt_crear_receta(self):
         nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
 
@@ -504,18 +550,23 @@ class VistaRecetas(VistaBase):
 
         return None, None
 
-    def paginar(self, items:list, num_pag:int):
-        lineas_disp = ((self.console.size[1] - 6) // 2) - 6
+    def mostrar_conteo_paginas(self, pag_actual, pag_total):
+        paginas_columna = Columns()
+        paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
 
-        idx_inicio = (num_pag - 1) * lineas_disp
-        idx_final = idx_inicio + lineas_disp
+        paginas_columna.expand = True
+        self.layout["banda_pagina"].size = 1
+        paginas_columna.add_renderable(Align.center(paginas))
 
-        if idx_final < len(items) - 1:
-            prox_pag = True
-        else:
-            prox_pag = False
+        self.layout["banda_pagina"].update(paginas_columna)
 
-        return items[idx_inicio:idx_final], prox_pag
+    def mostrar_mensaje_no_pagina_anterior(self):
+        rich.print("[bold green]Error: no hay página anterior")
+        time.sleep(2)
+
+    def mostrar_mensaje_no_pagina_siguiente(self):
+        rich.print("[bold green]Error: no hay página siguiente")
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:
