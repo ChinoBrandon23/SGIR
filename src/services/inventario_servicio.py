@@ -10,7 +10,7 @@ from models.compra import Compra, DetalleCompra
 
 from typing import List
 
-class InsumoServicio:
+class InventarioServicio:
     def __init__(self, insumo_dao:InsumoDAO, compra_dao:CompraDAO):
         self._insumo_dao = insumo_dao
         self._compra_dao = compra_dao

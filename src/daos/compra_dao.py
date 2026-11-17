@@ -7,6 +7,7 @@ from models.proveedor import Proveedor
 import mysql.connector
 from mysql.connector import Error
 
+
 class CompraDAO:
     def __init__(self, db_connection):
         self.db = db_connection
@@ -95,5 +96,81 @@ class CompraDAO:
             if connection.is_connected():
                 connection.close()
 
-    ''' FUNCIONES DE UPDATE '''
+    def obtener_proveedores(self) -> List[Proveedor]:
+            '''Obtiene una lista de todas los proveedores disponibles.'''
+            connection = self.db.get_connection()
+            try:
+                with connection.cursor(dictionary=True) as cursor:
+                    sql = '''SELECT num, nombre FROM proveedor;'''
+                    cursor.execute(sql)
+                    filas = cursor.fetchall()
+    
+                    proveedores: List[Proveedor] = []
+    
+                    for fila in filas:
+                        proveedores.append(Proveedor(num=fila['num'],nombre=fila['nombre']))
+                    
+                    return proveedores
+            except mysql.connector.Error as err:
+                raise Error(f"DAO: Error al consultar los proovedores: {err}")
+            finally:
+                if connection.is_connected():
+                    connection.close()
 
+    ''' FUNCIONES DE REGISTRO '''
+    def registrar_compra(self, compra_nueva:Compra):
+        '''Registra una compra en la BD'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+
+                # actualiza los atributos basicos la compra
+                sql_compra = '''
+                    INSERT INTO compra (fechaCreacion, total_bruto, proveedor)
+                    VALUES (%s,%s,%s);
+                '''
+                cursor.execute(sql_compra, (
+                    compra_nueva.fecha_creacion,
+                    compra_nueva.total_bruto,
+                    compra_nueva.proveedor.num # type: ignore
+                ))
+                compra_id = cursor.lastrowid
+                compra_nueva.num = compra_id
+
+                for detalle in compra_nueva.lista_compras:
+                    sql_detalles_compra = '''
+                        INSERT INTO lista_compra (compra,insumo,montoUnitario,importe,
+                        fechaCompra,fechaCaducidad,cantidadComprada,
+                        cantidadActual,unidadMedida)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s);
+                        '''
+
+                    cursor.execute(sql_detalles_compra,(
+                    compra_nueva.num,
+                    detalle.insumo.num,
+                    detalle.monto_unitario,
+                    detalle.importe,
+                    detalle.fecha_compra,
+                    detalle.fecha_caducidad,
+                    detalle.cantidad_comprada,
+                    detalle.cantidad_actual,
+                    detalle.unidad_medida))
+
+                    sql_actualizar_stock = '''UPDATE insumo SET stock = stock + %s WHERE num = %s;'''
+
+                    cursor.execute(sql_actualizar_stock,(
+                        detalle.cantidad_comprada,
+                        detalle.insumo.num
+                    ))
+
+
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                connection.commit()
+                return compra_nueva
+        except Exception as err:
+            # si cualquiera de los updates, inserts o select fallo:
+            connection.rollback()
+            raise Error(f"DAO: Error en la transaccion al registrar compra.: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()

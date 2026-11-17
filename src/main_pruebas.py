@@ -18,7 +18,8 @@ from datetime import date
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
-from services.insumo_servicio import InsumoServicio
+from services.inventario_servicio import InventarioServicio
+from services.compras_servicio import CompraServicio
 
 
 from models.insumo import Insumo
@@ -53,27 +54,32 @@ def testeando_crud_menus():
 def testeando_crud_insumos():
     connection:DatabaseConnection = DatabaseConnection()
     insumo_dao = InsumoDAO(connection)
-    insumo_servicio = InsumoServicio(insumo_dao=insumo_dao,compra_dao=CompraDAO(connection))
+    compra_dao = CompraDAO(connection)
+    inventario_servicio = InventarioServicio(insumo_dao=insumo_dao,compra_dao=compra_dao)
+    compras_servicio = CompraServicio(compra_dao=compra_dao,insumo_dao=insumo_dao)
 
-    for compra in insumo_servicio.obtener_compras():
+    for compra in inventario_servicio.obtener_compras():
         print(f'Compra: {compra.num} - Fecha Compra: {compra.fecha_creacion}')
         for detalle in compra.lista_compras:
             print(f'    - Insumo: {detalle.insumo.nombre} - Stock: {detalle.insumo.stock} {detalle.unidad_medida} Caducidad: {detalle.fecha_caducidad} Marca: {detalle.insumo.marca.nombre}') # type: ignore
             print()
 
     print('---------ACTUALIZAR INSUMO')
-    insumo_servicio.actualizar_insumo(Insumo(15,'Queso Mozzarella',5,12,TipoInsumo('LAC',''),Marca(0,'')))
+    inventario_servicio.actualizar_insumo(Insumo(15,'Queso Mozzarella',5,12,TipoInsumo('LAC',''),Marca(0,'')))
 
     print('-----------')
-    for insumo in insumo_servicio.obtener_insumos():
+    for insumo in inventario_servicio.obtener_insumos():
         print(f'Insumo: {insumo.nombre} Stock: {insumo.stock}')
 
     print('------------Tipos insumo------------')
-    for ti in insumo_servicio.obtener_tipos_insumo():
+    for ti in inventario_servicio.obtener_tipos_insumo():
         print(f'{ti.clave}-{ti.nombre}')
 
     print('------------Marcas------------')
-    for m in insumo_servicio.obtener_marcas():
+    for m in inventario_servicio.obtener_marcas():
+        print(f'{m.num}-{m.nombre}')
+    print('------------Proveedores------------')
+    for m in compra_dao.obtener_proveedores():
         print(f'{m.num}-{m.nombre}')
 
 if __name__ == "__main__":
