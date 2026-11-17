@@ -1,3 +1,6 @@
+import time
+
+from models.insumo import Insumo
 from models.receta import Receta, IngredientesReceta
 from models.ingrediente import Ingrediente
 from daos.receta_dao import RecetaDAO
@@ -18,9 +21,11 @@ class RecetaServicio:
         lista_recetas = self._receta_dao.obtener_recetas()  
         for receta in lista_recetas:
             receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
-            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):  
+            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):
                 receta.agregarIngrediente(
-                    ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],insumo=None,receta=None),
+                    ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],
+                    insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila['NumInsumo'] else None,
+                    receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila['NumRecetaIngrediente'] else None),
                     cantidad=fila['Cantidad'],
                     unidad_medida=fila['uniMedida']
                     )
@@ -38,7 +43,9 @@ class RecetaServicio:
         receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
         for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):  # pyright: ignore[reportOptionalIterable]
             receta.agregarIngrediente(
-                ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],insumo=None,receta=None),
+                ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],
+                insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila['NumInsumo'] else None,
+                receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila['NumRecetaIngrediente'] else None),
                 cantidad=fila['Cantidad'],
                 unidad_medida=fila['uniMedida']
                 )
@@ -151,3 +158,20 @@ class RecetaServicio:
         except mysql.connector.Error as e:
             raise ValueError(f'Servicio: {e}\n')
 
+    def crear_ingrediente(self, ingrediente: Ingrediente):
+        try:
+            self._receta_dao.crear_ingrediente(ingrediente)
+        except mysql.connector.Error as err:
+            raise Error(f'Error al crear ingrediente en la BD - {err}')
+
+    def obtener_ingredientes_basados_en_insumo(self):
+        lista_ingredientes: List[Ingrediente] = []
+        lista_ingredientes = self._receta_dao.obtener_ingredientes_basados_en_insumo()
+
+        return lista_ingredientes
+
+    def obtener_ingredientes_basados_en_receta(self):
+        lista_ingredientes: List[Ingrediente] = []
+        lista_ingredientes = self._receta_dao.obtener_ingredientes_basados_en_receta()
+
+        return lista_ingredientes

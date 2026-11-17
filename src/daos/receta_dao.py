@@ -173,10 +173,14 @@ class RecetaDAO:
                             i.num NumIngre,
                             i.nombre IngreNombre,
                             li.cantidad Cantidad,
-                            li.unidadMedida uniMedida
+                            li.unidadMedida uniMedida,
+                            ins.num NumInsumo,
+                            ins.nombre InsumoNombre,
+                            i.receta NumRecetaIngrediente
                         FROM lista_ingredientes li
                         INNER JOIN receta AS r ON li.receta = r.num
                         INNER JOIN ingrediente AS i ON li.ingrediente = i.num
+                        INNER JOIN insumo AS ins ON i.insumo = ins.num
                         WHERE r.num = %s;'''
                 cursor.execute(sql,(num_receta,))
                 return cursor.fetchall()
@@ -186,6 +190,52 @@ class RecetaDAO:
             raise Error(f"Error al obtener recetas: {err}")
         finally:
             # devuelve el pool, incluso si hubo un error o un return antes
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_ingredientes_basados_en_insumo(self):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = ''' SELECT num, nombre, insumo FROM ingrediente WHERE insumo IS NOT NULL '''
+                cursor.execute(sql)
+                filas = cursor.fetchall()
+
+                lista_ingredientes: List[Ingrediente] = []
+                for fila in filas:
+                    ingrediente = Ingrediente(
+                        num=fila['num'],
+                        nombre=fila['nombre'],
+                        insumo=fila['insumo'])
+                    lista_ingredientes.append(ingrediente)
+                return lista_ingredientes
+
+        except mysql.connector.Error as err:
+            raise Error(f"Error al obtener ingredientes: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_ingredientes_basados_en_receta(self):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = ''' SELECT num, nombre, receta FROM ingrediente WHERE receta IS NOT NULL '''
+                cursor.execute(sql)
+                filas = cursor.fetchall()
+
+                lista_ingredientes: List[Ingrediente] = []
+                for fila in filas:
+                    ingrediente = Ingrediente(
+                        num=fila['num'],
+                        nombre=fila['nombre'],
+                        receta=fila['receta'])
+                    lista_ingredientes.append(ingrediente)
+                return lista_ingredientes
+
+        except mysql.connector.Error as err:
+            raise Error(f"Error al obtener ingredientes: {err}")
+        finally:
             if connection.is_connected():
                 connection.close()
 
@@ -219,6 +269,32 @@ class RecetaDAO:
         
         #nombre receta, num porciones, ingredientes (nombre, cantidad, unidadMedida)
         #instrucciones(num,intruccion)
+
+    def crear_ingrediente(self, ingrediente:Ingrediente):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                query = '''
+                        INSERT INTO ingrediente (nombre, insumo, receta)
+                        VALUES (%s, %s, %s);
+                        '''
+                valores = (
+                    ingrediente.nombre,
+                    ingrediente.insumo,
+                    ingrediente.receta
+                )
+                cursor.execute(query, valores)
+                connection.commit()
+
+        except mysql.connector.Error as err:
+            # si hay fallo, se revierte la query ejecutada
+            connection.rollback()
+            raise Error(f"Error al insertar el ingrediente: {err}")
+
+        finally:
+            # devuelve el pool, incluso si hubo un error o un return antes
+            if connection.is_connected():
+                connection.close()
 
     def agregar_ingrediente_a_receta(self, num_receta:int, ingrediente_receta:IngredientesReceta):
         

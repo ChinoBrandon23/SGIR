@@ -1,15 +1,9 @@
 import copy
 import math
-from datetime import date, datetime
+from datetime import datetime
 import datetime
-import time
 
-from models.categoria import Categoria
-from models.ingrediente import Ingrediente
-from models.insumo import Insumo
 from models.menu import Menu
-from models.platillo import Platillo
-from models.receta import Receta
 from views.VistaMenus import VistaMenus
 
 from services.menu_servicio import MenuServicio
@@ -25,8 +19,7 @@ class ControladorMenus:
         self.pagina_actual_lista_compras = 1
         self.pagina_actual_lista_detalles = 1
 
-        self.platillos_testeo = self.servicio.obtener_platillos()
-        self.menus_testeo = self.servicio.obtener_menus()
+        self.menus_testeo = None
 
         self.configurar_listeners()
         self.mostrar_lista_menus()
@@ -46,56 +39,29 @@ class ControladorMenus:
         self.vista.input_menu_editar_menu.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
 
-    #def crear_platillos_testeo(self):
-    #    receta1 = Receta(2, "Receta de Pizza", 4,
-    #                     {1: "Mezclar los ingredientes", 2: "Amasar la masa", 3: "Hornear la pizza"})
-#
-#    #    Ingrediente1 = Ingrediente(1, "Harina", Insumo(1, "Harina de Trigo", umbral=5,
-#    #                                                   stock=10, tipo_insumo=None, marca=None))
-#    #    receta1.agregarIngrediente(Ingrediente1, 2, "taza")
-#    #    receta1.agregarIngrediente(Ingrediente(2, "Levadura", Insumo(2, "Levadura", umbral=5, stock=10,
-#    #                                                                 tipo_insumo=None, marca=None)), 1, "cucharada")
-#    #    receta2 = Receta(1, "Pasta en salsa de tomate", 10, {})
-#
-#    #    categoria1 = Categoria("PFUE", "Platillo fuerte")
-#    #    categoria2 = Categoria("ENTR", "Entrada")
-#    #    categoria3 = Categoria("POST", "Postre")
-#    #    categoria4 = Categoria("BEBI", "Bebida")
-#
-#    #    platillo1 = Platillo(num=1, nombre="Pasta en salsa de tomate", categoria=categoria1,
-    #                         receta=receta2)
-    #    platillo2 = Platillo(num=2, nombre="Pizza de peperoni", categoria=categoria1, receta=receta1)
-#
-    #    return [platillo1, platillo2]
-
-    #def crear_menus_testeo(self):
-    #    fecha_inicio = datetime.date.today()
-    #    fecha_final = datetime.date.strptime("31-12-2027", "%d-%m-%Y")
-#
-    #    menu1 = Menu(1, "Menú 2025", 0, fecha_inicio, fecha_final)
-    #    menu2 = Menu(2, "Menú 2026", 2, fecha_inicio, fecha_final)
-#
-    #    for platillo in self.platillos_testeo:
-    #        menu2.agregar_platillo(platillo, 150)
-#
-    #    return [menu1, menu2]
-
-    def mostrar_lista_menus(self, lista_menus=None):
+    def mostrar_lista_menus(self, pag_lista_menus=None):
         """
         Conecta con la capa de servicios para obtener la lista de recetas y crea un elemento de lista para cada una.
         """
 
         #calcula el numero de recetas reales: se eliminara despues
+        if self.menus_testeo is None:
+            self.menus_testeo = self.servicio.obtener_menus()
+
         for menu in self.menus_testeo:
             menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
 
+        # esta función en la vista resetea la vista y crea los layouts para mostrar la lista de menús
+        # se pasan como arg el núm de pág actual y el total de páginas para mostrar en el panel
         self.vista.mostrar_todos_menus(self.pagina_actual_lista_compras,
                                        self.obtener_total_paginas_lista_menus(self.menus_testeo))
 
-        if lista_menus is None:
-            lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+        # checa si tenemos pag_lista_menus actual para mostrar, si no, se obtiene la página actual
+        if pag_lista_menus is None:
+            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
 
-        for menu in lista_menus:
+        # se agregan a la tabla únicamente los elementos de la página actual
+        for menu in pag_lista_menus:
             self.vista.crear_elemento_tabla_menus(menu)
 
         self.vista.refrescar_pantalla()
@@ -146,13 +112,9 @@ class ControladorMenus:
     def guardar_editar_menu(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
-        #lista_num = [menu.num for menu in self.menus_testeo]
-            #idx = lista_num.index(self.menu_actual.num)
+
         self.servicio.actualizar_menu(menu=self.menu_actual)
-            #self.menus_testeo.pop(idx)
-            #self.menus_testeo.insert(idx, copy.deepcopy(self.menu_actual))
-            #else:
-            #self.menus_testeo.append(copy.deepcopy(self.menu_actual))
+
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         menu_actual_num = str(self.menu_actual.num)
@@ -211,10 +173,6 @@ class ControladorMenus:
 
                 if nombre:
                     # debería llamar al servicio para crear un menú nuevo
-                    #num = len(self.menus_testeo) + 1
-                    #self.menu_actual = copy.deepcopy(Menu(num, nombre, 0, datetime.date.today(), datetime.date.today()))
-                    #self.mostrar_formulario_crear_menu()
-
                     # creamos un menu base (num puede ser 0 o None) y el servicio lo inserta en la BD
                     nuevo_menu = Menu(num=0, nombre=nombre, cantidad_platillos=0, 
                                     fecha_inicial=datetime.date.today(), 
@@ -278,7 +236,6 @@ class ControladorMenus:
 
             case "3":
                 # mostrar todos los menús
-
                 self.menus_testeo = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
 
@@ -335,9 +292,10 @@ class ControladorMenus:
                 # hago una lista con los nombres (str) de los platillos que ya son parte del menú actual
                 # y luego hago un dict con un # de índice y el nombre de cada platillo que existe
                 # y NO es ya parte del menú para evitar añadir duplicados, estos son los platillos disponibles
+                lista_platillos_actual = self.servicio.obtener_platillos()
                 lista_platillos_actuales = [pl.platillo.nombre for pl in self.menu_actual.detalles]
-                idx_plat_disp = {i + 1: self.platillos_testeo[i] for i in range(len(self.platillos_testeo)) if
-                                self.platillos_testeo[i].nombre not in lista_platillos_actuales}
+                idx_plat_disp = {i + 1: lista_platillos_actual[i] for i in range(len(lista_platillos_actual)) if
+                                lista_platillos_actual[i].nombre not in lista_platillos_actuales}
 
                 # hago una lista de solo los índices de los platillos disponibles para pasarla a la vista como
                 # opciones válidas de input para el usuario
@@ -353,8 +311,9 @@ class ControladorMenus:
 
                 if num_platillo and precio:
                     nombre = idx_plat_disp[int(num_platillo)].nombre
+                    lista_platillos_actuales = self.servicio.obtener_platillos()
 
-                    for plat in self.platillos_testeo:
+                    for plat in lista_platillos_actuales:
                         if plat.nombre == nombre:
                             self.menu_actual.agregar_platillo(plat, float(precio))
                             self.agregar_edicion_platillos(copy.deepcopy(self.menu_actual.detalles[-1]))
