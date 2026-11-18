@@ -1,7 +1,7 @@
 class validadorPlatillos:
 
     #Valida la creacion de un nuevo platillo
-    def crear_platillo(self, nombre: str, categoria: str, receta_base: str, platillos_bd: list) -> tuple[bool, any]:
+    def crear_platillo(self, nombre: str, categoria: str, receta_base: str, platillos_bd: list):
 
         #Eliminar los espacios al incio y final de cada valor
         nombre_limpio = nombre.strip()
@@ -10,15 +10,15 @@ class validadorPlatillos:
 
         #Verificar que antes de guardar, el objeto tenga nombre, categoria y receta
         if not nombre_limpio or not categoria_limpia or not receta_limpia:
-            return False, "Error, el platillo debe tener obligatoriamente nombre, categoria y receta."
+            return False, "Error: El platillo debe tener obligatoriamente nombre, categoria y receta."
 
         if not (3 <= len(nombre_limpio) <= 25):
-            return False, "Error el nombre tiene un largo invalido. Debe tener un rango de 3 a 25 caracteres."
+            return False, "Error:El nombre tiene un largo invalido. Debe tener un rango de 3 a 25 caracteres."
 
         #Verficar que el nombre del platillo sea unico en toda la BD
         nombres_existentes = [platillo.lower() for platillo in platillos_bd]
         if nombre_limpio.lower() in nombres_existentes:
-            return False, f"Error, ya existe un platillo llamado {nombre_limpio} en la base de datos."
+            return False, f"Error: Ya existe un platillo llamado {nombre_limpio} en la base de datos."
 
         return True, {
             "nombre": nombre_limpio.capitalize(),
@@ -27,7 +27,7 @@ class validadorPlatillos:
         }
 
     #Valida el nombre al crear una nueva categoria de platillos
-    def creacion_categoria(self, nombre_categoria: str) -> tuple[bool, str]:
+    def creacion_categoria(self, nombre_categoria: str):
 
         categoria_limpia = nombre_categoria.strip()
 
@@ -36,12 +36,12 @@ class validadorPlatillos:
 
         #Verificar el largo del nombre
         if not (3 <= len(categoria_limpia) <= 15):
-            return False,"Error: el largo de la categoria es invalido. Debe tener entre 3 y 15 caracteres."
+            return False,"Error: El largo de la categoria es invalido. Debe tener entre 3 y 15 caracteres."
 
         return True, categoria_limpia.capitalize()
     
     #Valida la edicion del nombre de un platillo exitente.
-    def edicion_nombre_platillo(self, nuevo_nombre: str) -> tuple[bool, str]:
+    def edicion_nombre_platillo(self, nuevo_nombre: str):
 
         nombre_limpio = nuevo_nombre.strip()
 

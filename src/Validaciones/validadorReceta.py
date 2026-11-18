@@ -5,56 +5,50 @@ class validadorReceta:
         "taza", "tazas", "cucharada", "cucharadas"
     }
 
-    def validar_crear_ingrediente(self, cadena_entrada: str, ingredientes_actuales: list) -> tuple[bool,any]:
+    def validar_crear_ingrediente(self, nombre: str, cantidad: str, unidad: str, ingredientes: list):
 
-        #Verificar que se hayan ingresado las comas
-        if "," not in cadena_entrada:
-            return False, "Error: El formato debe estar separado por comas"
+        #Verificar espacios al inicio y al final
 
-        elementos = [elemento.strip() for elemento in cadena_entrada.split(",")]
+        nombre_limpio = nombre.strip()
+        cantidad_limpia = cantidad.strip()
+        unidad_limpia = unidad.strip()
 
-        #Verificar que se hayan ingresados los 3 elementos
-        if len(elementos) != 3:
-            return False, "Error: se esperaban 3 elementos (nombre, cantidad, unidad)"
-
-        nombre, cantidad_str, unidad = elementos
-
-        if not nombre or not cantidad_str or not unidad:
+        if not nombre_limpio or not cantidad_limpia or not unidad_limpia:
             return False, "Error: ninguno de los elementos pueden estar vacios."
 
         #Verificar el largo del nombre
-        if not (5 <= len(nombre) <= 20):
+        if not (5 <= len(nombre_limpio) <= 20):
             return False, "Error: El nombre del ingrediete debe tener entre 5 a 20 caracteres."
 
         #Validar el nombre ignorando mayusculas y minusculas
-        ingredientes_lower = [ing.lower() for ing in ingredientes_actuales]
-        if nombre.lower() in ingredientes_lower:
-            return False, f"Error: El ingrediente {nombre} ya existe en la receta"
+        ingredientes_lower = [ing.lower() for ing in ingredientes]
+        if nombre_limpio.lower() in ingredientes_lower:
+            return False, f"Error: El ingrediente {nombre_limpio} ya existe en la receta."
 
             #Verificar que las cantidades sean numeros
         try:
-            Cantidad = float(cantidad_str)
+            Cantidad = float(cantidad_limpia)
             if Cantidad <= 0:
-                return False, "Error la cantidad debe ser mayor a 0."
+                return False, "Error: La cantidad debe ser mayor a 0."
         except ValueError:
-            return False, f"Error: La cantidad {cantidad_str} no es un número válido."
+            return False, f"Error: La cantidad {cantidad_limpia} no es un número válido."
         
         #Verificar que la unidad de medida tenga un largo adecuado y sea válida
-        unidad_limpia = unidad.lower()
-        if not (2 <= len(unidad_limpia) <= 15):
+        unidad_lower = unidad_limpia.lower()
+        if not (2 <= len(unidad_lower) <= 15):
             return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 2 y 15 caracteres)."
             
-        if unidad_limpia not in self.UNIDADES_VALIDAS:
-            return False, f"Error: '{unidad}' no es una unidad de medida reconocida."
+        if unidad_lower not in self.UNIDADES_VALIDAS:
+            return False, f"Error: '{unidad_limpia}' no es una unidad de medida reconocida."
 
         return True, {
-            "nombre": nombre.capitalize(),
-            "cantidad": cantidad_str,
-            "unidad": unidad_limpia
+            "nombre": nombre_limpio.capitalize(),
+            "cantidad": cantidad_limpia,
+            "unidad": unidad_lower
         }
 
     #Valida el numero de insumo o receta a enlazar.
-    def validar_crear_ingrediente(self, cadena_entrdad : str, ids_existentes: list) -> tuple[bool,any]:
+    def validar_crear_ingrediente(self, cadena_entrdad : str, ids_existentes: list):
 
         #Valida el numerode insumo o receta
         id_limpio = cadena_entrdad.strip()
@@ -63,16 +57,16 @@ class validadorReceta:
             return False, "Error: Debes ingresar el numero del insumo o receta."
 
         if not id_limpio.isdigit():
-            return False, "Error: no es un numero valido. Ingresa solo numeros enteros."
+            return False, "Error: No es un numero valido. Ingresa solo numeros enteros."
 
         id_numero = int(id_limpio)
         if id_numero not in ids_existentes:
-            return False, f"Error: no existe ninguna receta o insumo con el numero {id_numero}."
+            return False, f"Error: No existe ninguna receta o insumo con el numero {id_numero}."
 
         return True, id_numero
 
     #Valida la edicion de la cantidad y unidad de un ingrediente
-    def editar_ingrediente(self, cadena_entrada: str) -> tuple[bool, any]:
+    def editar_ingrediente(self, cadena_entrada: str):
 
         #Verficar que se ingresaron las comas
         if "," not in cadena_entrada:
@@ -111,7 +105,7 @@ class validadorReceta:
         }
 
     #Valida la edicion del nombre de una receta
-    def editar_nombre(self, cadena_entrada: str) -> tuple[bool, str]:
+    def editar_nombre(self, cadena_entrada: str):
 
         #Eliminar espacios al inicio y final de la cadena
         nombre_limpio = cadena_entrada.strip()
@@ -127,7 +121,7 @@ class validadorReceta:
         return True, nombre_limpio.capitalize()
 
     #Valida la edicion de la cantidad de porciones de la receta.
-    def validar_editar_porciones(self, cadena_entrada: str) -> tuple[bool, float]:
+    def validar_editar_porciones(self, cadena_entrada: str):
 
         porciones_limpias = cadena_entrada.strip()
         if not porciones_limpias:

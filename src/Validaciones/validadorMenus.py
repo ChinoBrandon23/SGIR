@@ -2,7 +2,7 @@ from datetime import datetime
 
 class validadorMenu:
 
-    def crear_menu( self, nombre: str, fecha_inicio: str, fecha_fin: str, platillos: list) -> tuple [bool, any]:
+    def crear_menu( self, nombre: str, fecha_inicio: str, fecha_fin: str, platillos: list):
 
         #Quitar espacios al inicio y final
         nombre_limpio = nombre.strip()
@@ -23,12 +23,12 @@ class validadorMenu:
             fecha_inicio = datetime.strptime(fecha_inicio_limpio, formato)
             fecha_fin = datetime.strptime(fecha_fin_limpia, formato)
         except ValueError:
-            return False, "Error: la fecha es invalida (DD/MM/YY)"
+            return False, "Error: la fecha es invalida (DD/MM/YY)."
 
         #Verifica que la fecha de inicio y final no sean pasadas
         hoy = datetime.now().replace(hour=0, minute=0,second=0,microsecond=0)
         if fecha_inicio < hoy:
-            return False, "Error: la fecha inicio no puede ser  una fecha pasada."
+            return False, "Error: La fecha inicio no puede ser  una fecha pasada."
 
         if fecha_fin < hoy:
             return False, "Error: La fecha final no puede ser una fecha pasada."
@@ -41,7 +41,7 @@ class validadorMenu:
         }
 
     #Validar el precio ingresado por cada platillo
-    def precio_platillo(self, precio_str: str) -> tuple[bool, any]:
+    def precio_platillo(self, precio_str: str):
 
         precio_limpio = precio_str.strip()
 
@@ -49,7 +49,7 @@ class validadorMenu:
         try:
             precio = float(precio_limpio)
         except ValueError:
-            return False,f"Error: el valor {precio_limpio} no es numerico."
+            return False,f"Error: El valor {precio_limpio} no es numerico."
 
         #Verifica que sea >0
         if precio <= 0:
