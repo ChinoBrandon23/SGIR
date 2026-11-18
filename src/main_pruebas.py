@@ -25,6 +25,8 @@ from services.compras_servicio import CompraServicio
 from models.insumo import Insumo
 from models.insumo import TipoInsumo
 from models.insumo import Marca
+from models.compra import Compra, DetalleCompra
+from models.proveedor import Proveedor
 
 def main():
     '''
@@ -35,7 +37,8 @@ def main():
     ControladorMenuPrincipal(vista=vista_principal)
     '''
     #testeando_crud_menus()
-    testeando_crud_insumos()
+    #testeando_crud_insumos()
+    testeando_crud_compras()
 
 def testeando_crud_menus():
     connection:DatabaseConnection = DatabaseConnection()
@@ -81,6 +84,22 @@ def testeando_crud_insumos():
     print('------------Proveedores------------')
     for m in compra_dao.obtener_proveedores():
         print(f'{m.num}-{m.nombre}')
+
+def testeando_crud_compras():
+    compra_dao = CompraDAO(DatabaseConnection())
+    insumo_dao = InsumoDAO(DatabaseConnection())
+
+    compra_servicio = CompraServicio(compra_dao=compra_dao,insumo_dao=insumo_dao)
+    proveedores = compra_servicio.obtener_proovedores()
+
+    for proveedor in proveedores:
+        print(proveedor.num,' ',proveedor.nombre)
+
+    print('------------------------------')
+    compra = Compra(num=0,fecha_creacion='17-11-2027',total_bruto=0,proveedor=Proveedor(8,'Calimax'))
+    compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tomate Roma'),
+                                100,100,'kg',0,20,'10-12-2026','17-11-2026')
+    #compra_servicio.registrar_compra(compra_nueva=compra)
 
 if __name__ == "__main__":
     main()

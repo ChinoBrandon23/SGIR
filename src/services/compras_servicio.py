@@ -17,10 +17,11 @@ class CompraServicio:
         self._compra_dao = compra_dao
         self._insumo_dao = insumo_dao
 
+    
+
     #def registrar_compra(self, fecha_creacion:date, proveedor:Proveedor, detalles_compra:DetalleCompra):
     def registrar_compra(self, compra_nueva:Compra):
         importes:List[float] = []
-
 
         # validaciones
         if not compra_nueva.proveedor:
@@ -66,7 +67,7 @@ class CompraServicio:
     def _calcular_total_bruto(self, importes:List[float]) -> float:
         return sum(importes)
 
-    def obtener_proovedores(self) -> List[Proveedor]:
+    def obtener_proovedores(self) -> list[Proveedor]:
         try:
             return self._compra_dao.obtener_proveedores()
         except mysql.connector.Error as err:
@@ -78,14 +79,53 @@ class CompraServicio:
             return self._compra_dao.obtener_compras()
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al obtener las compras. {err}')
+    
+    def obtener_insumo_por_nombre(self, nombre_insumo:str) -> Insumo:
+        try:
+            return self._insumo_dao.obtener_id_insumo_por_nombre(nombre_insumo)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Error al consultar numero de insumo por el nombre. {err}')
 
-    def obtener_compra_por_nombre(self, nombre_ins:str):
-        pass
+    def actualizar_compra(self, compra_act:Compra):
+        '''Actualiza una compra completa.'''
+        importes:List[float] = []
 
-    def actualizar_compra(self, compra:Compra):
-        '''Actualiza una compra.'''
-        pass
+        # validaciones
+        if not compra_act.proveedor:
+            raise ValueError("Servicio: La compra debe tener un proveedor asignado.")
+            
+        if not compra_act.lista_compras or len(compra_act.lista_compras) == 0:
+            raise ValueError("Servicio: La compra debe contener al menos un insumo.")
 
+        for detalle_compra in compra_act.lista_compras:
+            # validaciones
+            if detalle_compra.cantidad_comprada <= 0:
+                raise ValueError(f"Servicio: La cantidad de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
+            if detalle_compra.monto_unitario <= 0:
+                raise ValueError(f"Servicio: El precio unitario de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
+
+            # formatear fecha
+            detalle_compra.fecha_caducidad = datetime.strptime(str(detalle_compra.fecha_caducidad), '%d-%m-%Y').strftime('%Y-%m-%d')
+            detalle_compra.fecha_compra = datetime.strptime(str(detalle_compra.fecha_compra), '%d-%m-%Y').strftime('%Y-%m-%d')
+
+            # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+            detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
+            # agregar a lista de importes para posterior suma
+            importes.append(detalle_compra.importe)
+            # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
+            detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
+            # agregando stock nuevo al insumo
+            #self._abastecer_insumo(detalle_compra.insumo,detalle_compra.cantidad_comprada)
+
+        # formateando fecha
+        compra_act.fecha_creacion = datetime.strptime(str(compra_act.fecha_creacion), '%d-%m-%Y').strftime('%Y-%m-%d')
+
+        compra_act.total_bruto = self._calcular_total_bruto(importes)
+
+        try:
+            return self._compra_dao.actualizar_compra_completa(compra_act)
+        except Error as err:
+            raise ValueError(f"Servicio: Error en base de datos al actualizar compra: {err}")
 
     def eliminar_compra(self):
         # pensando si usar o no

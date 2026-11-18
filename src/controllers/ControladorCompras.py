@@ -212,7 +212,7 @@ class ControladorCompras:
         total_actual = 0
 
         for detalle in self.compra_actual.lista_compras:
-            total_actual += detalle.importe
+            total_actual = float(total_actual) + float(detalle.importe)
 
         if total_actual != self.compra_actual.total_bruto:
             self.compra_actual.total_bruto = total_actual
@@ -225,6 +225,8 @@ class ControladorCompras:
                 self.vista.mostrar_abrir_detalles_prompt(self.servicio_compra.obtener_compras())
             case "2":
                 # Aquí crea el registro de una nueva compra
+                self.proveedores_testeo = self.servicio_compra.obtener_proovedores()
+                self.compras_testeo = self.servicio_compra.obtener_compras()
                 self.vista.mostrar_proveedores_disponibles(self.proveedores_testeo)
                 self.vista.refrescar_pantalla()
 
@@ -409,6 +411,8 @@ class ControladorCompras:
                         # de testeo, el idx de este insumo nuevo se guarda para que al llegar al
                         # sig. if aquí debajo, se jale el dato y ahora sí lo use para crear
                         # un nuevo detalle de compra
+
+                        # obtiene el del insumo en la BD                        
                         nuevo_insumo = Insumo(idx_insumo, nombre, umbral, 0, tipo, marca)
                         self.insumos_testeo.append(copy.deepcopy(nuevo_insumo))
 
@@ -422,11 +426,11 @@ class ControladorCompras:
                             # digamos que los inputs de fecha están validados, entonces primero toma cada str
                             # y lo pasa a tipo date, luego el tipo date se pasa al formato adecuado de día-mes-año
 
-                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%d-%m-%Y")
-                            fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%d-%m-%Y")
+                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%Y-%m-%d")
+                            fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%Y-%m-%d")
 
-                            fecha_compra = datetime.date.strptime(fecha_compra, "%d-%m-%Y")
-                            fecha_compra = datetime.date.strftime(fecha_compra, "%d-%m-%Y")
+                            fecha_compra = datetime.date.strptime(fecha_compra, "%Y-%m-%d")
+                            fecha_compra = datetime.date.strftime(fecha_compra, "%Y-%m-%d")
 
                             importe = float(monto_unitario) * float(cantidad)
 

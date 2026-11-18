@@ -9,8 +9,8 @@ from models.marca import Marca
 from models.tipo_insumo import TipoInsumo
 from views.VistaInventario import VistaInventario
 
-
 class ControladorInventario:
+
 
     def __init__(self, vista:VistaInventario, servicio=None):
         self.vista = vista
@@ -22,9 +22,9 @@ class ControladorInventario:
         self.pagina_actual_lista_inventario = 1
         self.pagina_actual_lista_detalles = 1
 
-        self.marcas_testeo = self.crear_marcas_testeo()
-        self.tipos_insumo_testeo = self.crear_tipos_insumo_testeo()
-        self.insumos_testeo = self.crear_insumos_testeo()
+        self.marcas_testeo = self.servicio.obtener_marcas()
+        self.tipos_insumo_testeo = self.servicio.obtener_tipos_insumo()
+        self.insumos_testeo = self.servicio.obtener_insumos()
 
         # esto era para testear paginado
         # for i in range(25):
@@ -42,7 +42,7 @@ class ControladorInventario:
         self.vista.input_menu_detalles.agregar_escuchante(self.evaluar_seleccion_menu_detalles)
         self.vista.input_menu_editar_inventario.agregar_escuchante(self.evaluar_seleccion_menu_editar)
         self.vista.input_cambiar_pagina.agregar_escuchante(self.cambiar_pagina_lista_inventario)
-
+    
     def crear_detalle_compra_testeo(self):
         fecha1 = datetime.date.strptime("04-11-2027", "%d-%m-%Y")
         fecha1 = datetime.date.strftime(fecha1, "%d-%m-%Y")
@@ -77,7 +77,7 @@ class ControladorInventario:
                          marca=self.marcas_testeo[1])
 
         return [insumo1, insumo2]
-
+    
     def mostrar_lista_insumos(self, lista_insumos=None):
         """
         Conecta con la capa de servicios para obtener la lista de insumos y crea un elemento de lista para cada una.

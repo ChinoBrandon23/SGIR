@@ -24,7 +24,7 @@ class InventarioServicio:
     def obtener_insumo_por_nombre(self, nombre_ins:str):
         pass
 
-    def obtener_insumos(self) -> List[Insumo]:
+    def obtener_insumos(self) -> list[Insumo]:
         ''' Obtiene todos los insumos.'''
         try:
             return self._insumo_dao.obtener_insumos()
