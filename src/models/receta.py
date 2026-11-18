@@ -80,8 +80,15 @@ class IngredientesReceta:
     def cantidad(self) -> float:
         return self._cantidad
 
+    @cantidad.setter
+    def cantidad(self, value):
+        self._cantidad = value
+
     @property
     def unidad_medida(self) -> str:
         return self._unidad_medida
 
+    @unidad_medida.setter
+    def unidad_medida(self, value):
+        self._unidad_medida = value
 

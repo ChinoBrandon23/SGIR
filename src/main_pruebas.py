@@ -12,12 +12,14 @@ from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
 from daos.menu_dao import MenuDAO
 from daos.insumo_dao import InsumoDAO
+from daos.compra_dao import CompraDAO
 
 from datetime import date
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
 from services.insumo_servicio import InsumoServicio
+
 
 from models.insumo import Insumo
 from models.insumo import TipoInsumo
@@ -51,9 +53,9 @@ def testeando_crud_menus():
 def testeando_crud_insumos():
     connection:DatabaseConnection = DatabaseConnection()
     insumo_dao = InsumoDAO(connection)
-    insumo_servicio = InsumoServicio(insumo_dao=insumo_dao)
+    insumo_servicio = InsumoServicio(insumo_dao=insumo_dao,compra_dao=CompraDAO(connection))
 
-    for compra in insumo_servicio.obtener_insumos():
+    for compra in insumo_servicio.obtener_compras():
         print(f'Compra: {compra.num} - Fecha Compra: {compra.fecha_creacion}')
         for detalle in compra.lista_compras:
             print(f'    - Insumo: {detalle.insumo.nombre} - Stock: {detalle.insumo.stock} {detalle.unidad_medida} Caducidad: {detalle.fecha_caducidad} Marca: {detalle.insumo.marca.nombre}') # type: ignore
@@ -62,5 +64,19 @@ def testeando_crud_insumos():
     print('---------ACTUALIZAR INSUMO')
     insumo_servicio.actualizar_insumo(Insumo(15,'Queso Mozzarella',5,12,TipoInsumo('LAC',''),Marca(0,'')))
 
+    print('-----------')
+    for insumo in insumo_servicio.obtener_insumos():
+        print(f'Insumo: {insumo.nombre} Stock: {insumo.stock}')
+
+    print('------------Tipos insumo------------')
+    for ti in insumo_servicio.obtener_tipos_insumo():
+        print(f'{ti.clave}-{ti.nombre}')
+
+    print('------------Marcas------------')
+    for m in insumo_servicio.obtener_marcas():
+        print(f'{m.num}-{m.nombre}')
+
 if __name__ == "__main__":
     main()
+
+
