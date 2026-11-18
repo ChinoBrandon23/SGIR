@@ -52,6 +52,15 @@ class MenuServicio:
             return menu
         except mysql.connector.Error as err:
             raise ValueError(f'Servicio: Ocurrio un error: {err}\n')
+
+    def obtener_menu_por_nombre(self, nombre_menu: str) -> Menu:
+        try:
+            menu = self._menu_dao.obtener_menu_por_nombre(nombre_menu)
+            if not menu:
+                raise IndexError(f'Servicio: El menú "{nombre_menu}" no existe.')
+            return menu
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Ocurrió un error al obtener menú por nombre: {err}\n')
     
     def obtener_menus_disponibles(self, fecha_actual:date) -> List[Menu]:
         '''Obtiene los menus disponibles de una fecha. (Con platillos y precios)'''
