@@ -71,11 +71,6 @@ class ControladorMenus:
         if self.menu_actual is None and menu_num is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
-            #for menu in self.menus_testeo:
-            #    if str(menu.num) == menu_num:
-            #        # El menú encontrado se convierte en el nuevo menú actual
-            #        self.menu_actual = copy.deepcopy(menu)
-            #        break
             self.menu_actual = self.servicio.obtener_menu_por_id(num_menu=int(menu_num))
 
         self.mapear_detalle_platillo()
@@ -112,12 +107,17 @@ class ControladorMenus:
     def guardar_editar_menu(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
-
-        self.servicio.actualizar_menu(menu=self.menu_actual)
+        if self.servicio.menu_existe(self.menu_actual.num):
+            self.servicio.actualizar_menu(menu=self.menu_actual)
+            menu_actual_num = str(self.menu_actual.num)
+        else:
+            self.servicio.crear_menu(self.menu_actual)
+            menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
+            self.menus_testeo = self.servicio.obtener_menus()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-        menu_actual_num = str(self.menu_actual.num)
+
         self.cancelar_edicion_actual()
         self.mostrar_detalles_menu(menu_actual_num)
 
@@ -172,13 +172,11 @@ class ControladorMenus:
                 nombre = self.vista.mostrar_prompt_crear_menu()
 
                 if nombre:
-                    # debería llamar al servicio para crear un menú nuevo
-                    # creamos un menu base (num puede ser 0 o None) y el servicio lo inserta en la BD
-                    nuevo_menu = Menu(num=0, nombre=nombre, cantidad_platillos=0, 
-                                    fecha_inicial=datetime.date.today(), 
+                    # mejor se crea el objeto para permitir la edición de este pero no se guarda hasta que el usuario
+                    # escoge la opción guardar manualmente
+                    self.menu_actual = Menu(num=0, nombre=nombre, cantidad_platillos=0,
+                                    fecha_inicial=datetime.date.today(),
                                     fecha_final=datetime.date.today())
-                    # el servicio retorna el menu ya creado con su numero real en la BD
-                    self.menu_actual = self.servicio.crear_menu(nuevo_menu)
                     self.mostrar_formulario_crear_menu()
                 else:
                     self.mostrar_lista_menus()
@@ -207,6 +205,7 @@ class ControladorMenus:
                     self.servicio.eliminar_menu(self.menu_actual.num)
                 
                 self.cancelar_edicion_actual()
+                self.menus_testeo = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
             case "m":
                 # volver al menú principal

@@ -16,16 +16,16 @@ class RecetaServicio:
         self._receta_dao = receta_dao
 
     def obtener_recetas(self):
-        '''Obtiene todas las receteas del sistema.'''
+        '''Obtiene todas las recetas del sistema.'''
         lista_recetas: List[Receta] = []
         lista_recetas = self._receta_dao.obtener_recetas()  
         for receta in lista_recetas:
             receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
             for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):
                 receta.agregarIngrediente(
-                    ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],
-                    insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila['NumInsumo'] else None,
-                    receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila['NumRecetaIngrediente'] else None),
+                    ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                            insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila['NumInsumo'] else None,
+                                            receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila['NumRecetaIngrediente'] else None),
                     cantidad=fila['Cantidad'],
                     unidad_medida=fila['uniMedida']
                     )
@@ -43,13 +43,45 @@ class RecetaServicio:
         receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
         for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):  # pyright: ignore[reportOptionalIterable]
             receta.agregarIngrediente(
-                ingrediente=Ingrediente(fila['NumIngre'],fila['IngreNombre'],
-                insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila['NumInsumo'] else None,
-                receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila['NumRecetaIngrediente'] else None),
+                ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                        insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila['NumInsumo'] else None,
+                                        receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila['NumRecetaIngrediente'] else None),
                 cantidad=fila['Cantidad'],
                 unidad_medida=fila['uniMedida']
                 )
         return receta
+
+    def obtener_receta_por_nombre(self, nombre_receta: str):
+        '''Obtener una receta por su numero.'''
+        # evalua que receta exista
+        try:
+            self._receta_dao.obtener_receta_por_nombre(nombre_receta)
+        except IndexError as indexError:
+            raise IndexError(f'Servicio: {indexError}')
+
+        receta: Receta = self._receta_dao.obtener_receta_por_nombre(nombre_receta)
+        receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
+        for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):  # pyright: ignore[reportOptionalIterable]
+            receta.agregarIngrediente(
+                ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                        insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila[
+                                            'NumInsumo'] else None,
+                                        receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila[
+                                            'NumRecetaIngrediente'] else None),
+                cantidad=fila['Cantidad'],
+                unidad_medida=fila['uniMedida']
+            )
+        return receta
+
+    def receta_existe(self, num_receta):
+        try:
+            receta = self._receta_dao.obtener_receta_por_id(num_receta)
+            if receta:
+                return True
+        except IndexError:
+            return False
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Ocurrió un error: {err}\n')
 
     def obtener_ingrediente_por_id(self, num_ing:int):
         try:
@@ -67,10 +99,10 @@ class RecetaServicio:
         '''Crear una receta.'''
 
         # evalua que la receta no exista
-        if self._receta_dao.obtener_receta_por_id(receta.num):
+        if self.receta_existe(receta.num):
             # la receta existe y hay que impedir creacion
             raise ValueError('Servicio: El numero de receta es invalido. La receta ya existe.')
-        
+
         self._receta_dao.crear_receta_vacia(receta=receta)
 
         if receta.lista_ingredientes:
@@ -106,22 +138,21 @@ class RecetaServicio:
             for li in receta.lista_ingredientes:
                 self._receta_dao.agregar_ingrediente_a_receta(receta.num,li)
         else:
+            ingredientes_existentes_num = [registro['NumIngre'] for registro in lista_ing_receta_bd]
+
             for lista_ingrediente in receta.lista_ingredientes:
                 # validando que el ingrediente exista en la BD, no se puede agregar un ingrediente que no existe
                 if not self.obtener_ingrediente_por_id(lista_ingrediente.ingrediente.num):
                     continue # si no existe entonces pasamos a la siguiente iteracion
-                for registro in lista_ing_receta_bd:
-                    # para poder actualizar, primero se evalua si el ingrediente existe en la lista de ing de la receta en la BD
-                    if lista_ingrediente.ingrediente.num == int(registro['NumIngre']):
-                        
-                        self._receta_dao.actualizar_ingrediente_receta(
-                            num_receta=receta.num,
-                            ingrediente_receta=lista_ingrediente
-                        )
-                    #else:
-                    #    print(f'aqui toy -------{lista_ingrediente.ingrediente.num}--{registro['NumIngre']}')
-                    #    ''' si el ingrediente no existe en la receta actual, entonces, hay que agregarla'''
-                    #    self._receta_dao.agregar_ingrediente_a_receta(receta.num,lista_ingrediente)
+                # para poder actualizar, primero se evalua si el ingrediente existe en la lista de ing de la receta en la BD
+                if lista_ingrediente.ingrediente.num in ingredientes_existentes_num:
+                    self._receta_dao.actualizar_ingrediente_receta(
+                        num_receta=receta.num,
+                        ingrediente_receta=lista_ingrediente
+                    )
+                else:
+                    ''' si el ingrediente no existe en la receta actual, entonces, hay que agregarla'''
+                    self._receta_dao.agregar_ingrediente_a_receta(receta.num,lista_ingrediente)
 
         # obtiene todas instrucciones de la receta en la BD para comparar 
         instrucciones_actuales:dict[int,str] = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
@@ -175,3 +206,38 @@ class RecetaServicio:
         lista_ingredientes = self._receta_dao.obtener_ingredientes_basados_en_receta()
 
         return lista_ingredientes
+
+    def obtener_recetas_por_match_nombre(self, nombre_receta:str):
+        lista_recetas: List[Receta] = []
+        lista_recetas = self._receta_dao.obtener_recetas_por_match_nombre(nombre_receta)
+        for receta in lista_recetas:
+            receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
+            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):
+                receta.agregarIngrediente(
+                    ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                            insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila[
+                                                'NumInsumo'] else None,
+                                            receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila[
+                                                'NumRecetaIngrediente'] else None),
+                    cantidad=fila['Cantidad'],
+                    unidad_medida=fila['uniMedida']
+                )
+        return lista_recetas
+
+    def obtener_recetas_por_num_porciones(self, num_porciones:int):
+        lista_recetas: List[Receta] = []
+        lista_recetas = self._receta_dao.obtener_recetas_por_num_porciones(num_porciones)
+
+        for receta in lista_recetas:
+            receta.instrucciones = self._receta_dao.obtener_instrucion_receta_por_id(receta.num)
+            for fila in self._receta_dao.obtener_ingredientes_receta(receta.num):
+                receta.agregarIngrediente(
+                    ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                            insumo=Insumo(fila['NumInsumo'], fila['InsumoNombre']) if fila[
+                                                'NumInsumo'] else None,
+                                            receta=self.obtener_receta_por_id(fila['NumRecetaIngrediente']) if fila[
+                                                'NumRecetaIngrediente'] else None),
+                    cantidad=fila['Cantidad'],
+                    unidad_medida=fila['uniMedida']
+                )
+        return lista_recetas

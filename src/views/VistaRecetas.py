@@ -533,22 +533,21 @@ class VistaRecetas(VistaBase):
         return num_porciones
 
     def mostrar_prompt_crear_receta(self):
-        nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
+        nombre = ""
+        porciones = ""
 
-        if len(nombre) == 0:
+        if len(nombre) == 0 and nombre != "0":
             self.refrescar_pantalla()
-            self.mostrar_prompt_crear_receta()
+            nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
 
-        if nombre is not "0":
-            porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta o 0 para cancelar")
+        if nombre == "0":
+            return None, None
 
-            if len(porciones) == 0:
-                self.mostrar_prompt_crear_receta()
+        if len(porciones) == 0:
+            self.refrescar_pantalla()
+            porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta")
 
-            if porciones is not "0":
-                return nombre, porciones
-
-        return None, None
+        return nombre, porciones
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
@@ -567,6 +566,10 @@ class VistaRecetas(VistaBase):
     def mostrar_mensaje_no_pagina_siguiente(self):
         rich.print("[bold green]Error: no hay página siguiente")
         time.sleep(2)
+
+    def mostrar_mensaje_no_resultados_busqueda_av(self):
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
 
     def refrescar_pantalla(self):
         try:
