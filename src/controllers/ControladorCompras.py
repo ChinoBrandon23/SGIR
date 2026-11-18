@@ -9,11 +9,15 @@ from models.proveedor import Proveedor
 from models.tipo_insumo import TipoInsumo
 from views.VistaCompras import VistaCompras
 
+from services.compras_servicio import CompraServicio
+from services.inventario_servicio import InventarioServicio
+
 
 class ControladorCompras:
-    def __init__(self, vista:VistaCompras, servicio=None):
+    def __init__(self, vista:VistaCompras, compra_servicio:CompraServicio, inventario_servicio:InventarioServicio):
         self.vista = vista
-        self.servicio = servicio
+        self.servicio_compra = compra_servicio
+        self.servicio_inventario = inventario_servicio
         self.compra_actual = None
         self.formulario = {"insumos":[], "item_borrado":False}
         self.insumo_idx = {}
@@ -21,11 +25,11 @@ class ControladorCompras:
         self.pagina_actual_lista_compras = 1
         self.pagina_actual_lista_detalles = 1
 
-        self.proveedores_testeo = self.crear_proveedores_testeo()
-        self.marcas_testeo = self.crear_marcas_testeo()
-        self.tipos_insumo_testeo = self.crear_tipos_insumo_testeo()
-        self.insumos_testeo = self.crear_insumos_testeo()
-        self.compras_testeo = self.crear_compras_testeo()
+        self.proveedores_testeo = self.servicio_compra.obtener_proovedores()
+        self.marcas_testeo = self.servicio_inventario.obtener_marcas()
+        self.tipos_insumo_testeo = self.servicio_inventario.obtener_tipos_insumo()
+        self.insumos_testeo = self.servicio_inventario.obtener_insumos()
+        self.compras_testeo = self.servicio_compra.obtener_compras()
 
         self.configurar_listeners()
         self.mostrar_lista_compras()
@@ -44,7 +48,7 @@ class ControladorCompras:
         # self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         # self.vista.input_menu_editar_compra.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         # self.vista.input_menu_editar_insumo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
-
+    '''
     def crear_proveedores_testeo(self):
         proveedor1 = Proveedor(1, "Calimax")
         proveedor2 = Proveedor(2, "Central de abastos")
@@ -85,11 +89,13 @@ class ControladorCompras:
         compra1.total_bruto = 500 + 750
 
         return [compra1, compra2]
+        '''
 
     def mostrar_lista_compras(self, lista_compras=None):
         """
         Conecta con la capa de servicios para obtener la lista de compras y crea un elemento de lista para cada una.
         """
+        self.compras_testeo = self.servicio_compra.obtener_compras()
 
         self.vista.mostrar_todas_compras(self.pagina_actual_lista_compras,
                                          self.obtener_total_paginas_lista_compras(self.compras_testeo))
@@ -143,21 +149,33 @@ class ControladorCompras:
         self.vista.refrescar_pantalla()
 
     def guardar_editar_compra(self):
-        # Cambia los datos del formulario en el objeto actual
-        # para testeo, aquí debería llamar a un servicio
-        lista_num = [compra.num for compra in self.compras_testeo]
-
-        if self.compra_actual.num in lista_num:
-            idx = lista_num.index(self.compra_actual.num)
-            self.compras_testeo.pop(idx)
-            self.compras_testeo.insert(idx, copy.deepcopy(self.compra_actual))
-        else:
-            self.compras_testeo.append(copy.deepcopy(self.compra_actual))
-        # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
-        # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-        menu_actual_num = str(self.compra_actual.num)
-        self.cancelar_edicion_actual()
-        self.mostrar_detalles_compra(menu_actual_num)
+        ## Cambia los datos del formulario en el objeto actual
+        ## para testeo, aquí debería llamar a un servicio
+        #lista_num = [compra.num for compra in self.compras_testeo]
+#
+        #if self.compra_actual.num in lista_num:
+        #    idx = lista_num.index(self.compra_actual.num)
+        #    self.compras_testeo.pop(idx)
+        #    self.compras_testeo.insert(idx, copy.deepcopy(self.compra_actual))
+        #else:
+        #    self.compras_testeo.append(copy.deepcopy(self.compra_actual))
+        ## resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
+        ## esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
+        #menu_actual_num = str(self.compra_actual.num)
+        #self.cancelar_edicion_actual()
+        #self.mostrar_detalles_compra(menu_actual_num)
+        try:
+            # llama al servicio para que valide, calcule y guarde en BD
+            self.compra_actual = self.servicio_compra.registrar_compra(self.compra_actual)
+            # se refresca la lista de compras desde la BD
+            menu_actual_num = str(self.compra_actual.num)
+            self.compras_testeo = self.servicio_compra.obtener_compras()
+            self.cancelar_edicion_actual()
+            self.mostrar_lista_compras()
+        except ValueError as err:
+            # si el servicio lanza un error de validacion
+            self.vista.refrescar_pantalla()
+            print(f'Error: {err}')
 
     def cancelar_edicion_actual(self):
         # resetea formulario y receta actual
@@ -194,7 +212,7 @@ class ControladorCompras:
         total_actual = 0
 
         for detalle in self.compra_actual.lista_compras:
-            total_actual += detalle.importe
+            total_actual = float(total_actual) + float(detalle.importe)
 
         if total_actual != self.compra_actual.total_bruto:
             self.compra_actual.total_bruto = total_actual
@@ -204,9 +222,11 @@ class ControladorCompras:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las compras y pasarlas
-                self.vista.mostrar_abrir_detalles_prompt(self.compras_testeo)
+                self.vista.mostrar_abrir_detalles_prompt(self.servicio_compra.obtener_compras())
             case "2":
                 # Aquí crea el registro de una nueva compra
+                self.proveedores_testeo = self.servicio_compra.obtener_proovedores()
+                self.compras_testeo = self.servicio_compra.obtener_compras()
                 self.vista.mostrar_proveedores_disponibles(self.proveedores_testeo)
                 self.vista.refrescar_pantalla()
 
@@ -221,7 +241,7 @@ class ControladorCompras:
                         proveedor_num = idx
 
                 if proveedor_num:
-                    # debería llamar al servicio para crear un menú nuevo
+                    # debería llamar al servicio para crear una compra nueva
                     num = len(self.compras_testeo) + 1
                     for prov in self.proveedores_testeo:
                         if prov.num == int(proveedor_num):
@@ -391,6 +411,8 @@ class ControladorCompras:
                         # de testeo, el idx de este insumo nuevo se guarda para que al llegar al
                         # sig. if aquí debajo, se jale el dato y ahora sí lo use para crear
                         # un nuevo detalle de compra
+
+                        # obtiene el del insumo en la BD                        
                         nuevo_insumo = Insumo(idx_insumo, nombre, umbral, 0, tipo, marca)
                         self.insumos_testeo.append(copy.deepcopy(nuevo_insumo))
 
@@ -404,11 +426,11 @@ class ControladorCompras:
                             # digamos que los inputs de fecha están validados, entonces primero toma cada str
                             # y lo pasa a tipo date, luego el tipo date se pasa al formato adecuado de día-mes-año
 
-                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%d-%m-%Y")
-                            fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%d-%m-%Y")
+                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%Y-%m-%d")
+                            fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%Y-%m-%d")
 
-                            fecha_compra = datetime.date.strptime(fecha_compra, "%d-%m-%Y")
-                            fecha_compra = datetime.date.strftime(fecha_compra, "%d-%m-%Y")
+                            fecha_compra = datetime.date.strptime(fecha_compra, "%Y-%m-%d")
+                            fecha_compra = datetime.date.strftime(fecha_compra, "%Y-%m-%d")
 
                             importe = float(monto_unitario) * float(cantidad)
 
@@ -470,7 +492,7 @@ class ControladorCompras:
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
                             # asigna la nueva cantidad comprada y recalcula el importe del insumo
                             detalle.cantidad_comprada = float(cantidad)
-                            detalle.importe = float(cantidad) * detalle.monto_unitario
+                            detalle.importe = float(cantidad) * float(detalle.monto_unitario)
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()
