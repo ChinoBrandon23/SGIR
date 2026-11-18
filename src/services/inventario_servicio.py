@@ -11,7 +11,7 @@ from models.compra import Compra, DetalleCompra
 
 from typing import List
 
-class InsumoServicio:
+class InventarioServicio:
     def __init__(self, insumo_dao:InsumoDAO, compra_dao:CompraDAO):
         self._insumo_dao = insumo_dao
         self._compra_dao = compra_dao
@@ -37,7 +37,7 @@ class InsumoServicio:
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al obtener insumo. {err}')
 
-    def obtener_insumos(self) -> List[Insumo]:
+    def obtener_insumos(self) -> list[Insumo]:
         ''' Obtiene todos los insumos.'''
         try:
             return self._insumo_dao.obtener_insumos()

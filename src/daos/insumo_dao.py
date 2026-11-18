@@ -74,7 +74,7 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
-    def obtener_insumos(self) -> List[Insumo]:
+    def obtener_insumos(self) -> list[Insumo]:
         '''Obtiene todos los insumos existentes en la BD'''
         connection = self.db.get_connection()
         try:
@@ -333,6 +333,36 @@ class InsumoDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
+    def obtener_id_insumo_por_nombre(self, nombre_insumo:str) -> Insumo:
+            '''Obtiene un insumo por su nombre.'''
+            connection = self.db.get_connection()
+            try:
+                with connection.cursor(dictionary=True) as cursor:
+                    sql = '''SELECT 
+                        ins.num num, 
+                        ins.nombre nm, 
+                        ins.umbral umb, 
+                        ins.stock stock, 
+                        ins.tipo_insumo numTipo,
+                        ti.nombre nombreTipo,
+                        ins.marca numMarca,
+                        mc.nombre nombreMarca
+                        FROM insumo ins
+                        INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                        INNER JOIN marca mc ON ins.marca = mc.num
+                        WHERE ins.nombre = %s;'''
+                    cursor.execute(sql,(nombre_insumo,))
+                    fila = cursor.fetchone()
+                    return Insumo(fila['num'],fila['nm'],fila['umb'],fila['stock'],
+                                TipoInsumo(fila['numTipo'],fila['nombreTipo']),
+                                Marca(fila['numMarca'],fila['nombreMarca']))
+                
+            except mysql.connector.Error as err:
+                raise Error(f"DAO: Error al consultar insumo por su nombre: {err}")
+            finally:
+                if connection.is_connected():
+                    connection.close()
 
     ''' FUNCIONES DE UPDATE '''
 
