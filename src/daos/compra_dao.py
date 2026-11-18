@@ -95,5 +95,46 @@ class CompraDAO:
             if connection.is_connected():
                 connection.close()
 
+    def obtener_detalles_compras_por_insumo(self, insumo_id:int) -> List[DetalleCompra]:
+        # pensada para el servicio inventario
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                      SELECT 
+                          insumo ins,
+                          cantidadActual canAct,
+                          cantidadComprada canCom,
+                          unidadMedida unidad_m,
+                          montoUnitario monto,
+                          importe imp,
+                          fechaCompra fechaCom,
+                          fechaCaducidad fechaCad
+                      FROM lista_compra
+                        WHERE insumo = %s
+                      '''
+
+                cursor.execute(sql, (insumo_id,))
+                filas = cursor.fetchall()
+                lista_detalles_compra: List[DetalleCompra] = []
+
+                for fila in filas:
+                    lista_detalles_compra.append(DetalleCompra(
+                        insumo=fila['ins'],
+                        cantidad_actual=fila['canAct'],
+                        cantidad_comprada=fila['canCom'],
+                        unidad_medida=fila['unidad_m'],
+                        importe=fila['imp'],
+                        monto_unitario=fila['monto'],
+                        fecha_caducidad=fila['fechaCad'],
+                        fecha_compra=fila['fechaCom']))
+
+                return lista_detalles_compra
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los detalles de compra: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     ''' FUNCIONES DE UPDATE '''
 
