@@ -105,8 +105,8 @@ class CompraServicio:
                 raise ValueError(f"Servicio: El precio unitario de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
 
             # formatear fecha
-            detalle_compra.fecha_caducidad = datetime.strptime(str(detalle_compra.fecha_caducidad), '%d-%m-%Y').strftime('%Y-%m-%d')
-            detalle_compra.fecha_compra = datetime.strptime(str(detalle_compra.fecha_compra), '%d-%m-%Y').strftime('%Y-%m-%d')
+            detalle_compra.fecha_caducidad = self._formatear_a_iso(detalle_compra.fecha_caducidad)
+            detalle_compra.fecha_compra = self._formatear_a_iso(detalle_compra._fecha_compra)
 
             # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
             detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
@@ -130,3 +130,20 @@ class CompraServicio:
     def eliminar_compra(self):
         # pensando si usar o no
         pass
+
+    ''' FUNCIONALIDAD '''
+    def _formatear_a_iso(self, fecha:date) -> str:
+        """Asegura que la fecha termine en formato y-m-d para mysql."""
+        if not fecha:
+            return None
+        if isinstance(fecha, (date, datetime)):
+            return fecha.strftime('%Y-%m-%d')
+        fecha_str = str(fecha).strip()
+        # si ya tiene guiones estilo YYYY-MM-DD...
+        if len(fecha_str) == 10 and fecha_str[4] == '-' and fecha_str[7] == '-':
+            return fecha_str
+        # Si viene en formato dd-mm-yyyy:
+        try:
+            return datetime.strptime(fecha_str, '%d-%m-%Y').strftime('%Y-%m-%d')
+        except ValueError:
+            return fecha_str

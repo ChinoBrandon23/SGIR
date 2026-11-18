@@ -206,7 +206,7 @@ class CompraDAO:
                 cursor.execute(sql_compra, (
                     compra_act.fecha_creacion,
                     compra_act.total_bruto,
-                    compra_act.proveedor,
+                    compra_act.proveedor.num, # type: ignore
                     compra_act.num
                 ))
 
@@ -276,7 +276,7 @@ class CompraDAO:
                         sql_actualizar_stock = '''UPDATE insumo SET stock = stock + %s WHERE num = %s;'''
                         cursor.execute(sql_actualizar_stock,(
                             detalle.cantidad_comprada,
-                            id_bd_ins
+                            id_bd_ins   
                         ))
                 # ELIMINAR INSUMO DE COMPRA PENDIENTE
                 ## delete de los platillos que el usuario elimino
