@@ -148,6 +148,72 @@ class MenuDAO:
             if connection.is_connected():
                 connection.close()
 
+    def obtener_menus_disponibles_por_rango_fecha(self, fecha_inicial:str, fecha_final:str) -> List[Menu]:
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                    SELECT 
+                    m.num numMenu,
+                    m.nombre nombreMenu,
+                    m.cantidadPlatillos cantPlatillos,
+                    m.fechaInicial fechaInicial,
+                    m.fechaFinal fechaFinal
+                    FROM menu m
+                    WHERE m.fechaInicial BETWEEN %s and %s AND m.fechaFinal BETWEEN %s and %s;
+                '''
+                cursor.execute(sql,(fecha_inicial, fecha_final, fecha_inicial, fecha_final))
+                filas = cursor.fetchall()
+                lista_menus: List[Menu] = []
+
+                for fila in filas:
+                    lista_menus.append(Menu(
+                                    num=fila['numMenu'],
+                                    nombre=fila['nombreMenu'],
+                                    cantidad_platillos=fila['cantPlatillos'],
+                                    fecha_inicial=fila['fechaInicial'],
+                                    fecha_final=fila['fechaFinal']
+                                    ))
+                return lista_menus
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error generico de mysql menus: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_menus_disponibles_por_match_nombre(self, insumo_nombre:str) -> List[Menu]:
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = f'''
+                    SELECT 
+                    m.num numMenu,
+                    m.nombre nombreMenu,
+                    m.cantidadPlatillos cantPlatillos,
+                    m.fechaInicial fechaInicial,
+                    m.fechaFinal fechaFinal
+                    FROM menu m
+                    WHERE m.nombre LIKE('{insumo_nombre}%');
+                '''
+                cursor.execute(sql)
+                filas = cursor.fetchall()
+                lista_menus: List[Menu] = []
+
+                for fila in filas:
+                    lista_menus.append(Menu(
+                                    num=fila['numMenu'],
+                                    nombre=fila['nombreMenu'],
+                                    cantidad_platillos=fila['cantPlatillos'],
+                                    fecha_inicial=fila['fechaInicial'],
+                                    fecha_final=fila['fechaFinal']
+                                    ))
+                return lista_menus
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error generico de mysql menus: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     def obtener_menus(self) -> List[Menu]:
         '''Retorna todos los menus de la BD. (Sin los platillos).'''
         connection = self.db.get_connection()

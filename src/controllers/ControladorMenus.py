@@ -217,8 +217,15 @@ class ControladorMenus:
                 # buscar por nombre
                 nombre = self.vista.mostrar_buscar_por_nombre_prompt()
 
-                # Aquí un servicio debería buscar por nombre y asignarlo a self.menus_testeo, si es que se va a mantener
-                # esa variable, básicamente lo que comenté en a partir de la línea 215 en controlador platillos
+                resultados_obtenidos = self.servicio.obtener_menus_por_match_nombre(nombre)
+
+                if len(resultados_obtenidos):
+                    self.menus_testeo = resultados_obtenidos
+                else:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_menus()
 
@@ -226,10 +233,14 @@ class ControladorMenus:
                 # buscar por vigencia
                 fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_vigencia_prompt()
 
-                # aquí definitivamente se debería validar que sean fechas válidas
-
-                # Lo mismo de arriba aplica aquí, busca por el rango de fechas provisto en uns servicio y asigna a
-                # self.menus_testeo
+                try:
+                    resultados_obtenidos = self.servicio.obtener_menus_por_rango_fecha(fecha_inicial, fecha_final)
+                    self.menus_testeo = resultados_obtenidos
+                except IndexError:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_menus()
 

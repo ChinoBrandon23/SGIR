@@ -1,13 +1,13 @@
 import copy
 import math
 
-from services.insumo_servicio import InsumoServicio
+from services.inventario_servicio import  InventarioServicio
 from views.VistaInventario import VistaInventario
 
 
 class ControladorInventario:
 
-    def __init__(self, vista:VistaInventario, servicio:InsumoServicio):
+    def __init__(self, vista:VistaInventario, servicio:InventarioServicio):
         self.vista = vista
         self.servicio = servicio
         self.insumo_actual = None
