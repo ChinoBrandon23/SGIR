@@ -34,6 +34,7 @@ class VistaMenus(VistaBase):
         self.input_menu_editar_menu = InputEmisor()
         self.input_menu_editar_platillo = InputEmisor()
         self.input_menu_filtros = InputEmisor()
+        self.input_seleccion_platillos_disp = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -139,7 +140,13 @@ class VistaMenus(VistaBase):
                                                 f"[bold red]{platillo.platillo.categoria.nombre}[/bold red]",
                                                 f"[bold red]${str(platillo.precio)}[/bold red]")
 
-    def mostrar_platillos_disponibles(self, lista_platillos:list[Platillo]):
+    def mostrar_platillos_disponibles(self, lista_platillos:list[Platillo], pag_actual, total_pag):
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * 9
+
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Platillos disponibles")
@@ -148,7 +155,8 @@ class VistaMenus(VistaBase):
             tabla.add_column(col)
 
         for i in range(len(lista_platillos)):
-            tabla.add_row(str(i+1), lista_platillos[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_platillos[i].nombre)
 
         self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
 
@@ -351,9 +359,15 @@ class VistaMenus(VistaBase):
             time.sleep(5)
             return None, None
 
-        num_receta = Prompt.ask("[bold yellow]Selecciona uno de los platillos disponibles[/bold yellow]",
-                            choices=opciones,
-                            show_choices=False)
+        num_receta = ""
+        opciones.append(",")
+        opciones.append(".")
+
+        while len(num_receta) == 0 or num_receta == "," or num_receta == ".":
+            self.refrescar_pantalla()
+            num_receta = self.input_seleccion_platillos_disp.imprimir("[bold yellow]Selecciona uno de los platillos disponibles[/bold yellow]",
+                                choices=opciones,
+                                show_choices=False)
 
         precio = Prompt.ask("[bold yellow]Ingresa el precio del platillo para este menú[bold yellow]", )
 
