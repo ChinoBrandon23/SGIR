@@ -367,6 +367,11 @@ class VistaRecetas(VistaBase):
         self.layout["tablas"].unsplit()
         self.mostrar_conteo_paginas(pag_actual, total_pag)
 
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = idx_ui = (pag_actual - 1) * 20
+
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Ingredientes disponibles")
@@ -375,7 +380,8 @@ class VistaRecetas(VistaBase):
             tabla.add_column(col)
 
         for i in range(len(lista_ingredientes)):
-            tabla.add_row(str(lista_ingredientes[i].num), lista_ingredientes[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_ingredientes[i].nombre)
 
         self.layout["tablas"].update(Align.center(tabla, vertical="middle"))
 

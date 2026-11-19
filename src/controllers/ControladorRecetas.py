@@ -311,7 +311,7 @@ class ControladorRecetas:
                     lista_todos_ing = self.servicio.obtener_ingredientes_basados_en_insumo()
                     ing_disponibles = self.filtrar_ingredientes_duplicados(lista_todos_ing)
 
-                    opciones = [str(i.num) for i in ing_disponibles]
+                    opciones = [str(i+1) for i in range(len(ing_disponibles))]
 
                     pagina, prox_pag = self.paginar_lista_recetas(ing_disponibles, self.pagina_actual_lista_insumos_disponibles)
                     total_pag = self.obtener_total_paginas_lista_recetas(ing_disponibles)
@@ -320,7 +320,7 @@ class ControladorRecetas:
                     self.vista.refrescar_pantalla()
 
                     ins_num = self.vista.mostrar_seleccionar_insumo_ing_prompt(opciones)
-                    ing_obj = [ing for ing in ing_disponibles if str(ing.num) == ins_num][0]
+                    ing_obj = ing_disponibles[int(ins_num)-1]
 
                     cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
 
@@ -336,7 +336,7 @@ class ControladorRecetas:
                     lista_todos_ing = self.servicio.obtener_ingredientes_basados_en_receta()
                     ing_disponibles = self.filtrar_ingredientes_duplicados(lista_todos_ing)
 
-                    opciones = [str(i.num) for i in ing_disponibles]
+                    opciones = [str(i+1) for i in range(len(ing_disponibles))]
 
                     pagina, prox_pag = self.paginar_lista_recetas(ing_disponibles, self.pagina_actual_lista_recetas_disponibles)
                     total_pag = self.obtener_total_paginas_lista_recetas(ing_disponibles)
@@ -345,7 +345,7 @@ class ControladorRecetas:
                     self.vista.refrescar_pantalla()
 
                     ins_num = self.vista.mostrar_seleccionar_receta_ing_prompt(opciones)
-                    ing_obj = [ing for ing in ing_disponibles if str(ing.num) == ins_num][0]
+                    ing_obj = ing_disponibles[int(ins_num)-1]
 
                     cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
 
