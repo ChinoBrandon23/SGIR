@@ -1,5 +1,6 @@
 import copy
 import math
+import time
 
 from services.inventario_servicio import  InventarioServicio
 from views.VistaInventario import VistaInventario
@@ -16,6 +17,8 @@ class ControladorInventario:
 
         self.pagina_actual_lista_inventario = 1
         self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_tipos_insumo_disp = 1
+        self.pagina_actual_marcas_disp = 1
 
         self.insumos_testeo = None
 
@@ -33,6 +36,8 @@ class ControladorInventario:
         self.vista.input_menu_inventario.agregar_escuchante(self.cambiar_pagina_lista_inventario)
         self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_menu_editar_inventario.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_seleccion_tipo_insumo.agregar_escuchante(self.cambiar_pagina_lista_tipos_insumo)
+        self.vista.input_seleccion_marca.agregar_escuchante(self.cambiar_pagina_lista_marcas)
 
     def mostrar_lista_insumos(self, lista_insumos=None):
         """
@@ -175,13 +180,17 @@ class ControladorInventario:
 
                 opciones_tipo = [str(idx) for idx in dict_tipo_insumo]
 
-                self.vista.mostrar_tipos_insumo_disponibles(todos_tipos_insumo)
+                pagina, prox_pag = self.paginar_lista_detalles(todos_tipos_insumo, self.pagina_actual_tipos_insumo_disp)
+                total_pag = self.obtener_total_paginas_detalles(todos_tipos_insumo)
+
+                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_tipos_insumo_disp, total_pag)
                 self.vista.refrescar_pantalla()
 
                 tipo_num = self.vista.mostrar_buscar_por_tipo_insumo_prompt(opciones_tipo)
                 tipo_clave = dict_tipo_insumo[int(tipo_num)].clave
 
                 resultado_busqueda = self.servicio.obtener_insumos_por_tipo_insumo(tipo_clave)
+                self.pagina_actual_tipos_insumo_disp = 1
 
                 if len(resultado_busqueda):
                     self.insumos_testeo = resultado_busqueda
@@ -196,14 +205,19 @@ class ControladorInventario:
             case "3":
                 # buscar por marca
                 marcas_lista = self.servicio.obtener_marcas()
-                opciones_marca = [str(marca.num) for marca in marcas_lista]
+                opciones_marca = [str(i+1) for i in range(len(marcas_lista))]
 
-                self.vista.mostrar_marcas_disponibles(marcas_lista)
+                pagina, prox_pag = self.paginar_lista_inventario(marcas_lista, self.pagina_actual_marcas_disp)
+                total_pag = self.obtener_total_paginas_lista_inventario(marcas_lista)
+
+                self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_tipos_insumo_disp, total_pag)
                 self.vista.refrescar_pantalla()
 
                 marca_num = self.vista.mostrar_buscar_por_marca_prompt(opciones_marca)
+                marca_num = opciones_marca[int(marca_num)-1]
 
                 resultado_busqueda = self.servicio.obtener_insumos_por_marca(marca_num)
+                self.pagina_actual_marcas_disp = 1
 
                 if len(resultado_busqueda):
                     self.insumos_testeo = resultado_busqueda
@@ -267,7 +281,11 @@ class ControladorInventario:
 
                 opciones_tipo = [str(idx) for idx in dict_tipo_insumo]
 
-                self.vista.mostrar_tipos_insumo_disponibles(todos_tipos_insumo)
+                # paginar
+                pagina, prox_pag = self.paginar_lista_detalles(todos_tipos_insumo, self.pagina_actual_tipos_insumo_disp)
+                total_pag = self.obtener_total_paginas_detalles(todos_tipos_insumo)
+
+                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_tipos_insumo_disp, total_pag)
                 self.vista.refrescar_pantalla()
 
                 tipo_num = self.vista.mostrar_editar_tipo_insumo_prompt(opciones_tipo)
@@ -284,7 +302,7 @@ class ControladorInventario:
                         self.vista.refrescar_pantalla()
                         self.vista.mostrar_mensaje_tipo_insumo_ya_existe()
 
-                else:
+                elif tipo_num is not None:
                     for idx, tipo_obj in dict_tipo_insumo.items():
                         if idx == int(tipo_num):
                             tipo = dict_tipo_insumo[idx]
@@ -293,6 +311,7 @@ class ControladorInventario:
                     self.insumo_actual.tipo_insumo = tipo
                     self.formulario["tipo_insumo"] = (copy.deepcopy(tipo))
 
+                self.pagina_actual_tipos_insumo_disp = 1
                 self.mostrar_detalles_insumo()
             case "4":
                 # llama a la función para guardar
@@ -330,15 +349,12 @@ class ControladorInventario:
                 self.mostrar_lista_insumos(pagina)
 
     def paginar_lista_inventario(self, items: list, num_pag: int):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
-
-        lineas_disp = size_sin_prompt - 7
+        lineas_disp = 20
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
@@ -369,27 +385,70 @@ class ControladorInventario:
                 self.mostrar_detalles_insumo(pagina)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 9
+        lineas_disp = 15
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
 
         return items[idx_inicio:idx_final], prox_pag
 
-    def obtener_total_paginas_lista_inventario(self, items: list):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
+    def cambiar_pagina_lista_tipos_insumo(self, mov):
+        tipos_insumo = self.servicio.obtener_tipos_insumo()
 
-        lineas_disp = size_sin_prompt - 7
+        if mov == ",":
+            if self.pagina_actual_tipos_insumo_disp == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_tipos_insumo_disp -= 1
+
+                pagina, hay_sig_pag = self.paginar_lista_detalles(tipos_insumo, self.pagina_actual_tipos_insumo_disp)
+                total_pag = self.obtener_total_paginas_detalles(tipos_insumo)
+                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_tipos_insumo_disp, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(tipos_insumo, self.pagina_actual_tipos_insumo_disp)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_tipos_insumo_disp += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(tipos_insumo, self.pagina_actual_tipos_insumo_disp)
+                total_pag = self.obtener_total_paginas_detalles(tipos_insumo)
+                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_tipos_insumo_disp, total_pag)
+
+    def cambiar_pagina_lista_marcas(self, mov):
+        detalles_lista = self.servicio.obtener_marcas()
+
+        if mov == ",":
+            if self.pagina_actual_marcas_disp == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_marcas_disp -= 1
+
+                pagina, hay_sig_pag = self.paginar_lista_detalles(detalles_lista, self.pagina_actual_marcas_disp)
+                total_pag = self.obtener_total_paginas_detalles(detalles_lista)
+                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_marcas_disp, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(detalles_lista, self.pagina_actual_marcas_disp)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_marcas_disp += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(detalles_lista, self.pagina_actual_marcas_disp)
+                total_pag = self.obtener_total_paginas_detalles(detalles_lista)
+                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_marcas_disp, total_pag)
+
+    def obtener_total_paginas_lista_inventario(self, items: list):
+        lineas_disp = 20
 
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self, items: list):
-        lineas_disp = 9
+        lineas_disp = 15
 
         return math.ceil(len(items) / lineas_disp)
