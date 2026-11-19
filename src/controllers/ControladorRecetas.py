@@ -21,8 +21,10 @@ class ControladorRecetas:
         self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
         self.ing_idx = {}
 
-        self.pagina_actual_lista_compras = 1
+        self.pagina_actual_lista_recetas = 1
         self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_lista_insumos_disponibles = 1
+        self.pagina_actual_lista_recetas_disponibles = 1
 
         self.recetas_a_mostrar = None
 
@@ -40,6 +42,14 @@ class ControladorRecetas:
 
         # Para cambiar de página
         self.vista.input_menu_recetas.agregar_escuchante(self.cambiar_pagina_lista_recetas)
+        self.vista.input_menu_filtros.agregar_escuchante(self.cambiar_pagina_lista_recetas)
+        self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_receta.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_ing.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_menu_editar_inst.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_seleccionar_insumo.agregar_escuchante(self.cambiar_pagina_lista_insumos_disponibles)
+        self.vista.input_seleccionar_receta.agregar_escuchante(self.cambiar_pagina_lista_recetas_disponibles)
+
 
     def mostrar_lista_recetas(self, pag_lista_recetas=None):
         """
@@ -49,12 +59,12 @@ class ControladorRecetas:
         if self.recetas_a_mostrar is None:
             self.recetas_a_mostrar = self.servicio.obtener_recetas()
 
-        self.vista.mostrar_todas_recetas(self.pagina_actual_lista_compras,
-                                         self.obtener_total_paginas_lista_compras(self.recetas_a_mostrar))
+        self.vista.mostrar_todas_recetas(self.pagina_actual_lista_recetas,
+                                         self.obtener_total_paginas_lista_recetas(self.recetas_a_mostrar))
 
         if pag_lista_recetas is None:
             pag_lista_recetas, hay_prox_pag = self.paginar_lista_recetas(self.recetas_a_mostrar,
-                                                                         self.pagina_actual_lista_compras)
+                                                                         self.pagina_actual_lista_recetas)
 
         for receta in pag_lista_recetas:
             self.vista.crear_elemento_tabla_recetas(receta)
@@ -66,9 +76,15 @@ class ControladorRecetas:
         if self.receta_actual is None:
             # Si no tenemos una receta actual, busca la receta por el num pasado como arg
             self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+
         self.mapear_ingredientes()
+
+        # paginado
+        pagina_detalles, prox_pag = self.crear_paginado_detalles_receta()
+        total_paginas = self.obtener_total_paginas_detalles()
+
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
-        self.vista.mostrar_detalles_receta(self.receta_actual, datos_editados=self.formulario, mapa_idx_ing=self.ing_idx)
+        self.vista.mostrar_detalles_receta(self.receta_actual, pagina_detalles=pagina_detalles,  pag_actual=self.pagina_actual_lista_detalles, total_pag=total_paginas, datos_editados=self.formulario, mapa_idx_ing=self.ing_idx)
 
         if self.usuario_esta_editando():
             # si actualmente el formulario tiene info, muestra las opciones de edicion y su prompt
@@ -94,7 +110,7 @@ class ControladorRecetas:
 
     def guardar_receta(self):
         # Cambia los datos del formulario en el objeto actual
-        # para testeo, aquí debería llamar a un servicio
+
         if self.servicio.receta_existe(self.receta_actual.num):
             self.servicio.actualizar_receta(self.receta_actual)
             receta_actual_num = self.receta_actual.num
@@ -118,6 +134,13 @@ class ControladorRecetas:
 
         self.formulario["instrucciones"].append(dic_inst)
 
+    def filtrar_ingredientes_duplicados(self, lista_ingredientes_dispo:list[Ingrediente]):
+        lista_ing_utilizados = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
+
+        ing_disponibles = [ing for ing in lista_ingredientes_dispo if ing.nombre not in lista_ing_utilizados]
+
+        return ing_disponibles
+
     def mapear_ingredientes(self):
         # toma los ingredientes de la receta
         # itera sobre cada uno y les asigna un número para mostrar en la tabla de la vista
@@ -136,6 +159,8 @@ class ControladorRecetas:
         return False
 
     def cancelar_edicion_actual(self):
+        self.pagina_actual_lista_recetas = 1
+        self.pagina_actual_lista_detalles = 1
         self.receta_actual = None
         self.formulario = {"ingredientes": [], "instrucciones": [], "item_borrado": False}
 
@@ -150,7 +175,6 @@ class ControladorRecetas:
                 self.mostrar_formulario_crear_receta()
                 nombre, porciones = self.vista.mostrar_prompt_crear_receta()
                 if nombre is not None and porciones is not None:
-                    # debería llamar al servicio para crear una receta nueva
                     self.receta_actual = Receta(0, nombre, porciones, {})
                     self.mapear_ingredientes()
                     self.mostrar_formulario_crear_receta()
@@ -285,17 +309,18 @@ class ControladorRecetas:
                     # aquí debería obtener la lista de ingredientes existentes y que no se repiten ya en la receta actual
                     # para evitar duplicados
                     lista_todos_ing = self.servicio.obtener_ingredientes_basados_en_insumo()
+                    ing_disponibles = self.filtrar_ingredientes_duplicados(lista_todos_ing)
 
-                    lista_ing_utilizados = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
+                    opciones = [str(i.num) for i in ing_disponibles]
 
-                    ing_disponibles = [ing for ing in lista_todos_ing if ing.nombre not in lista_ing_utilizados]
-                    opciones = [str(i + 1) for i in range(len(ing_disponibles))]
+                    pagina, prox_pag = self.paginar_lista_recetas(ing_disponibles, self.pagina_actual_lista_insumos_disponibles)
+                    total_pag = self.obtener_total_paginas_lista_recetas(ing_disponibles)
 
-                    self.vista.mostrar_ingredientes_disponibles(ing_disponibles)
+                    self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_insumos_disponibles, total_pag)
                     self.vista.refrescar_pantalla()
 
-                    ins_num = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
-                    ing_obj = ing_disponibles[int(ins_num)-1]
+                    ins_num = self.vista.mostrar_seleccionar_insumo_ing_prompt(opciones)
+                    ing_obj = [ing for ing in ing_disponibles if str(ing.num) == ins_num][0]
 
                     cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
 
@@ -303,22 +328,24 @@ class ControladorRecetas:
 
                     self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=cantidad, unidad_medida=unidad_medida)
 
+                    self.pagina_actual_lista_insumos_disponibles = 1
                     self.formulario["ingredientes"].append(ing_obj.nombre)
 
                 if seleccion_ingrediente == "2":
                     # seleccionando ingrediente basado en receta
                     lista_todos_ing = self.servicio.obtener_ingredientes_basados_en_receta()
+                    ing_disponibles = self.filtrar_ingredientes_duplicados(lista_todos_ing)
 
-                    lista_ing_utilizados = [ing.ingrediente.nombre for ing in self.receta_actual.lista_ingredientes]
+                    opciones = [str(i.num) for i in ing_disponibles]
 
-                    ing_disponibles = [ing for ing in lista_todos_ing if ing.nombre not in lista_ing_utilizados]
-                    opciones = [str(i + 1) for i in range(len(ing_disponibles))]
+                    pagina, prox_pag = self.paginar_lista_recetas(ing_disponibles, self.pagina_actual_lista_recetas_disponibles)
+                    total_pag = self.obtener_total_paginas_lista_recetas(ing_disponibles)
 
-                    self.vista.mostrar_ingredientes_disponibles(ing_disponibles)
+                    self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_recetas_disponibles, total_pag)
                     self.vista.refrescar_pantalla()
 
-                    ins_num = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
-                    ing_obj = ing_disponibles[int(ins_num) - 1]
+                    ins_num = self.vista.mostrar_seleccionar_receta_ing_prompt(opciones)
+                    ing_obj = [ing for ing in ing_disponibles if str(ing.num) == ins_num][0]
 
                     cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
 
@@ -327,6 +354,7 @@ class ControladorRecetas:
                     self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=cantidad,
                                                           unidad_medida=unidad_medida)
 
+                    self.pagina_actual_lista_recetas_disponibles = 1
                     self.formulario["ingredientes"].append(ing_obj.nombre)
 
                 self.mostrar_detalles_receta()
@@ -425,34 +453,31 @@ class ControladorRecetas:
 
     def cambiar_pagina_lista_recetas(self, mov):
         if mov == ",":
-            if self.pagina_actual_lista_compras == 1:
+            if self.pagina_actual_lista_recetas == 1:
                 self.vista.mostrar_mensaje_no_pagina_anterior()
                 self.mostrar_lista_recetas()
             else:
-                self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_compras)
+                self.pagina_actual_lista_recetas -= 1
+                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_recetas)
                 self.mostrar_lista_recetas(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_recetas)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_recetas()
             else:
-                self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_compras)
+                self.pagina_actual_lista_recetas += 1
+                pagina, hay_sig_pag = self.paginar_lista_recetas(self.recetas_a_mostrar, self.pagina_actual_lista_recetas)
                 self.mostrar_lista_recetas(pagina)
 
     def paginar_lista_recetas(self, items: list, num_pag: int):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
-
-        lineas_disp = size_sin_prompt - 7
+        lineas_disp = 20
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
@@ -466,43 +491,113 @@ class ControladorRecetas:
                 self.mostrar_detalles_receta()
             else:
                 self.pagina_actual_lista_detalles -= 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(self.receta_actual.detalles,
-                                                               self.pagina_actual_lista_detalles)
+                pagina, sig_pag = self.crear_paginado_detalles_receta()
                 self.mostrar_detalles_receta(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_detalles(self.receta_actual.detalles, self.pagina_actual_lista_detalles)
+            pagina, sig_pag = self.crear_paginado_detalles_receta()
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_detalles_receta()
             else:
                 self.pagina_actual_lista_detalles += 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(self.receta_actual.detalles,
-                                                               self.pagina_actual_lista_detalles)
+                pagina, sig_pag = self.crear_paginado_detalles_receta()
                 self.mostrar_detalles_receta(pagina)
 
+    def crear_paginado_detalles_receta(self):
+        lista_detalles_ingredientes, prox_pag_ing = self.paginar_lista_detalles(self.receta_actual.lista_ingredientes,
+                                                                            self.pagina_actual_lista_detalles)
+
+        lista_detalles_instrucciones, prox_pag_ins = self.paginar_lista_detalles(list(self.receta_actual.instrucciones.items()),
+                                                                             self.pagina_actual_lista_detalles)
+
+        if prox_pag_ing or prox_pag_ins:
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        diccionario_instrucciones = dict()
+
+        for item in lista_detalles_instrucciones:
+            diccionario_instrucciones[item[0]] = item[1]
+
+        pagina_dict = dict()
+        pagina_dict["lista_ingredientes"] = lista_detalles_ingredientes
+        pagina_dict["instrucciones"] = diccionario_instrucciones
+
+        return pagina_dict, prox_pag
+
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 11
+        lineas_disp = 15
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
 
         return items[idx_inicio:idx_final], prox_pag
 
-    def obtener_total_paginas_lista_compras(self, items: list):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
+    def cambiar_pagina_lista_insumos_disponibles(self, mov):
+        lista_insumos = self.servicio.obtener_ingredientes_basados_en_insumo()
+        lista_insumos_filtrados = self.filtrar_ingredientes_duplicados(lista_insumos)
 
-        lineas_disp = size_sin_prompt - 7
+        total_pag = self.obtener_total_paginas_lista_recetas(lista_insumos_filtrados)
+
+        if mov == ",":
+            if self.pagina_actual_lista_insumos_disponibles == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_lista_insumos_disponibles -= 1
+                pagina, hay_sig_pag = self.paginar_lista_recetas(lista_insumos_filtrados, self.pagina_actual_lista_insumos_disponibles)
+                self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_insumos_disponibles, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_recetas(lista_insumos_filtrados, self.pagina_actual_lista_insumos_disponibles)
+
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_lista_insumos_disponibles += 1
+                pagina, hay_sig_pag = self.paginar_lista_recetas(lista_insumos_filtrados, self.pagina_actual_lista_insumos_disponibles)
+                self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_insumos_disponibles, total_pag)
+
+    def cambiar_pagina_lista_recetas_disponibles(self, mov):
+        lista_recetas = self.servicio.obtener_ingredientes_basados_en_receta()
+        lista_recetas_filtradas = self.filtrar_ingredientes_duplicados(lista_recetas)
+
+        total_pag = self.obtener_total_paginas_lista_recetas(lista_recetas_filtradas)
+
+        if mov == ",":
+            if self.pagina_actual_lista_recetas_disponibles == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_lista_recetas_disponibles -= 1
+                pagina, hay_sig_pag = self.paginar_lista_recetas(lista_recetas_filtradas, self.pagina_actual_lista_recetas_disponibles)
+                self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_recetas_disponibles, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag = self.paginar_lista_recetas(lista_recetas_filtradas, self.pagina_actual_lista_recetas_disponibles)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_lista_recetas_disponibles += 1
+                pagina, hay_sig_pag = self.paginar_lista_recetas(lista_recetas_filtradas, self.pagina_actual_lista_recetas_disponibles)
+                self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_recetas_disponibles, total_pag)
+
+    def obtener_total_paginas_lista_recetas(self, items: list):
+        lineas_disp = 20
 
         return math.ceil(len(items) / lineas_disp)
 
-    def obtener_total_paginas_detalles(self, items: list):
-        lineas_disp = 11
+    def obtener_total_paginas_detalles(self):
+        lineas_disp = 15
+
+        if len(self.receta_actual.lista_ingredientes) > len(self.receta_actual.instrucciones):
+            items = self.receta_actual.lista_ingredientes
+        else:
+            items = self.receta_actual.instrucciones
 
         return math.ceil(len(items) / lineas_disp)
