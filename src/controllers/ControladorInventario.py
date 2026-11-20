@@ -448,9 +448,15 @@ class ControladorInventario:
     def obtener_total_paginas_lista_inventario(self, items: list):
         lineas_disp = 20
 
+        if len(items) == 0:
+            return 1
+
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self, items: list):
         lineas_disp = 15
+
+        if len(items) == 0:
+            return 1
 
         return math.ceil(len(items) / lineas_disp)
