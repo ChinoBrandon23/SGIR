@@ -619,7 +619,7 @@ class VistaRecetas(VistaBase):
         time.sleep(3)
 
     def mostrar_error_receta_nombre_duplicado(self):
-        rich.print("[bold red]Error: El nombre que estás intentando guardar ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
+        rich.print("[bold red]Error: El nombre ingresado ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):
