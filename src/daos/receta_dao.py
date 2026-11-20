@@ -277,7 +277,7 @@ class RecetaDAO:
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-                sql = ''' SELECT num, nombre, insumo FROM ingrediente WHERE insumo IS NOT NULL '''
+                sql = ''' SELECT num, nombre, insumo FROM ingrediente WHERE insumo IS NOT NULL ORDER BY num'''
                 cursor.execute(sql)
                 filas = cursor.fetchall()
 
@@ -300,7 +300,7 @@ class RecetaDAO:
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-                sql = ''' SELECT num, nombre, receta FROM ingrediente WHERE receta IS NOT NULL '''
+                sql = ''' SELECT num, nombre, receta FROM ingrediente WHERE receta IS NOT NULL ORDER BY num '''
                 cursor.execute(sql)
                 filas = cursor.fetchall()
 

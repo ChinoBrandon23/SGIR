@@ -34,6 +34,8 @@ class VistaInventario(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_inventario = InputEmisor()
         self.input_menu_filtros = InputEmisor()
+        self.input_seleccion_tipo_insumo = InputEmisor()
+        self.input_seleccion_marca = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -185,6 +187,7 @@ class VistaInventario(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_insumos_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_inventario.imprimir("Selecciona una opción",
                                             choices=["1", "2", "m", ",", "."],
                                             show_choices=False)
@@ -194,6 +197,7 @@ class VistaInventario(VistaBase):
             self.mostrar_menu_insumos_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_insumos: list[Insumo]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice del insumo a mostrar",
                                            choices=[str(insumo.num) for insumo in lista_insumos],
                                            show_choices=False)
@@ -203,6 +207,7 @@ class VistaInventario(VistaBase):
             self.mostrar_abrir_detalles_prompt(lista_insumos)
 
     def mostrar_opciones_detalles_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
@@ -212,6 +217,7 @@ class VistaInventario(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción",
                                          choices=["1", "2", "3", "4", "5", "6"],
                                          show_choices=False)
@@ -221,6 +227,7 @@ class VistaInventario(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_insumo_prompt(self):
+        self.refrescar_pantalla()
         confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar este insumo, confirma para continuar[/bold red]",
                                   choices=["S","N"])
 
@@ -230,6 +237,7 @@ class VistaInventario(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_inventario.imprimir("Selecciona una opción",
                                                    choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                    show_choices=False)
@@ -239,6 +247,7 @@ class VistaInventario(VistaBase):
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre del insumo[/bold yellow]")
 
         if len(info) > 0:
@@ -253,6 +262,7 @@ class VistaInventario(VistaBase):
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_umbral_prompt(self):
+        self.refrescar_pantalla()
         umbral = Prompt.ask("[bold yellow]Ingresa el nuevo umbral para este insumo[/bold yellow]")
 
         if len(umbral) > 0:
@@ -266,17 +276,23 @@ class VistaInventario(VistaBase):
             self.refrescar_pantalla()
             self.mostrar_editar_umbral_prompt()
 
-    def mostrar_tipos_insumo_disponibles(self, lista_tipos:list[TipoInsumo]):
+    def mostrar_tipos_insumo_disponibles(self, lista_tipos:list[TipoInsumo], pag_actual, total_pag):
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Tipos de insumo disponibles")
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * 15
 
         for col in columnas:
             tabla.add_column(col)
 
         if len(lista_tipos):
             for i in range(len(lista_tipos)):
-                tabla.add_row(str(i+1), lista_tipos[i].nombre)
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_tipos[i].nombre)
         else:
             tabla.add_row(" " * 10, " " * 10)
 
@@ -285,17 +301,25 @@ class VistaInventario(VistaBase):
         except KeyError:
             self.layout["main"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_marcas_disponibles(self, lista_marcas:list[Marca]):
+    def mostrar_marcas_disponibles(self, lista_marcas:list[Marca], pag_actual, total_pag):
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Marcas disponibles")
+
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * 20
 
         for col in columnas:
             tabla.add_column(col)
 
         if len(lista_marcas):
             for i in range(len(lista_marcas)):
-                tabla.add_row(str(lista_marcas[i].num), lista_marcas[i].nombre)
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_marcas[i].nombre)
         else:
             tabla.add_row(" " * 10, " " * 10)
 
@@ -306,10 +330,16 @@ class VistaInventario(VistaBase):
 
     def mostrar_editar_tipo_insumo_prompt(self, opciones):
         opciones.append("0")
+        opciones.append(",")
+        opciones.append(".")
 
-        tipo_ins = Prompt.ask("[bold yellow]Selecciona el tipo de insumo de entre las opciones o presiona 0 para crear un nuevo tipo[/bold yellow]",
-                              choices=opciones,
-                              show_choices=False)
+        tipo_ins = ""
+
+        while len(tipo_ins) == 0 or tipo_ins == "," or tipo_ins == ".":
+            self.refrescar_pantalla()
+            tipo_ins = self.input_seleccion_tipo_insumo.imprimir("[bold yellow]Selecciona el tipo de insumo de entre las opciones o presiona 0 para crear un nuevo tipo[/bold yellow]",
+                                  choices=opciones,
+                                  show_choices=False)
 
         confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de tipo de insumo[bold yellow]", choices=["S", "N"])
 
@@ -340,14 +370,28 @@ class VistaInventario(VistaBase):
         return nombre
 
     def mostrar_buscar_por_tipo_insumo_prompt(self, opciones):
-        tipo_ins = Prompt.ask( "[bold yellow]Selecciona el tipo de insumo a buscar de entre las opciones[/bold yellow]",
-            choices=opciones,
-            show_choices=False)
+        opciones.append(".")
+        opciones.append(",")
+
+        tipo_ins = ""
+
+        while len(tipo_ins) == 0 or tipo_ins == "," or tipo_ins == ".":
+            self.refrescar_pantalla()
+            tipo_ins = self.input_seleccion_tipo_insumo.imprimir( "[bold yellow]Selecciona el tipo de insumo a buscar de entre las opciones[/bold yellow]",
+                choices=opciones,
+                show_choices=False)
 
         return tipo_ins
 
     def mostrar_buscar_por_marca_prompt(self, opciones):
-        marca_num = Prompt.ask("[bold yellow]Selecciona la marca a buscar de entre las opciones[/bold yellow]",
+        opciones.append(".")
+        opciones.append(",")
+
+        marca_num = ""
+
+        while len(marca_num) == 0 or marca_num == "," or marca_num == ".":
+            self.refrescar_pantalla()
+            marca_num = self.input_seleccion_marca.imprimir("[bold yellow]Selecciona la marca a buscar de entre las opciones[/bold yellow]",
                               choices=opciones,
                               show_choices=False)
 
@@ -389,6 +433,10 @@ class VistaInventario(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_mensaje_nombre_duplicado(self):
+        rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita el insumo existente.[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):

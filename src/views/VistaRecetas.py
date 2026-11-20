@@ -37,6 +37,8 @@ class VistaRecetas(VistaBase):
         self.input_menu_editar_ing = InputEmisor()
         self.input_menu_editar_inst = InputEmisor()
         self.input_menu_filtros = InputEmisor()
+        self.input_seleccionar_insumo = InputEmisor()
+        self.input_seleccionar_receta = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -70,7 +72,9 @@ class VistaRecetas(VistaBase):
     def crear_elemento_tabla_recetas(self, receta:Receta):
         self.tabla_recetas.add_row(str(receta.num), receta.nombre)
 
-    def mostrar_detalles_receta(self, receta:Receta, datos_editados, mapa_idx_ing):
+    def mostrar_detalles_receta(self, receta:Receta,  pagina_detalles:dict, pag_actual, total_pag, datos_editados, mapa_idx_ing):
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+
         if self.tabla_ingredientes.row_count > 0 or self.tabla_instrucciones.row_count > 0:
             self.resetear_vista()
 
@@ -90,11 +94,11 @@ class VistaRecetas(VistaBase):
 
         panel.height = 3
 
-        if receta and receta.lista_ingredientes:
-            self.llenar_tabla_ingredientes(receta.lista_ingredientes, mapa_idx_ing, datos_editados["ingredientes"])
+        if receta and len(pagina_detalles["lista_ingredientes"]):
+            self.llenar_tabla_ingredientes(pagina_detalles["lista_ingredientes"], mapa_idx_ing, datos_editados["ingredientes"])
 
-        if receta and receta.instrucciones:
-            self.llenar_tabla_instrucciones(receta.instrucciones)
+        if receta and len(pagina_detalles["instrucciones"]):
+            self.llenar_tabla_instrucciones(pagina_detalles["instrucciones"])
 
         self.layout["panel_receta"].update(panel)
         self.layout["tabla_ing"].update(self.tabla_ingredientes)
@@ -269,6 +273,7 @@ class VistaRecetas(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_recetas_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_recetas.imprimir("Selecciona una opción",
                                          choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
@@ -278,6 +283,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_menu_recetas_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_recetas:list[Receta]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice de la receta a mostrar",
                                            choices=[str(receta.num) for receta in lista_recetas],
                                            show_choices=False)
@@ -287,8 +293,9 @@ class VistaRecetas(VistaBase):
             self.mostrar_abrir_detalles_prompt(lista_recetas)
 
     def mostrar_opciones_detalles_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m"],
+                                          choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -296,8 +303,9 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "3", "4"],
+                                         choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -305,6 +313,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_receta_prompt(self):
+        self.refrescar_pantalla()
         confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, confirma para continuar[/bold red]",
                                   choices=["S","N"])
 
@@ -314,8 +323,9 @@ class VistaRecetas(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_receta.imprimir("Selecciona una opción",
-                                               choices=["1", "2", "3", "4", "5", "6", "m"],
+                                               choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
 
         if self.input_menu_editar_receta.user_input is None:
@@ -323,6 +333,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre de la receta[/bold yellow]")
 
         if len(info) > 0:
@@ -337,6 +348,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_porciones_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de porciones[/bold yellow]")
 
         if len(info):
@@ -359,8 +371,14 @@ class VistaRecetas(VistaBase):
 
         return info
 
-    def mostrar_ingredientes_disponibles(self, lista_ingredientes:list[Ingrediente]):
+    def mostrar_ingredientes_disponibles(self, lista_ingredientes:list[Ingrediente], pag_actual, total_pag):
         self.layout["tablas"].unsplit()
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = idx_ui = (pag_actual - 1) * 20
 
         columnas = ["#", "Nombre"]
 
@@ -370,17 +388,40 @@ class VistaRecetas(VistaBase):
             tabla.add_column(col)
 
         for i in range(len(lista_ingredientes)):
-            tabla.add_row(str(i+1), lista_ingredientes[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_ingredientes[i].nombre)
 
         self.layout["tablas"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_seleccionar_insumo_prompt(self, opciones):
-        self.refrescar_pantalla()
-        ins_num = Prompt.ask("[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
-                             choices=opciones,
-                             show_choices=False)
+    def mostrar_seleccionar_insumo_ing_prompt(self, opciones):
+        opciones.append(",")
+        opciones.append(".")
+
+        ins_num = None
+
+        while ins_num is None or ins_num == "," or ins_num == ".":
+            self.refrescar_pantalla()
+            ins_num = self.input_seleccionar_insumo.imprimir(
+                "[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
+                choices=opciones,
+                show_choices=False)
 
         return ins_num
+
+    def mostrar_seleccionar_receta_ing_prompt(self, opciones):
+        opciones.append(",")
+        opciones.append(".")
+
+        receta_num = None
+
+        while receta_num is None or receta_num == "," or receta_num == ".":
+            self.refrescar_pantalla()
+            receta_num = self.input_seleccionar_receta.imprimir(
+                "[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
+                choices=opciones,
+                show_choices=False)
+
+        return receta_num
 
     def mostrar_ingresar_cantidad_ing_prompt(self):
         cantidad = ""
@@ -449,8 +490,9 @@ class VistaRecetas(VistaBase):
                 return None
 
     def mostrar_opciones_editar_ing_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_ing.imprimir("Selecciona una opción",
-                                            choices=[str(i) for i in range(1, 5)],
+                                            choices=["1", "2", "3", "4", ",", "."],
                                             show_choices=False)
 
         if self.input_menu_editar_ing.user_input is None:
@@ -458,8 +500,9 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_editar_ing_prompt()
 
     def mostrar_opciones_editar_inst_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_inst.imprimir("Selecciona una opción",
-                                             choices=[str(i) for i in range(1, 5)],
+                                             choices=["1", "2", "3", "4", ",", "."],
                                              show_choices=False)
 
         if self.input_menu_editar_inst.user_input is None:
@@ -560,15 +603,23 @@ class VistaRecetas(VistaBase):
         self.layout["banda_pagina"].update(paginas_columna)
 
     def mostrar_mensaje_no_pagina_anterior(self):
-        rich.print("[bold green]Error: no hay página anterior")
+        rich.print("[bold green]Error: No hay página anterior")
         time.sleep(2)
 
     def mostrar_mensaje_no_pagina_siguiente(self):
-        rich.print("[bold green]Error: no hay página siguiente")
+        rich.print("[bold green]Error: No hay página siguiente")
         time.sleep(2)
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_error_crear_receta_duplicado(self):
+        rich.print("[bold red]Error: La receta que intentas crear ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
+        time.sleep(3)
+
+    def mostrar_error_receta_nombre_duplicado(self):
+        rich.print("[bold red]Error: El nombre ingresado ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):
