@@ -273,6 +273,7 @@ class VistaRecetas(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_recetas_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_recetas.imprimir("Selecciona una opción",
                                          choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
@@ -282,6 +283,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_menu_recetas_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_recetas:list[Receta]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice de la receta a mostrar",
                                            choices=[str(receta.num) for receta in lista_recetas],
                                            show_choices=False)
@@ -291,6 +293,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_abrir_detalles_prompt(lista_recetas)
 
     def mostrar_opciones_detalles_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
@@ -300,6 +303,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción",
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
@@ -309,6 +313,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_receta_prompt(self):
+        self.refrescar_pantalla()
         confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, confirma para continuar[/bold red]",
                                   choices=["S","N"])
 
@@ -318,6 +323,7 @@ class VistaRecetas(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_receta.imprimir("Selecciona una opción",
                                                choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
@@ -327,6 +333,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre de la receta[/bold yellow]")
 
         if len(info) > 0:
@@ -341,6 +348,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_porciones_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de porciones[/bold yellow]")
 
         if len(info):
@@ -482,6 +490,7 @@ class VistaRecetas(VistaBase):
                 return None
 
     def mostrar_opciones_editar_ing_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_ing.imprimir("Selecciona una opción",
                                             choices=["1", "2", "3", "4", ",", "."],
                                             show_choices=False)
@@ -491,6 +500,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_editar_ing_prompt()
 
     def mostrar_opciones_editar_inst_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_inst.imprimir("Selecciona una opción",
                                              choices=["1", "2", "3", "4", ",", "."],
                                              show_choices=False)
@@ -593,15 +603,23 @@ class VistaRecetas(VistaBase):
         self.layout["banda_pagina"].update(paginas_columna)
 
     def mostrar_mensaje_no_pagina_anterior(self):
-        rich.print("[bold green]Error: no hay página anterior")
+        rich.print("[bold green]Error: No hay página anterior")
         time.sleep(2)
 
     def mostrar_mensaje_no_pagina_siguiente(self):
-        rich.print("[bold green]Error: no hay página siguiente")
+        rich.print("[bold green]Error: No hay página siguiente")
         time.sleep(2)
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_error_crear_receta_duplicado(self):
+        rich.print("[bold red]Error: La receta que intentas crear ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
+        time.sleep(3)
+
+    def mostrar_error_receta_nombre_duplicado(self):
+        rich.print("[bold red]Error: El nombre que estás intentando guardar ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):

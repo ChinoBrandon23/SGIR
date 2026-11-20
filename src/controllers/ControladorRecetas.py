@@ -1,14 +1,9 @@
 import copy
 import math
-import sys
-import time
+from mysql.connector import Error
 
 from models.ingrediente import Ingrediente
-from models.insumo import Insumo
-from models.marca import Marca
 from models.receta import Receta
-from models.tipo_insumo import TipoInsumo
-from services.inventario_servicio import InventarioServicio 
 from views.VistaRecetas import VistaRecetas
 
 from services.receta_servicio import RecetaServicio
@@ -112,12 +107,22 @@ class ControladorRecetas:
         # Cambia los datos del formulario en el objeto actual
 
         if self.servicio.receta_existe(self.receta_actual.num):
-            self.servicio.actualizar_receta(self.receta_actual)
-            receta_actual_num = self.receta_actual.num
+            try:
+                self.servicio.actualizar_receta(self.receta_actual)
+                receta_actual_num = self.receta_actual.num
+            except Error:
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_error_receta_nombre_duplicado()
+                self.vista.mostrar_opciones_editar_prompt()
         else:
-            self.servicio.crear_receta(self.receta_actual)
-            receta_actual_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
-            self.recetas_a_mostrar = self.servicio.obtener_recetas()
+            try:
+                self.servicio.crear_receta(self.receta_actual)
+                receta_actual_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
+                self.recetas_a_mostrar = self.servicio.obtener_recetas()
+            except ValueError:
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_error_crear_receta_duplicado()
+                self.vista.mostrar_opciones_editar_prompt()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
@@ -590,10 +595,16 @@ class ControladorRecetas:
     def obtener_total_paginas_lista_recetas(self, items: list):
         lineas_disp = 20
 
+        if len(items) == 0:
+            return 1
+
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self):
         lineas_disp = 15
+
+        if len(self.receta_actual.lista_ingredientes) == 0 and len(self.receta_actual.instrucciones) == 0:
+            return 1
 
         if len(self.receta_actual.lista_ingredientes) > len(self.receta_actual.instrucciones):
             items = self.receta_actual.lista_ingredientes
