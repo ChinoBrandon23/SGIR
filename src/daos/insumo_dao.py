@@ -150,6 +150,46 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
+    def obtener_insumo_por_nombre(self, nombre_insumo:str) -> Insumo|None:
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                    SELECT
+                    ins.num num,
+                    ins.nombre nom,
+                    ins.umbral umb,
+                    ins.stock stock,
+                    ins.tipo_insumo claveTipo,
+                    ti.nombre nombreTipo,
+                    ins.marca numMarca,
+                    mc.nombre nombreMarca
+                    FROM insumo ins
+                    INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                    INNER JOIN marca mc ON ins.marca = mc.num
+                    WHERE ins.nombre = %s;
+                        '''
+                cursor.execute(sql, (nombre_insumo,))
+                fila = cursor.fetchone()
+
+                if fila is None:
+                    return fila
+
+                insumo = Insumo(
+                    num=fila['num'],
+                    nombre=fila['nom'],
+                    umbral=fila['umb'],
+                    stock=fila['stock'],
+                    tipo_insumo=TipoInsumo(fila['claveTipo'], fila['nombreTipo']),
+                    marca=Marca(fila['numMarca'], fila['nombreMarca']))
+
+                return insumo
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar el insumo: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     def obtener_insumo_por_tipo_insumo(self, tipo_insumo_clave:str) -> List[Insumo]:
         connection = self.db.get_connection()
         try:
