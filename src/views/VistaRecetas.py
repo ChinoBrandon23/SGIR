@@ -69,8 +69,8 @@ class VistaRecetas(VistaBase):
         for columna in columnas:
             self.tabla_recetas.add_column(columna)
 
-    def crear_elemento_tabla_recetas(self, receta:Receta):
-        self.tabla_recetas.add_row(str(receta.num), receta.nombre)
+    def crear_elemento_tabla_recetas(self, receta:Receta, idx):
+        self.tabla_recetas.add_row(str(idx), receta.nombre)
 
     def mostrar_detalles_receta(self, receta:Receta,  pagina_detalles:dict, pag_actual, total_pag, datos_editados, mapa_idx_ing):
         self.mostrar_conteo_paginas(pag_actual, total_pag)
@@ -285,7 +285,7 @@ class VistaRecetas(VistaBase):
     def mostrar_abrir_detalles_prompt(self, lista_recetas:list[Receta]):
         self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice de la receta a mostrar",
-                                           choices=[str(receta.num) for receta in lista_recetas],
+                                           choices=[str(i+1) for i in range(len(lista_recetas))],
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
@@ -378,7 +378,7 @@ class VistaRecetas(VistaBase):
         if pag_actual == 1:
             idx_ui = 0
         else:
-            idx_ui = idx_ui = (pag_actual - 1) * 20
+            idx_ui = (pag_actual - 1) * 20
 
         columnas = ["#", "Nombre"]
 

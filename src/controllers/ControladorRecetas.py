@@ -61,8 +61,14 @@ class ControladorRecetas:
             pag_lista_recetas, hay_prox_pag = self.paginar_lista_recetas(self.recetas_a_mostrar,
                                                                          self.pagina_actual_lista_recetas)
 
+        if self.pagina_actual_lista_recetas == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (self.pagina_actual_lista_recetas - 1) * 20
+
         for receta in pag_lista_recetas:
-            self.vista.crear_elemento_tabla_recetas(receta)
+            idx_ui += 1
+            self.vista.crear_elemento_tabla_recetas(receta, idx_ui)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_recetas_prompt()
@@ -70,7 +76,8 @@ class ControladorRecetas:
     def mostrar_detalles_receta(self, receta_num = None):
         if self.receta_actual is None:
             # Si no tenemos una receta actual, busca la receta por el num pasado como arg
-            self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+            self.receta_actual = self.recetas_a_mostrar[int(receta_num)-1]
+            # self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
 
         self.mapear_ingredientes()
 
@@ -174,8 +181,8 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las recetas y pasarlas
-                self.recetas_a_mostrar = self.servicio.obtener_recetas()
-                self.vista.mostrar_abrir_detalles_prompt(self.recetas_a_mostrar)
+                opciones = self.servicio.obtener_recetas()
+                self.vista.mostrar_abrir_detalles_prompt(opciones)
             case "2":
                 # Aquí crea receta
                 self.mostrar_formulario_crear_receta()
