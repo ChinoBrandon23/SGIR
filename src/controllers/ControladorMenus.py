@@ -21,7 +21,7 @@ class ControladorMenus:
         self.pagina_actual_lista_detalles = 1
         self.pagina_actual_lista_platillos_disp = 1
 
-        self.menus_testeo = None
+        self.menus_a_mostrar = None
 
         self.configurar_listeners()
         self.mostrar_lista_menus()
@@ -48,20 +48,20 @@ class ControladorMenus:
         """
 
         #calcula el numero de recetas reales: se eliminara despues
-        if self.menus_testeo is None:
-            self.menus_testeo = self.servicio.obtener_menus()
+        if self.menus_a_mostrar is None:
+            self.menus_a_mostrar = self.servicio.obtener_menus()
 
-        for menu in self.menus_testeo:
+        for menu in self.menus_a_mostrar:
             menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
 
         # esta función en la vista resetea la vista y crea los layouts para mostrar la lista de menús
         # se pasan como arg el núm de pág actual y el total de páginas para mostrar en el panel
         self.vista.mostrar_todos_menus(self.pagina_actual_lista_compras,
-                                       self.obtener_total_paginas_lista_menus(self.menus_testeo))
+                                       self.obtener_total_paginas_lista_menus(self.menus_a_mostrar))
 
         # checa si tenemos pag_lista_menus actual para mostrar, si no, se obtiene la página actual
         if pag_lista_menus is None:
-            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
 
         # se agregan a la tabla únicamente los elementos de la página actual
         for menu in pag_lista_menus:
@@ -116,11 +116,11 @@ class ControladorMenus:
         else:
             self.servicio.crear_menu(self.menu_actual)
             menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
-            self.menus_testeo = self.servicio.obtener_menus()
+            self.menus_a_mostrar = self.servicio.obtener_menus()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-
+        self.menus_a_mostrar = self.servicio.obtener_menus()
         self.cancelar_edicion_actual()
         self.mostrar_detalles_menu(menu_actual_num)
 
@@ -176,7 +176,7 @@ class ControladorMenus:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todos los menús y pasarlos
-                self.vista.mostrar_abrir_detalles_prompt(self.menus_testeo)
+                self.vista.mostrar_abrir_detalles_prompt(self.menus_a_mostrar)
             case "2":
                 # Aquí crea menú
                 self.mostrar_formulario_crear_menu()
@@ -216,7 +216,7 @@ class ControladorMenus:
                     self.servicio.eliminar_menu(self.menu_actual.num)
                 
                 self.cancelar_edicion_actual()
-                self.menus_testeo = self.servicio.obtener_menus()
+                self.menus_a_mostrar = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
             case "m":
                 # volver al menú principal
@@ -231,7 +231,7 @@ class ControladorMenus:
                 resultados_obtenidos = self.servicio.obtener_menus_por_match_nombre(nombre)
 
                 if len(resultados_obtenidos):
-                    self.menus_testeo = resultados_obtenidos
+                    self.menus_a_mostrar = resultados_obtenidos
                 else:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -246,7 +246,7 @@ class ControladorMenus:
 
                 try:
                     resultados_obtenidos = self.servicio.obtener_menus_por_rango_fecha(fecha_inicial, fecha_final)
-                    self.menus_testeo = resultados_obtenidos
+                    self.menus_a_mostrar = resultados_obtenidos
                 except IndexError:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -257,7 +257,7 @@ class ControladorMenus:
 
             case "3":
                 # mostrar todos los menús
-                self.menus_testeo = self.servicio.obtener_menus()
+                self.menus_a_mostrar = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
 
             case "4":
@@ -392,17 +392,17 @@ class ControladorMenus:
                 self.mostrar_lista_menus()
             else:
                 self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
                 self.mostrar_lista_menus(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_menus()
             else:
                 self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
                 self.mostrar_lista_menus(pagina)
 
     def paginar_lista_menus(self, items: list, num_pag: int):

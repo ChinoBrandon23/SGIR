@@ -126,6 +126,7 @@ class ControladorRecetas:
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
+        self.recetas_a_mostrar = self.servicio.obtener_recetas()
         self.cancelar_edicion_actual()
         self.mostrar_detalles_receta(receta_actual_num)
 

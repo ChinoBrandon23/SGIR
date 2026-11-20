@@ -20,7 +20,7 @@ class ControladorInventario:
         self.pagina_actual_tipos_insumo_disp = 1
         self.pagina_actual_marcas_disp = 1
 
-        self.insumos_testeo = None
+        self.insumos_a_mostrar = None
 
         self.configurar_listeners()
         self.mostrar_lista_insumos()
@@ -44,14 +44,14 @@ class ControladorInventario:
         Conecta con la capa de servicios para obtener la lista de insumos y crea un elemento de lista para cada una.
         """
 
-        if self.insumos_testeo is None:
-            self.insumos_testeo = self.servicio.obtener_insumos()
+        if self.insumos_a_mostrar is None:
+            self.insumos_a_mostrar = self.servicio.obtener_insumos()
 
         self.vista.mostrar_todos_insumos(self.pagina_actual_lista_inventario,
-                                         self.obtener_total_paginas_lista_inventario(self.insumos_testeo))
+                                         self.obtener_total_paginas_lista_inventario(self.insumos_a_mostrar))
 
         if lista_insumos is None:
-            lista_insumos, hay_prox_pag = self.paginar_lista_inventario(self.insumos_testeo, self.pagina_actual_lista_inventario)
+            lista_insumos, hay_prox_pag = self.paginar_lista_inventario(self.insumos_a_mostrar, self.pagina_actual_lista_inventario)
 
         for insumo in lista_insumos:
             # calcula si el stock está bajo o no
@@ -97,6 +97,8 @@ class ControladorInventario:
 
         self.servicio.actualizar_insumo(self.insumo_actual)
 
+        self.insumos_a_mostrar = self.servicio.obtener_insumos()
+
         insumo_actual_num = str(self.insumo_actual.num)
         self.cancelar_edicion_actual()
         self.mostrar_detalles_insumo(insumo_actual_num)
@@ -117,7 +119,7 @@ class ControladorInventario:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todos los insumos y pasarlos
-                self.vista.mostrar_abrir_detalles_prompt(self.insumos_testeo)
+                self.vista.mostrar_abrir_detalles_prompt(self.insumos_a_mostrar)
             case "2":
                 # busqueda avanzada
                 self.vista.crear_banda_opciones_busqueda_av()
@@ -143,9 +145,9 @@ class ControladorInventario:
                 # comentado en lo que veo si se van a borrar insumos y cómo
                 # borrar = self.vista.mostrar_prompt_eliminar_insumo_prompt()
                 # if borrar:
-                #     for insumo in self.insumos_testeo:
+                #     for insumo in self.insumos_a_mostrar:
                 #         if insumo.nombre == self.insumo_actual.nombre:
-                #             self.insumos_testeo.remove(insumo)
+                #             self.insumos_a_mostrar.remove(insumo)
                 #             break
 
                 self.cancelar_edicion_actual()
@@ -163,7 +165,7 @@ class ControladorInventario:
                 resultado_busqueda = self.servicio.obtener_insumos_por_match_nombre(nombre)
 
                 if len(resultado_busqueda):
-                    self.insumos_testeo = resultado_busqueda
+                    self.insumos_a_mostrar = resultado_busqueda
                 else:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -193,7 +195,7 @@ class ControladorInventario:
                 self.pagina_actual_tipos_insumo_disp = 1
 
                 if len(resultado_busqueda):
-                    self.insumos_testeo = resultado_busqueda
+                    self.insumos_a_mostrar = resultado_busqueda
                 else:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -220,7 +222,7 @@ class ControladorInventario:
                 self.pagina_actual_marcas_disp = 1
 
                 if len(resultado_busqueda):
-                    self.insumos_testeo = resultado_busqueda
+                    self.insumos_a_mostrar = resultado_busqueda
                 else:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -234,7 +236,7 @@ class ControladorInventario:
                 resultado_busqueda = self.servicio.obtener_insumos_con_stock_bajo()
 
                 if len(resultado_busqueda):
-                    self.insumos_testeo = resultado_busqueda
+                    self.insumos_a_mostrar = resultado_busqueda
                 else:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -245,7 +247,7 @@ class ControladorInventario:
 
             case "5":
                 # mostrar todos los insumos
-                self.insumos_testeo = self.servicio.obtener_insumos()
+                self.insumos_a_mostrar = self.servicio.obtener_insumos()
                 self.mostrar_lista_insumos()
 
             case "6":
@@ -318,7 +320,7 @@ class ControladorInventario:
                 self.guardar_editar_menu()
             case "5":
                 # cancela la edición actual y vuelve a detalles
-                if self.insumo_actual.num in [menu.num for menu in self.insumos_testeo]:
+                if self.insumo_actual.num in [menu.num for menu in self.insumos_a_mostrar]:
                     self.cancelar_edicion_actual()
                     self.mostrar_detalles_insumo(self.vista.input_abrir_detalles.user_input)
                 else:
@@ -335,17 +337,17 @@ class ControladorInventario:
                 self.mostrar_lista_insumos()
             else:
                 self.pagina_actual_lista_inventario -= 1
-                pagina, hay_sig_pag = self.paginar_lista_inventario(self.insumos_testeo, self.pagina_actual_lista_inventario)
+                pagina, hay_sig_pag = self.paginar_lista_inventario(self.insumos_a_mostrar, self.pagina_actual_lista_inventario)
                 self.mostrar_lista_insumos(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_inventario(self.insumos_testeo, self.pagina_actual_lista_inventario)
+            pagina, sig_pag  = self.paginar_lista_inventario(self.insumos_a_mostrar, self.pagina_actual_lista_inventario)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_insumos()
             else:
                 self.pagina_actual_lista_inventario += 1
-                pagina, hay_sig_pag = self.paginar_lista_inventario(self.insumos_testeo, self.pagina_actual_lista_inventario)
+                pagina, hay_sig_pag = self.paginar_lista_inventario(self.insumos_a_mostrar, self.pagina_actual_lista_inventario)
                 self.mostrar_lista_insumos(pagina)
 
     def paginar_lista_inventario(self, items: list, num_pag: int):
