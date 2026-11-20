@@ -166,9 +166,9 @@ class ControladorCompras:
         #self.mostrar_detalles_compra(menu_actual_num)
         try:
             # llama al servicio para que valide, calcule y guarde en BD
-            self.compra_actual = self.servicio_compra.registrar_compra(self.compra_actual)
+            self.compra_actual = self.servicio_compra.actualizar_compra(self.compra_actual)
             # se refresca la lista de compras desde la BD
-            menu_actual_num = str(self.compra_actual.num)
+            #menu_actual_num = str(self.compra_actual.num)
             self.compras_testeo = self.servicio_compra.obtener_compras()
             self.cancelar_edicion_actual()
             self.mostrar_lista_compras()
@@ -250,8 +250,9 @@ class ControladorCompras:
 
                             self.compra_actual = copy.deepcopy(Compra(num, fecha_actual, 0, proveedor=copy.deepcopy(prov)))
                             self.mostrar_formulario_registrar_compra()
-
-                self.mostrar_detalles_compra()
+                            self.servicio_compra.registrar_compra(compra_nueva=self.compra_actual)
+                self.mostrar_lista_compras()
+                #self.mostrar_detalles_compra()
             case "3":
                 self.vista.crear_banda_opciones_busqueda_av()
                 self.vista.refrescar_pantalla()
@@ -333,7 +334,19 @@ class ControladorCompras:
                 opciones = [str(proveedor.num) for proveedor in self.proveedores_testeo]
                 num_prov = self.vista.mostrar_editar_proveedor_prompt(opciones)
 
-                if num_prov:
+                #assert num_prov == 0, f'Hacer proveedor nuevo.'
+                if num_prov == "0":
+                    nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
+                    if nuevo_prov_nom:
+                        idx = len(self.proveedores_testeo) + 1
+                        proveedor = Proveedor(idx,nuevo_prov_nom)
+                        self.proveedores_testeo.append(proveedor)
+                        #if prov.num == int(num_prov):
+                        self.compra_actual.proveedor = copy.deepcopy(proveedor)
+                        self.formulario["proveedor"] = proveedor.nombre
+                        num_prov = idx
+
+                elif num_prov:
                     for prov in self.proveedores_testeo:
                         if prov.num == int(num_prov):
                             self.compra_actual.proveedor = copy.deepcopy(prov)
@@ -341,9 +354,10 @@ class ControladorCompras:
 
                 self.mostrar_detalles_compra()
             case "2":
+                
                 # agregar insumo
                 lista_insumos_actuales = [det.insumo.nombre for det in self.compra_actual.lista_compras]
-                idx_ins_disp = {i + 1: self.insumos_testeo[i] for i in range(len(self.insumos_testeo)) if
+                '''idx_ins_disp = {i + 1: self.insumos_testeo[i] for i in range(len(self.insumos_testeo)) if
                                 self.insumos_testeo[i].nombre not in lista_insumos_actuales}
 
                 # hago una lista de solo los índices de los insumos disponibles para pasarla a la vista como
@@ -358,6 +372,22 @@ class ControladorCompras:
 
                 # pedir resto de detalles
                 num_insumo = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
+                '''
+                # 1. Numeramos del 1 al N solo los disponibles
+                lista_ins_disp = [
+                    ins
+                    for ins in self.insumos_testeo
+                    if ins.nombre not in lista_insumos_actuales
+                ]
+                idx_ins_disp = {i + 1: ins for i, ins in enumerate(lista_ins_disp)}
+
+                opciones = [str(k) for k in idx_ins_disp.keys()]
+
+                self.vista.mostrar_insumos_disponibles(lista_ins_disp)
+                self.vista.refrescar_pantalla()
+
+                num_insumo = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
+
 
                 # Si el usuario quiere crear un insumo, se desvía el flow de la creación de detalle compra
                 # para crearlo de cero
@@ -419,26 +449,55 @@ class ControladorCompras:
                         num_insumo = idx_insumo
 
                 if num_insumo:
+                    '''
+                    #assert not self.insumos_testeo, [i.nombre for i in lista_ins_disp]
                     for insumo in self.insumos_testeo:
                         if insumo.num == int(num_insumo):
                             monto_unitario, fecha_compra, fecha_caducidad, cantidad, unidad_medida = self.vista.mostrar_agregar_insumo_prompt()
-
+                            #assert False ,f'{[i.nombre for i in lista_ins_disp]} - {insumo.nombre}'
                             # digamos que los inputs de fecha están validados, entonces primero toma cada str
                             # y lo pasa a tipo date, luego el tipo date se pasa al formato adecuado de día-mes-año
-
-                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%Y-%m-%d")
-                            fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%Y-%m-%d")
-
-                            fecha_compra = datetime.date.strptime(fecha_compra, "%Y-%m-%d")
-                            fecha_compra = datetime.date.strftime(fecha_compra, "%Y-%m-%d")
-
+                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%d-%m-%Y")
+                            #fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%Y-%m-%d")
+                            fecha_compra = datetime.date.strptime(fecha_compra, "%d-%m-%Y")
+                            #fecha_compra = datetime.date.strftime(fecha_compra, "%Y-%m-%d")
                             importe = float(monto_unitario) * float(cantidad)
-
                             self.compra_actual.agregar_insumo_compra(insumo, float(cantidad), float(cantidad), unidad_medida,
                                                                     float(importe), float(monto_unitario),
                                                                     fecha_caducidad, fecha_compra)
                             self.agregar_edicion_insumos(copy.deepcopy(self.compra_actual.lista_compras[-1]))
 
+                self.mostrar_detalles_compra()
+                '''
+                    insumo = idx_ins_disp[int(num_insumo)]
+
+                    (
+                        monto_unitario,
+                        fecha_compra,
+                        fecha_caducidad,
+                        cantidad,
+                        unidad_medida,
+                    ) = self.vista.mostrar_agregar_insumo_prompt()
+
+                    fecha_caducidad = datetime.datetime.strptime(
+                        fecha_caducidad, "%d-%m-%Y"
+                    ).date()
+                    fecha_compra = datetime.datetime.strptime(fecha_compra, "%d-%m-%Y").date()
+
+                    importe = float(monto_unitario) * float(cantidad)
+                    self.compra_actual.agregar_insumo_compra(
+                        insumo,
+                        float(cantidad),
+                        float(cantidad),
+                        unidad_medida,
+                        float(importe),
+                        float(monto_unitario),
+                        fecha_caducidad,
+                        fecha_compra,
+                    )
+                    self.agregar_edicion_insumos(
+                        copy.deepcopy(self.compra_actual.lista_compras[-1])
+                    )
                 self.mostrar_detalles_compra()
             case "3":
                 # Abre menú de editar insumo
@@ -520,7 +579,7 @@ class ControladorCompras:
                         # asigna el nuevo monto unitario y actualiza el importe del insumo
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
                             detalle.monto_unitario = float(monto_u)
-                            detalle.importe = float(monto_u) * detalle.cantidad_comprada
+                            detalle.importe = float(monto_u) * float(detalle.cantidad_comprada)
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()

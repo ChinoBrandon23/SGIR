@@ -96,10 +96,15 @@ def testeando_crud_compras():
         print(proveedor.num,' ',proveedor.nombre)
 
     print('------------------------------')
-    compra = Compra(num=0,fecha_creacion='17-11-2027',total_bruto=0,proveedor=Proveedor(8,'Calimax'))
-    compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tomate Roma'),
-                                100,100,'kg',0,20,'10-12-2026','17-11-2026')
+    
+    compra = compra_servicio.obtener_compra_por_numero(1)
+    #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tomate Roma'),
+    #                            100,100,'kg',0,20,'10-12-2026','17-11-2026')
     #compra_servicio.registrar_compra(compra_nueva=compra)
+    #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Cilantro Fresco'),2.5,0,'kg',0,40,'2-2-2027','19-11-2026')
+    #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tortillas de Maíz'),10,0,'kg',0,40,'1-12-2026','19-11-2026')
+
+    compra_servicio.actualizar_compra(compra_act=compra)
 
 if __name__ == "__main__":
     main()
