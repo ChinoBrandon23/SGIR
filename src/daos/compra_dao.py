@@ -7,6 +7,8 @@ from models.proveedor import Proveedor
 import mysql.connector
 from mysql.connector import Error
 
+from utils.conversor_unidades import ConversorUnidades
+
 class CompraDAO:
     def __init__(self, db_connection):
         self.db = db_connection
@@ -293,19 +295,51 @@ class CompraDAO:
                         detalle.cantidad_actual,
                         detalle.unidad_medida))
 
-                    # actualiza el stock
+                    # valor inicial
+                    cantidad_convertida_base = detalle.cantidad_comprada
+                    ## estandarizar unidades
+                    #try:
+                    #    categoria = ConversorUnidades.obtener_categoria(detalle.unidad_medida)
+                    #    if not categoria or categoria == None:
+                    #        raise Exception('Unidad invalida.')
+                    #    # evaluar que unidad estandar es
+                    #    if categoria == 'MASA':
+                    #        cantidad_convertida_base = ConversorUnidades.convertir(
+                    #                cantidad=detalle.cantidad_comprada,
+                    #                unidad_origen=detalle.unidad_medida,
+                    #                unidad_destino='kg'
+                    #            )
+                    #        assert False, f'Origen:'
+                    #    if categoria == 'VOLUMEN':
+                    #        cantidad_convertida_base = ConversorUnidades.convertir(
+                    #                cantidad=detalle.cantidad_comprada,
+                    #                unidad_origen=detalle.unidad_medida,
+                    #                unidad_destino='l'
+                    #        )
+                    #    if categoria == 'CONTEO':
+                    #        cantidad_convertida_base = ConversorUnidades.convertir(
+                    #                cantidad=detalle.cantidad_comprada,
+                    #                unidad_origen=detalle.unidad_medida,
+                    #                unidad_destino='pza'
+                    #        )
+                    #except ValueError as err:
+                    #    raise ValueError(err)
+                    ## actualiza el stock
                     sql_actualizar_stock = '''UPDATE insumo \
                                             SET stock = stock + %s \
                                             WHERE num = %s;'''
 
                     cursor.execute(sql_actualizar_stock, (
-                        detalle.cantidad_comprada,
+                        cantidad_convertida_base,
                         detalle.insumo.num
                     ))
 
                 # si se llego hasta aqui sin lanzar excepcion, todo salio bien
                 connection.commit()
                 return cursor.lastrowid
+            
+        except ValueError as err:
+                raise ValueError(f'DAO: Error con las unidades de medida.')
         except Exception as err:
             # si cualquiera de los updates, inserts o select fallo:
             connection.rollback()
