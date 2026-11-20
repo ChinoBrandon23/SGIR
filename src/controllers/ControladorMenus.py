@@ -358,7 +358,9 @@ class ControladorMenus:
                 opciones = [str(idx) for idx in self.platillo_idx]
                 lista_platillos = [detalle.platillo for detalle in self.menu_actual.detalles]
 
-                self.vista.mostrar_platillos_disponibles(lista_platillos, )
+                total_pag_platillos = self.obtener_total_paginas_detalles(lista_platillos)
+
+                self.vista.mostrar_platillos_disponibles(lista_platillos, self.pagina_actual_lista_platillos_disp, total_pag_platillos)
                 self.vista.refrescar_pantalla()
 
                 num, precio = self.vista.mostrar_editar_precio_platillo_prompt(opciones)
