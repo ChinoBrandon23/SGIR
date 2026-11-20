@@ -98,11 +98,11 @@ class ControladorCompras:
         self.compras_testeo = self.servicio_compra.obtener_compras()
 
         self.vista.mostrar_todas_compras(self.pagina_actual_lista_compras,
-                                         self.obtener_total_paginas_lista_compras(self.compras_testeo))
+                                        self.obtener_total_paginas_lista_compras(self.compras_testeo))
 
         if lista_compras is None:
             lista_compras, hay_prox_pag = self.paginar_lista_compras(self.compras_testeo,
-                                                                     self.pagina_actual_lista_compras)
+                                                                    self.pagina_actual_lista_compras)
 
         for compra in lista_compras:
             self.vista.crear_elemento_tabla_compras(compra)
@@ -124,7 +124,7 @@ class ControladorCompras:
         self.actualizar_total_bruto()
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
         self.vista.mostrar_detalles_compra(self.compra_actual, datos_editados=copy.deepcopy(self.formulario),
-                                           mapa_insumos=self.insumo_idx)
+                                        mapa_insumos=self.insumo_idx)
 
         if self.usuario_esta_editando():
             # si actualmente el formulario tiene info, muestra las opciones de edicion y su prompt
@@ -667,7 +667,7 @@ class ControladorCompras:
             else:
                 self.pagina_actual_lista_compras -= 1
                 pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_testeo,
-                                                                 self.pagina_actual_lista_compras)
+                                                                self.pagina_actual_lista_compras)
                 self.mostrar_lista_compras(pagina)
 
         elif mov == ".":
@@ -678,7 +678,7 @@ class ControladorCompras:
             else:
                 self.pagina_actual_lista_compras += 1
                 pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_testeo,
-                                                                 self.pagina_actual_lista_compras)
+                                                                self.pagina_actual_lista_compras)
                 self.mostrar_lista_compras(pagina)
 
     def paginar_lista_compras(self, items: list, num_pag: int):
@@ -705,7 +705,7 @@ class ControladorCompras:
             else:
                 self.pagina_actual_lista_detalles -= 1
                 pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.detalles,
-                                                               self.pagina_actual_lista_detalles)
+                                                            self.pagina_actual_lista_detalles)
                 self.mostrar_detalles_compra(pagina)
 
         elif mov == ".":
@@ -716,7 +716,7 @@ class ControladorCompras:
             else:
                 self.pagina_actual_lista_detalles += 1
                 pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.detalles,
-                                                               self.pagina_actual_lista_detalles)
+                                                            self.pagina_actual_lista_detalles)
                 self.mostrar_detalles_compra(pagina)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
