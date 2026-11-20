@@ -61,8 +61,18 @@ class ControladorRecetas:
             pag_lista_recetas, hay_prox_pag = self.paginar_lista_recetas(self.recetas_a_mostrar,
                                                                          self.pagina_actual_lista_recetas)
 
+        if self.pagina_actual_lista_recetas == 1:
+            idx_ui = 0
+        else:
+            consola_size = self.vista.console.size[1]
+            size_sin_prompt = consola_size - 6
+            lineas_disp = size_sin_prompt - 6
+
+            idx_ui = (self.pagina_actual_lista_recetas - 1) * lineas_disp
+
         for receta in pag_lista_recetas:
-            self.vista.crear_elemento_tabla_recetas(receta)
+            idx_ui += 1
+            self.vista.crear_elemento_tabla_recetas(receta, idx_ui)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_recetas_prompt()
@@ -70,7 +80,8 @@ class ControladorRecetas:
     def mostrar_detalles_receta(self, receta_num = None):
         if self.receta_actual is None:
             # Si no tenemos una receta actual, busca la receta por el num pasado como arg
-            self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+            self.receta_actual = self.recetas_a_mostrar[int(receta_num)-1]
+            # self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
 
         self.mapear_ingredientes()
 
@@ -174,8 +185,8 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todas las recetas y pasarlas
-                self.recetas_a_mostrar = self.servicio.obtener_recetas()
-                self.vista.mostrar_abrir_detalles_prompt(self.recetas_a_mostrar)
+                opciones = self.servicio.obtener_recetas()
+                self.vista.mostrar_abrir_detalles_prompt(opciones)
             case "2":
                 # Aquí crea receta
                 self.mostrar_formulario_crear_receta()
@@ -478,7 +489,10 @@ class ControladorRecetas:
                 self.mostrar_lista_recetas(pagina)
 
     def paginar_lista_recetas(self, items: list, num_pag: int):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -534,7 +548,10 @@ class ControladorRecetas:
         return pagina_dict, prox_pag
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 8
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -594,7 +611,10 @@ class ControladorRecetas:
                 self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_recetas_disponibles, total_pag)
 
     def obtener_total_paginas_lista_recetas(self, items: list):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         if len(items) == 0:
             return 1
@@ -602,7 +622,10 @@ class ControladorRecetas:
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 8
 
         if len(self.receta_actual.lista_ingredientes) == 0 and len(self.receta_actual.instrucciones) == 0:
             return 1

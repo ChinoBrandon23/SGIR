@@ -64,13 +64,13 @@ class VistaInventario(VistaBase):
         for columna in columnas:
             self.tabla_inventario.add_column(columna)
 
-    def crear_elemento_tabla_insumos(self, insumo: Insumo, alerta_stock:bool):
+    def crear_elemento_tabla_insumos(self, insumo: Insumo, alerta_stock:bool, idx:int):
         if alerta_stock:
             celda_alerta = "[bold red]:warning: Stock bajo[/bold red]"
         else:
             celda_alerta = ""
 
-        self.tabla_inventario.add_row(str(insumo.num), insumo.nombre, insumo.tipo_insumo.nombre,
+        self.tabla_inventario.add_row(str(idx), insumo.nombre, insumo.tipo_insumo.nombre,
                                       insumo.marca.nombre,str(insumo.umbral), str(insumo.stock), celda_alerta)
 
     def mostrar_detalles_insumo(self, insumo: Insumo | None, pag_actual, total_pag, lista_detalles:list[DetalleCompra], datos_editados):
@@ -199,7 +199,7 @@ class VistaInventario(VistaBase):
     def mostrar_abrir_detalles_prompt(self, lista_insumos: list[Insumo]):
         self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice del insumo a mostrar",
-                                           choices=[str(insumo.num) for insumo in lista_insumos],
+                                           choices=[str(i+1) for i in range(len(lista_insumos))],
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
@@ -281,10 +281,15 @@ class VistaInventario(VistaBase):
 
         tabla = Table(title="Tipos de insumo disponibles")
 
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
+
         if pag_actual == 1:
             idx_ui = 0
         else:
-            idx_ui = (pag_actual - 1) * 15
+            idx_ui = (pag_actual - 1) * lineas_disp
 
         for col in columnas:
             tabla.add_column(col)
@@ -308,10 +313,15 @@ class VistaInventario(VistaBase):
 
         self.mostrar_conteo_paginas(pag_actual, total_pag)
 
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
+
         if pag_actual == 1:
             idx_ui = 0
         else:
-            idx_ui = (pag_actual - 1) * 20
+            idx_ui = (pag_actual - 1) * lineas_disp
 
         for col in columnas:
             tabla.add_column(col)

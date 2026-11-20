@@ -53,6 +53,15 @@ class ControladorInventario:
         if lista_insumos is None:
             lista_insumos, hay_prox_pag = self.paginar_lista_inventario(self.insumos_a_mostrar, self.pagina_actual_lista_inventario)
 
+        if self.pagina_actual_lista_inventario == 1:
+            idx_ui = 0
+        else:
+            consola_size = self.vista.console.size[1]
+            size_sin_prompt = consola_size - 6
+            lineas_disp = size_sin_prompt - 6
+
+            idx_ui = (self.pagina_actual_lista_inventario - 1) * lineas_disp
+
         for insumo in lista_insumos:
             # calcula si el stock está bajo o no
             if insumo.stock >= insumo.umbral:
@@ -60,7 +69,8 @@ class ControladorInventario:
             else:
                 stock_bajo = True
 
-            self.vista.crear_elemento_tabla_insumos(insumo, alerta_stock=stock_bajo)
+            idx_ui += 1
+            self.vista.crear_elemento_tabla_insumos(insumo, alerta_stock=stock_bajo, idx=idx_ui)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_insumos_prompt()
@@ -68,7 +78,7 @@ class ControladorInventario:
     def mostrar_detalles_insumo(self, insumo_num=None):
         if self.insumo_actual is None:
             # Si no tenemos un insumo actual, busca el insumo por el num pasado como arg
-            self.insumo_actual = self.servicio.obtener_insumo_por_num(insumo_num)
+            self.insumo_actual = self.insumos_a_mostrar[int(insumo_num)-1]
 
         # teniendo ahora el insumo a ver, hay que obtener la lista de los detalles de compra para este insumo
         detalles_compra = self.servicio.obtener_detalles_compra_por_insumo(self.insumo_actual.num)
@@ -110,6 +120,7 @@ class ControladorInventario:
 
     def cancelar_edicion_actual(self):
         # resetea formulario e insumo actual
+        self.pagina_actual_lista_inventario = 1
         self.insumo_actual = None
         self.detalles_insumo_actual = []
         self.formulario = {}
@@ -356,7 +367,10 @@ class ControladorInventario:
                 self.mostrar_lista_insumos(pagina)
 
     def paginar_lista_inventario(self, items: list, num_pag: int):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -392,7 +406,10 @@ class ControladorInventario:
                 self.mostrar_detalles_insumo(pagina)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -451,7 +468,10 @@ class ControladorInventario:
                 self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_marcas_disp, total_pag)
 
     def obtener_total_paginas_lista_inventario(self, items: list):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         if len(items) == 0:
             return 1
@@ -459,7 +479,10 @@ class ControladorInventario:
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self, items: list):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
 
         if len(items) == 0:
             return 1
