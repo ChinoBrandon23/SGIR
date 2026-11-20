@@ -53,6 +53,11 @@ class ControladorInventario:
         if lista_insumos is None:
             lista_insumos, hay_prox_pag = self.paginar_lista_inventario(self.insumos_a_mostrar, self.pagina_actual_lista_inventario)
 
+        if self.pagina_actual_lista_inventario == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (self.pagina_actual_lista_inventario - 1) * 20
+
         for insumo in lista_insumos:
             # calcula si el stock está bajo o no
             if insumo.stock >= insumo.umbral:
@@ -60,7 +65,8 @@ class ControladorInventario:
             else:
                 stock_bajo = True
 
-            self.vista.crear_elemento_tabla_insumos(insumo, alerta_stock=stock_bajo)
+            idx_ui += 1
+            self.vista.crear_elemento_tabla_insumos(insumo, alerta_stock=stock_bajo, idx=idx_ui)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_insumos_prompt()
@@ -68,7 +74,7 @@ class ControladorInventario:
     def mostrar_detalles_insumo(self, insumo_num=None):
         if self.insumo_actual is None:
             # Si no tenemos un insumo actual, busca el insumo por el num pasado como arg
-            self.insumo_actual = self.servicio.obtener_insumo_por_num(insumo_num)
+            self.insumo_actual = self.insumos_a_mostrar[int(insumo_num)-1]
 
         # teniendo ahora el insumo a ver, hay que obtener la lista de los detalles de compra para este insumo
         detalles_compra = self.servicio.obtener_detalles_compra_por_insumo(self.insumo_actual.num)
@@ -110,6 +116,7 @@ class ControladorInventario:
 
     def cancelar_edicion_actual(self):
         # resetea formulario e insumo actual
+        self.pagina_actual_lista_inventario = 1
         self.insumo_actual = None
         self.detalles_insumo_actual = []
         self.formulario = {}
