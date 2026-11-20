@@ -18,7 +18,7 @@ class ControladorMenus:
         self.formulario = {"platillos":[], "item_borrado":False}
         self.platillo_idx = {}
 
-        self.pagina_actual_lista_compras = 1
+        self.pagina_actual_lista_menus = 1
         self.pagina_actual_lista_detalles = 1
         self.pagina_actual_lista_platillos_disp = 1
 
@@ -57,16 +57,22 @@ class ControladorMenus:
 
         # esta función en la vista resetea la vista y crea los layouts para mostrar la lista de menús
         # se pasan como arg el núm de pág actual y el total de páginas para mostrar en el panel
-        self.vista.mostrar_todos_menus(self.pagina_actual_lista_compras,
+        self.vista.mostrar_todos_menus(self.pagina_actual_lista_menus,
                                        self.obtener_total_paginas_lista_menus(self.menus_a_mostrar))
 
         # checa si tenemos pag_lista_menus actual para mostrar, si no, se obtiene la página actual
         if pag_lista_menus is None:
-            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
+            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_menus)
+
+        if self.pagina_actual_lista_menus == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (self.pagina_actual_lista_menus - 1) * 20
 
         # se agregan a la tabla únicamente los elementos de la página actual
         for menu in pag_lista_menus:
-            self.vista.crear_elemento_tabla_menus(menu)
+            idx_ui += 1
+            self.vista.crear_elemento_tabla_menus(menu, idx_ui)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_menus_prompt()
@@ -75,7 +81,7 @@ class ControladorMenus:
         if self.menu_actual is None and menu_num is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
-            self.menu_actual = self.servicio.obtener_menu_por_id(num_menu=int(menu_num))
+            self.menu_actual = self.menus_a_mostrar[int(menu_num)-1]
 
         self.mapear_detalle_platillo()
 
@@ -99,9 +105,9 @@ class ControladorMenus:
 
     def mostrar_formulario_crear_menu(self):
         if self.menu_actual is None:
-            self.vista.mostrar_crear_menu(None, self.platillo_idx)
+            self.vista.mostrar_crear_menu(None)
         else:
-            self.vista.mostrar_crear_menu(self.menu_actual, self.platillo_idx)
+            self.vista.mostrar_crear_menu(self.menu_actual)
             self.vista.crear_banda_opciones_editar()
             self.vista.refrescar_pantalla()
             self.vista.mostrar_opciones_editar_prompt()
@@ -400,22 +406,22 @@ class ControladorMenus:
 
     def cambiar_pagina_lista_menus(self, mov):
         if mov == ",":
-            if self.pagina_actual_lista_compras == 1:
+            if self.pagina_actual_lista_menus == 1:
                 self.vista.mostrar_mensaje_no_pagina_anterior()
                 self.mostrar_lista_menus()
             else:
-                self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
+                self.pagina_actual_lista_menus -= 1
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_menus)
                 self.mostrar_lista_menus(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_menus)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_menus()
             else:
-                self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
+                self.pagina_actual_lista_menus += 1
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_menus)
                 self.mostrar_lista_menus(pagina)
 
     def paginar_lista_menus(self, items: list, num_pag: int):

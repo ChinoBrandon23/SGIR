@@ -63,8 +63,8 @@ class VistaMenus(VistaBase):
         for columna in columnas:
             self.tabla_menus.add_column(columna)
 
-    def crear_elemento_tabla_menus(self, menu: Menu):
-        self.tabla_menus.add_row(str(menu.num), menu.nombre, str(menu.cantidad_platillos))
+    def crear_elemento_tabla_menus(self, menu: Menu, idx:int):
+        self.tabla_menus.add_row(str(idx), menu.nombre, str(menu.cantidad_platillos))
 
     def mostrar_detalles_menu(self, menu: Menu | None, pag_detalles_menu, pag_actual, total_pag, datos_editados, mapa_platillos):
         self.resetear_vista()
@@ -160,7 +160,7 @@ class VistaMenus(VistaBase):
 
         self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_crear_menu(self, menu: Menu | None, platillo_idx):
+    def mostrar_crear_menu(self, menu: Menu | None):
         self.resetear_vista()
 
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
@@ -277,7 +277,7 @@ class VistaMenus(VistaBase):
     def mostrar_abrir_detalles_prompt(self, lista_menus: list[Menu]):
         self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice del menú a mostrar",
-                                           choices=[str(menu.num) for menu in lista_menus],
+                                           choices=[str(i+1) for i in range(len(lista_menus))],
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
