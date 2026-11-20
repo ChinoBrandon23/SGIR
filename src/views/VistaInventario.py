@@ -187,6 +187,7 @@ class VistaInventario(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_insumos_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_inventario.imprimir("Selecciona una opción",
                                             choices=["1", "2", "m", ",", "."],
                                             show_choices=False)
@@ -196,6 +197,7 @@ class VistaInventario(VistaBase):
             self.mostrar_menu_insumos_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_insumos: list[Insumo]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice del insumo a mostrar",
                                            choices=[str(insumo.num) for insumo in lista_insumos],
                                            show_choices=False)
@@ -205,6 +207,7 @@ class VistaInventario(VistaBase):
             self.mostrar_abrir_detalles_prompt(lista_insumos)
 
     def mostrar_opciones_detalles_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_detalles.imprimir("Selecciona una opción",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
@@ -214,6 +217,7 @@ class VistaInventario(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción",
                                          choices=["1", "2", "3", "4", "5", "6"],
                                          show_choices=False)
@@ -223,6 +227,7 @@ class VistaInventario(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_insumo_prompt(self):
+        self.refrescar_pantalla()
         confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar este insumo, confirma para continuar[/bold red]",
                                   choices=["S","N"])
 
@@ -232,6 +237,7 @@ class VistaInventario(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_inventario.imprimir("Selecciona una opción",
                                                    choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                    show_choices=False)
@@ -241,6 +247,7 @@ class VistaInventario(VistaBase):
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre del insumo[/bold yellow]")
 
         if len(info) > 0:
@@ -255,6 +262,7 @@ class VistaInventario(VistaBase):
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_umbral_prompt(self):
+        self.refrescar_pantalla()
         umbral = Prompt.ask("[bold yellow]Ingresa el nuevo umbral para este insumo[/bold yellow]")
 
         if len(umbral) > 0:
@@ -425,6 +433,10 @@ class VistaInventario(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_mensaje_nombre_duplicado(self):
+        rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita el insumo existente.[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):

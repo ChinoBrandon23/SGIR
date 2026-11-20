@@ -29,7 +29,10 @@ class InventarioServicio:
             raise IndexError(f'Servicio: Error al obtener los detalles de compras. {err}')
 
     def obtener_insumo_por_nombre(self, nombre_ins:str):
-        pass
+        try:
+            return self._insumo_dao.obtener_insumo_por_nombre(nombre_ins)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al obtener insumo. {err}')
 
     def obtener_insumo_por_num(self, num_insumo:int) -> Insumo:
         try:
@@ -82,6 +85,10 @@ class InventarioServicio:
         
     def actualizar_insumo(self, insumo_act:Insumo):
         try:
+            # checa si el insumo ya existe
+            if self.obtener_insumo_por_nombre(insumo_act.nombre):
+                raise ValueError(f"Servicio: El nombre del insumo ya existe")
+
             self._insumo_dao.actualizar_insumo(insumo=insumo_act)
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al actualizar insumo. {err}')

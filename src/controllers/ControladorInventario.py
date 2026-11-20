@@ -95,7 +95,12 @@ class ControladorInventario:
         # Como en el controlador inventario no se crean insumos, solo se consultan, solo se usará
         # el servicio de actualizar y no de crear
 
-        self.servicio.actualizar_insumo(self.insumo_actual)
+        try:
+            self.servicio.actualizar_insumo(self.insumo_actual)
+        except ValueError:
+            self.vista.refrescar_pantalla()
+            self.vista.mostrar_mensaje_nombre_duplicado()
+            self.vista.mostrar_opciones_editar_prompt()
 
         self.insumos_a_mostrar = self.servicio.obtener_insumos()
 
