@@ -8,9 +8,6 @@ from controllers.ControladorMerma import ControladorMerma
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
-from daos.compra_dao import CompraDAO
-from daos.insumo_dao import InsumoDAO
-from services.insumo_servicio import InsumoServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
@@ -24,15 +21,20 @@ from views.VistaVentas import VistaVentas
 from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
 from daos.menu_dao import MenuDAO
+from daos.insumo_dao import InsumoDAO
+from daos.compra_dao import CompraDAO
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
+from services.inventario_servicio import InventarioServicio
+from services.compras_servicio import CompraServicio
 
 class ControladorMenuPrincipal:
     def __init__(self, vista: VistaMenuPrincipal, servicio=None):
         self.vista = vista
         self.servicio = servicio
         self.vista.input_menu.agregar_escuchante(self.evaluar_input_menu)
+        self.db = DatabaseConnection()
 
         self.abrir_menu_principal()
 
@@ -107,7 +109,10 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_compra.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorCompras(vista)
+        compra_servicio = CompraServicio(compra_dao=CompraDAO(DatabaseConnection),insumo_dao=InsumoDAO(DatabaseConnection))
+        inventario_servicio = InventarioServicio(insumo_dao=InsumoDAO(DatabaseConnection),compra_dao=CompraDAO(DatabaseConnection))
+        
+        ControladorCompras(vista,compra_servicio=compra_servicio,inventario_servicio=inventario_servicio)
 
     def abrir_vista_inventario(self):
         vista = VistaInventario(self.vista.console)
@@ -116,10 +121,10 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_inventario.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        insumo_dao = InsumoDAO(DatabaseConnection)
-        compra_dao = CompraDAO(DatabaseConnection)
-        insumo_servicio = InsumoServicio(insumo_dao=insumo_dao, compra_dao=compra_dao)
-        ControladorInventario(vista, insumo_servicio)
+        insumo_dao = InsumoDAO(self.db)
+        compra_dao = CompraDAO(self.db)
+        inventario_servicio = InventarioServicio(insumo_dao=insumo_dao, compra_dao=compra_dao)
+        ControladorInventario(vista, inventario_servicio)
 
     def abrir_vista_merma(self):
         vista = VistaMerma(self.vista.console)

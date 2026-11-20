@@ -1,7 +1,9 @@
 import copy
 import math
+import time
 from datetime import datetime
 import datetime
+from mysql.connector import Error
 
 from models.menu import Menu
 from views.VistaMenus import VistaMenus
@@ -18,8 +20,9 @@ class ControladorMenus:
 
         self.pagina_actual_lista_compras = 1
         self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_lista_platillos_disp = 1
 
-        self.menus_testeo = None
+        self.menus_a_mostrar = None
 
         self.configurar_listeners()
         self.mostrar_lista_menus()
@@ -38,6 +41,7 @@ class ControladorMenus:
         self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_menu_editar_menu.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        self.vista.input_seleccion_platillos_disp.agregar_escuchante(self.cambiar_pagina_lista_platillos_disp)
 
     def mostrar_lista_menus(self, pag_lista_menus=None):
         """
@@ -45,20 +49,20 @@ class ControladorMenus:
         """
 
         #calcula el numero de recetas reales: se eliminara despues
-        if self.menus_testeo is None:
-            self.menus_testeo = self.servicio.obtener_menus()
+        if self.menus_a_mostrar is None:
+            self.menus_a_mostrar = self.servicio.obtener_menus()
 
-        for menu in self.menus_testeo:
+        for menu in self.menus_a_mostrar:
             menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
 
         # esta función en la vista resetea la vista y crea los layouts para mostrar la lista de menús
         # se pasan como arg el núm de pág actual y el total de páginas para mostrar en el panel
         self.vista.mostrar_todos_menus(self.pagina_actual_lista_compras,
-                                       self.obtener_total_paginas_lista_menus(self.menus_testeo))
+                                       self.obtener_total_paginas_lista_menus(self.menus_a_mostrar))
 
         # checa si tenemos pag_lista_menus actual para mostrar, si no, se obtiene la página actual
         if pag_lista_menus is None:
-            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+            pag_lista_menus, hay_prox_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
 
         # se agregan a la tabla únicamente los elementos de la página actual
         for menu in pag_lista_menus:
@@ -108,16 +112,26 @@ class ControladorMenus:
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
         if self.servicio.menu_existe(self.menu_actual.num):
-            self.servicio.actualizar_menu(menu=self.menu_actual)
-            menu_actual_num = str(self.menu_actual.num)
+            try:
+                self.servicio.actualizar_menu(menu=self.menu_actual)
+                menu_actual_num = str(self.menu_actual.num)
+            except ValueError:
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_mensaje_editar_nombre_duplicado()
+                self.vista.mostrar_opciones_editar_prompt()
         else:
-            self.servicio.crear_menu(self.menu_actual)
-            menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
-            self.menus_testeo = self.servicio.obtener_menus()
+            try:
+                self.servicio.crear_menu(self.menu_actual)
+                menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
+                self.menus_a_mostrar = self.servicio.obtener_menus()
+            except Error:
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_mensaje_editar_nombre_duplicado()
+                self.vista.mostrar_opciones_editar_prompt()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-
+        self.menus_a_mostrar = self.servicio.obtener_menus()
         self.cancelar_edicion_actual()
         self.mostrar_detalles_menu(menu_actual_num)
 
@@ -151,6 +165,14 @@ class ControladorMenus:
 
         self.formulario["platillos"].append(detalle_pl)
 
+    def filtrar_platillos_duplicados(self):
+        lista_platillos_actual = self.servicio.obtener_platillos()
+        lista_platillos_en_menu = [pl.platillo.nombre for pl in self.menu_actual.detalles]
+        idx_plat_disp = {i + 1: lista_platillos_actual[i] for i in range(len(lista_platillos_actual)) if
+                         lista_platillos_actual[i].nombre not in lista_platillos_en_menu}
+
+        return [idx_plat_disp[idx] for idx in idx_plat_disp]
+
     def mapear_detalle_platillo(self):
         # toma los platillos del menú itera sobre cada uno y les asigna un número para mostrar en la tabla de la vista
         if self.menu_actual:
@@ -165,7 +187,7 @@ class ControladorMenus:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todos los menús y pasarlos
-                self.vista.mostrar_abrir_detalles_prompt(self.menus_testeo)
+                self.vista.mostrar_abrir_detalles_prompt(self.menus_a_mostrar)
             case "2":
                 # Aquí crea menú
                 self.mostrar_formulario_crear_menu()
@@ -205,7 +227,7 @@ class ControladorMenus:
                     self.servicio.eliminar_menu(self.menu_actual.num)
                 
                 self.cancelar_edicion_actual()
-                self.menus_testeo = self.servicio.obtener_menus()
+                self.menus_a_mostrar = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
             case "m":
                 # volver al menú principal
@@ -217,8 +239,15 @@ class ControladorMenus:
                 # buscar por nombre
                 nombre = self.vista.mostrar_buscar_por_nombre_prompt()
 
-                # Aquí un servicio debería buscar por nombre y asignarlo a self.menus_testeo, si es que se va a mantener
-                # esa variable, básicamente lo que comenté en a partir de la línea 215 en controlador platillos
+                resultados_obtenidos = self.servicio.obtener_menus_por_match_nombre(nombre)
+
+                if len(resultados_obtenidos):
+                    self.menus_a_mostrar = resultados_obtenidos
+                else:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_menus()
 
@@ -226,16 +255,20 @@ class ControladorMenus:
                 # buscar por vigencia
                 fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_vigencia_prompt()
 
-                # aquí definitivamente se debería validar que sean fechas válidas
-
-                # Lo mismo de arriba aplica aquí, busca por el rango de fechas provisto en uns servicio y asigna a
-                # self.menus_testeo
+                try:
+                    resultados_obtenidos = self.servicio.obtener_menus_por_rango_fecha(fecha_inicial, fecha_final)
+                    self.menus_a_mostrar = resultados_obtenidos
+                except IndexError:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_menus()
 
             case "3":
                 # mostrar todos los menús
-                self.menus_testeo = self.servicio.obtener_menus()
+                self.menus_a_mostrar = self.servicio.obtener_menus()
                 self.mostrar_lista_menus()
 
             case "4":
@@ -291,28 +324,27 @@ class ControladorMenus:
                 # hago una lista con los nombres (str) de los platillos que ya son parte del menú actual
                 # y luego hago un dict con un # de índice y el nombre de cada platillo que existe
                 # y NO es ya parte del menú para evitar añadir duplicados, estos son los platillos disponibles
-                lista_platillos_actual = self.servicio.obtener_platillos()
-                lista_platillos_actuales = [pl.platillo.nombre for pl in self.menu_actual.detalles]
-                idx_plat_disp = {i + 1: lista_platillos_actual[i] for i in range(len(lista_platillos_actual)) if
-                                lista_platillos_actual[i].nombre not in lista_platillos_actuales}
-
+                lista_plat_disp = self.filtrar_platillos_duplicados()
                 # hago una lista de solo los índices de los platillos disponibles para pasarla a la vista como
                 # opciones válidas de input para el usuario
                 # hago otra lista con solo los nombres de los platillos para pasarla a la función que va a mostrar al
                 # usuario los platillos disponibles
-                opciones = [str(i) for i in idx_plat_disp]
-                lista_plat_disp = [idx_plat_disp[idx] for idx in idx_plat_disp]
 
-                self.vista.mostrar_platillos_disponibles(lista_plat_disp)
+                opciones = [str(i+1) for i in range(len(lista_plat_disp))]
+
+                pagina, prox_pag = self.paginar_lista_detalles(lista_plat_disp, self.pagina_actual_lista_platillos_disp)
+                total_pag = self.obtener_total_paginas_detalles(lista_plat_disp)
+
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos_disp, total_pag)
                 self.vista.refrescar_pantalla()
 
                 num_platillo, precio = self.vista.mostrar_agregar_platillo_prompt(opciones)
 
                 if num_platillo and precio:
-                    nombre = idx_plat_disp[int(num_platillo)].nombre
-                    lista_platillos_actuales = self.servicio.obtener_platillos()
+                    nombre = lista_plat_disp[int(num_platillo)-1].nombre
+                    lista_platillos_en_menu = self.servicio.obtener_platillos()
 
-                    for plat in lista_platillos_actuales:
+                    for plat in lista_platillos_en_menu:
                         if plat.nombre == nombre:
                             self.menu_actual.agregar_platillo(plat, float(precio))
                             self.agregar_edicion_platillos(copy.deepcopy(self.menu_actual.detalles[-1]))
@@ -326,7 +358,9 @@ class ControladorMenus:
                 opciones = [str(idx) for idx in self.platillo_idx]
                 lista_platillos = [detalle.platillo for detalle in self.menu_actual.detalles]
 
-                self.vista.mostrar_platillos_disponibles(lista_platillos)
+                total_pag_platillos = self.obtener_total_paginas_detalles(lista_platillos)
+
+                self.vista.mostrar_platillos_disponibles(lista_platillos, self.pagina_actual_lista_platillos_disp, total_pag_platillos)
                 self.vista.refrescar_pantalla()
 
                 num, precio = self.vista.mostrar_editar_precio_platillo_prompt(opciones)
@@ -371,17 +405,17 @@ class ControladorMenus:
                 self.mostrar_lista_menus()
             else:
                 self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
                 self.mostrar_lista_menus(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_menus()
             else:
                 self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_testeo, self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_menus(self.menus_a_mostrar, self.pagina_actual_lista_compras)
                 self.mostrar_lista_menus(pagina)
 
     def paginar_lista_menus(self, items: list, num_pag: int):
@@ -393,7 +427,7 @@ class ControladorMenus:
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
@@ -422,13 +456,39 @@ class ControladorMenus:
                                                                self.pagina_actual_lista_detalles)
                 self.mostrar_detalles_menu(pagina)
 
+    def cambiar_pagina_lista_platillos_disp(self, mov):
+        lista_platillos = self.filtrar_platillos_duplicados()
+
+        if mov == ",":
+            if self.pagina_actual_lista_platillos_disp == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_lista_platillos_disp -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_platillos,
+                                                               self.pagina_actual_lista_platillos_disp)
+                total_pag = self.obtener_total_paginas_detalles(lista_platillos)
+
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos_disp, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(lista_platillos, self.pagina_actual_lista_platillos_disp)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_lista_platillos_disp += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_platillos,
+                                                               self.pagina_actual_lista_platillos_disp)
+                total_pag = self.obtener_total_paginas_detalles(lista_platillos)
+
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos_disp, total_pag)
+
     def paginar_lista_detalles(self, items: list, num_pag: int):
         lineas_disp = 9
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
@@ -446,4 +506,9 @@ class ControladorMenus:
     def obtener_total_paginas_detalles(self, items: list):
         lineas_disp = 9
 
-        return math.ceil(len(items) / lineas_disp)
+        total = math.ceil(len(items) / lineas_disp)
+
+        if total == 0:
+            return 1
+
+        return total

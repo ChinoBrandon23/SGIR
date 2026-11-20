@@ -18,12 +18,15 @@ from datetime import date
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
-from services.insumo_servicio import InsumoServicio
+from services.inventario_servicio import InventarioServicio
+from services.compras_servicio import CompraServicio
 
 
 from models.insumo import Insumo
 from models.insumo import TipoInsumo
 from models.insumo import Marca
+from models.compra import Compra, DetalleCompra
+from models.proveedor import Proveedor
 
 def main():
     '''
@@ -34,7 +37,8 @@ def main():
     ControladorMenuPrincipal(vista=vista_principal)
     '''
     #testeando_crud_menus()
-    testeando_crud_insumos()
+    #testeando_crud_insumos()
+    testeando_crud_compras()
 
 def testeando_crud_menus():
     connection:DatabaseConnection = DatabaseConnection()
@@ -53,28 +57,54 @@ def testeando_crud_menus():
 def testeando_crud_insumos():
     connection:DatabaseConnection = DatabaseConnection()
     insumo_dao = InsumoDAO(connection)
-    insumo_servicio = InsumoServicio(insumo_dao=insumo_dao,compra_dao=CompraDAO(connection))
+    compra_dao = CompraDAO(connection)
+    inventario_servicio = InventarioServicio(insumo_dao=insumo_dao,compra_dao=compra_dao)
+    compras_servicio = CompraServicio(compra_dao=compra_dao,insumo_dao=insumo_dao)
 
-    for compra in insumo_servicio.obtener_compras():
+    for compra in inventario_servicio.obtener_compras():
         print(f'Compra: {compra.num} - Fecha Compra: {compra.fecha_creacion}')
         for detalle in compra.lista_compras:
             print(f'    - Insumo: {detalle.insumo.nombre} - Stock: {detalle.insumo.stock} {detalle.unidad_medida} Caducidad: {detalle.fecha_caducidad} Marca: {detalle.insumo.marca.nombre}') # type: ignore
             print()
 
     print('---------ACTUALIZAR INSUMO')
-    insumo_servicio.actualizar_insumo(Insumo(15,'Queso Mozzarella',5,12,TipoInsumo('LAC',''),Marca(0,'')))
+    inventario_servicio.actualizar_insumo(Insumo(15,'Queso Mozzarella',5,12,TipoInsumo('LAC',''),Marca(0,'')))
 
     print('-----------')
-    for insumo in insumo_servicio.obtener_insumos():
+    for insumo in inventario_servicio.obtener_insumos():
         print(f'Insumo: {insumo.nombre} Stock: {insumo.stock}')
 
     print('------------Tipos insumo------------')
-    for ti in insumo_servicio.obtener_tipos_insumo():
+    for ti in inventario_servicio.obtener_tipos_insumo():
         print(f'{ti.clave}-{ti.nombre}')
 
     print('------------Marcas------------')
-    for m in insumo_servicio.obtener_marcas():
+    for m in inventario_servicio.obtener_marcas():
         print(f'{m.num}-{m.nombre}')
+    print('------------Proveedores------------')
+    for m in compra_dao.obtener_proveedores():
+        print(f'{m.num}-{m.nombre}')
+
+def testeando_crud_compras():
+    compra_dao = CompraDAO(DatabaseConnection())
+    insumo_dao = InsumoDAO(DatabaseConnection())
+
+    compra_servicio = CompraServicio(compra_dao=compra_dao,insumo_dao=insumo_dao)
+    proveedores = compra_servicio.obtener_proovedores()
+
+    for proveedor in proveedores:
+        print(proveedor.num,' ',proveedor.nombre)
+
+    print('------------------------------')
+    
+    compra = compra_servicio.obtener_compra_por_numero(1)
+    #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tomate Roma'),
+    #                            100,100,'kg',0,20,'10-12-2026','17-11-2026')
+    #compra_servicio.registrar_compra(compra_nueva=compra)
+    #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Cilantro Fresco'),2.5,0,'kg',0,40,'2-2-2027','19-11-2026')
+    #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tortillas de Maíz'),10,0,'kg',0,40,'1-12-2026','19-11-2026')
+
+    compra_servicio.actualizar_compra(compra_act=compra)
 
 if __name__ == "__main__":
     main()

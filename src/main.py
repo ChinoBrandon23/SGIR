@@ -46,8 +46,8 @@ def main():
     ControladorMenuPrincipal(vista=vista_principal)
 
 if __name__ == "__main__":
-    try:
+    #try:
         main()
-    except Exception as err:
-        print(f"\n[bold red]Error inesperado no controlado:[/bold red] {err}")
-        sys.exit(1)
+    #except Exception as err:
+    #    print(f"\n[bold red]Error inesperado no controlado:[/bold red] {err}")
+    #    sys.exit(1)

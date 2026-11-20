@@ -1,3 +1,5 @@
+import datetime
+
 from models.menu import Menu, DetalleMenu
 from models.platillo import Platillo
 from daos.menu_dao import MenuDAO
@@ -102,6 +104,52 @@ class MenuServicio:
             
         except mysql.connector.Error as err:
             raise ValueError(f'Ocurrio un error: {err}')
+
+    def obtener_menus_por_rango_fecha(self, fecha_inicial:str, fecha_final:str) -> List[Menu]:
+        try:
+            # obtengo el objeto date a partir del str basado en el formato en que lo ingresó el usuario
+            fecha_inicial = datetime.datetime.strptime(fecha_inicial, '%d-%m-%Y') # type: ignore
+            fecha_final = datetime.datetime.strptime(fecha_final, '%d-%m-%Y') # type: ignore
+
+            # ahora se convierte al formato que mysql usa y se pasa de nuevo a str
+            fecha_inicial_formateada = datetime.datetime.strftime(fecha_inicial, '%Y-%m-%d') # type: ignore
+            fecha_final_formateada = datetime.datetime.strftime(fecha_final, '%Y-%m-%d') # type: ignore
+
+            menus = self._menu_dao.obtener_menus_disponibles_por_rango_fecha(fecha_inicial_formateada, fecha_final_formateada)
+
+            if not menus:
+                raise IndexError(f'Servicio: No hay menus disponibles en el rango.')
+
+            try:
+                for menu in menus:
+                    platillos = self._menu_dao.obtener_platillos_de_menu(menu.num)
+                    for detalleMenu in platillos:
+                        menu.agregar_platillo(platillo=detalleMenu.platillo, precio=detalleMenu.precio)
+                return menus
+            except mysql.connector.Error as err:
+                raise ValueError(f'Servicio: Ocurrio un error al obtener platillos: {err}\n')
+
+        except mysql.connector.Error as err:
+            raise ValueError(f'Ocurrio un error al buscar menús por rango de fecha: {err}')
+
+    def obtener_menus_por_match_nombre(self, insumo_nombre:str) -> List[Menu]:
+        try:
+            menus = self._menu_dao.obtener_menus_disponibles_por_match_nombre(insumo_nombre)
+
+            if not menus:
+                raise IndexError(f'Servicio: No hay menus disponibles en el rango.')
+
+            try:
+                for menu in menus:
+                    platillos = self._menu_dao.obtener_platillos_de_menu(menu.num)
+                    for detalleMenu in platillos:
+                        menu.agregar_platillo(platillo=detalleMenu.platillo, precio=detalleMenu.precio)
+                return menus
+            except mysql.connector.Error as err:
+                raise ValueError(f'Servicio: Ocurrio un error al obtener platillos: {err}\n')
+
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Ocurrió un error al obtener menús por nombre: {err}\n')
 
     def obtener_platillos_de_un_menu(self, num_menu:int) -> List[DetalleMenu]:
         ''' Retorna los platillos de un menu '''

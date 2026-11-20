@@ -99,16 +99,17 @@ class RecetaServicio:
         '''Crear una receta.'''
 
         # evalua que la receta no exista
-        if self.receta_existe(receta.num):
+        if  self._receta_dao.obtener_receta_por_nombre(receta.nombre):
             # la receta existe y hay que impedir creacion
             raise ValueError('Servicio: El numero de receta es invalido. La receta ya existe.')
 
         self._receta_dao.crear_receta_vacia(receta=receta)
+        receta_registrada = self._receta_dao.obtener_receta_por_nombre(receta.nombre)
 
         if receta.lista_ingredientes:
             # llama funcion del dao para agregar ingredientes de la receta
             for lista_ingrediente in receta.lista_ingredientes:
-                self._receta_dao.agregar_ingrediente_a_receta(receta.num,lista_ingrediente)
+                self._receta_dao.agregar_ingrediente_a_receta(receta_registrada.num,lista_ingrediente)
             
         if receta.instrucciones:
             # llama funcion del dao para agregar instrucciones a la receta
