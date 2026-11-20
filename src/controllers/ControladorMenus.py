@@ -425,10 +425,7 @@ class ControladorMenus:
                 self.mostrar_lista_menus(pagina)
 
     def paginar_lista_menus(self, items: list, num_pag: int):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
-
-        lineas_disp = size_sin_prompt - 7
+        lineas_disp = 20
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -502,10 +499,7 @@ class ControladorMenus:
         return items[idx_inicio:idx_final], prox_pag
 
     def obtener_total_paginas_lista_menus(self, items: list):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
-
-        lineas_disp = size_sin_prompt - 7
+        lineas_disp = 20
 
         return math.ceil(len(items) / lineas_disp)
 
