@@ -64,7 +64,11 @@ class ControladorRecetas:
         if self.pagina_actual_lista_recetas == 1:
             idx_ui = 0
         else:
-            idx_ui = (self.pagina_actual_lista_recetas - 1) * 20
+            consola_size = self.vista.console.size[1]
+            size_sin_prompt = consola_size - 6
+            lineas_disp = size_sin_prompt - 6
+
+            idx_ui = (self.pagina_actual_lista_recetas - 1) * lineas_disp
 
         for receta in pag_lista_recetas:
             idx_ui += 1
@@ -485,7 +489,10 @@ class ControladorRecetas:
                 self.mostrar_lista_recetas(pagina)
 
     def paginar_lista_recetas(self, items: list, num_pag: int):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -541,7 +548,10 @@ class ControladorRecetas:
         return pagina_dict, prox_pag
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 8
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -601,7 +611,10 @@ class ControladorRecetas:
                 self.vista.mostrar_ingredientes_disponibles(pagina, self.pagina_actual_lista_recetas_disponibles, total_pag)
 
     def obtener_total_paginas_lista_recetas(self, items: list):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         if len(items) == 0:
             return 1
@@ -609,7 +622,10 @@ class ControladorRecetas:
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 8
 
         if len(self.receta_actual.lista_ingredientes) == 0 and len(self.receta_actual.instrucciones) == 0:
             return 1

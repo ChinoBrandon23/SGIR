@@ -281,10 +281,15 @@ class VistaInventario(VistaBase):
 
         tabla = Table(title="Tipos de insumo disponibles")
 
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
+
         if pag_actual == 1:
             idx_ui = 0
         else:
-            idx_ui = (pag_actual - 1) * 15
+            idx_ui = (pag_actual - 1) * lineas_disp
 
         for col in columnas:
             tabla.add_column(col)
@@ -308,10 +313,15 @@ class VistaInventario(VistaBase):
 
         self.mostrar_conteo_paginas(pag_actual, total_pag)
 
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
+
         if pag_actual == 1:
             idx_ui = 0
         else:
-            idx_ui = (pag_actual - 1) * 20
+            idx_ui = (pag_actual - 1) * lineas_disp
 
         for col in columnas:
             tabla.add_column(col)

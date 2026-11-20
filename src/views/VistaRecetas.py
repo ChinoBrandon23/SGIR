@@ -375,10 +375,15 @@ class VistaRecetas(VistaBase):
         self.layout["tablas"].unsplit()
         self.mostrar_conteo_paginas(pag_actual, total_pag)
 
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 8
+
         if pag_actual == 1:
             idx_ui = 0
         else:
-            idx_ui = (pag_actual - 1) * 20
+            idx_ui = (pag_actual - 1) * lineas_disp
 
         columnas = ["#", "Nombre"]
 

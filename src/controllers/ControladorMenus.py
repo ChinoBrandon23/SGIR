@@ -67,7 +67,11 @@ class ControladorMenus:
         if self.pagina_actual_lista_menus == 1:
             idx_ui = 0
         else:
-            idx_ui = (self.pagina_actual_lista_menus - 1) * 20
+            consola_size = self.vista.console.size[1]
+            size_sin_prompt = consola_size - 6
+            lineas_disp = size_sin_prompt - 18
+
+            idx_ui = (self.pagina_actual_lista_menus - 1) * lineas_disp
 
         # se agregan a la tabla únicamente los elementos de la página actual
         for menu in pag_lista_menus:
@@ -426,7 +430,10 @@ class ControladorMenus:
                 self.mostrar_lista_menus(pagina)
 
     def paginar_lista_menus(self, items: list, num_pag: int):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -487,7 +494,10 @@ class ControladorMenus:
                 self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos_disp, total_pag)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 9
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -500,12 +510,18 @@ class ControladorMenus:
         return items[idx_inicio:idx_final], prox_pag
 
     def obtener_total_paginas_lista_menus(self, items: list):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self, items: list):
-        lineas_disp = 9
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
 
         total = math.ceil(len(items) / lineas_disp)
 

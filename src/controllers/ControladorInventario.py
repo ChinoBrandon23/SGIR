@@ -56,7 +56,11 @@ class ControladorInventario:
         if self.pagina_actual_lista_inventario == 1:
             idx_ui = 0
         else:
-            idx_ui = (self.pagina_actual_lista_inventario - 1) * 20
+            consola_size = self.vista.console.size[1]
+            size_sin_prompt = consola_size - 6
+            lineas_disp = size_sin_prompt - 6
+
+            idx_ui = (self.pagina_actual_lista_inventario - 1) * lineas_disp
 
         for insumo in lista_insumos:
             # calcula si el stock está bajo o no
@@ -363,7 +367,10 @@ class ControladorInventario:
                 self.mostrar_lista_insumos(pagina)
 
     def paginar_lista_inventario(self, items: list, num_pag: int):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -399,7 +406,10 @@ class ControladorInventario:
                 self.mostrar_detalles_insumo(pagina)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -458,7 +468,10 @@ class ControladorInventario:
                 self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_marcas_disp, total_pag)
 
     def obtener_total_paginas_lista_inventario(self, items: list):
-        lineas_disp = 20
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 6
 
         if len(items) == 0:
             return 1
@@ -466,7 +479,10 @@ class ControladorInventario:
         return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self, items: list):
-        lineas_disp = 15
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 20
 
         if len(items) == 0:
             return 1
