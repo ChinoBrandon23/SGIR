@@ -313,7 +313,7 @@ class VistaInventario(VistaBase):
 
         self.mostrar_conteo_paginas(pag_actual, total_pag)
 
-        consola_size = self.vista.console.size[1]
+        consola_size = self.console.size[1]
         size_sin_prompt = consola_size - 6
 
         lineas_disp = size_sin_prompt - 20
