@@ -3,6 +3,7 @@ import math
 import time
 from datetime import datetime
 import datetime
+from mysql.connector import Error
 
 from models.menu import Menu
 from views.VistaMenus import VistaMenus
@@ -111,12 +112,22 @@ class ControladorMenus:
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
         if self.servicio.menu_existe(self.menu_actual.num):
-            self.servicio.actualizar_menu(menu=self.menu_actual)
-            menu_actual_num = str(self.menu_actual.num)
+            try:
+                self.servicio.actualizar_menu(menu=self.menu_actual)
+                menu_actual_num = str(self.menu_actual.num)
+            except ValueError:
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_mensaje_editar_nombre_duplicado()
+                self.vista.mostrar_opciones_editar_prompt()
         else:
-            self.servicio.crear_menu(self.menu_actual)
-            menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
-            self.menus_a_mostrar = self.servicio.obtener_menus()
+            try:
+                self.servicio.crear_menu(self.menu_actual)
+                menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
+                self.menus_a_mostrar = self.servicio.obtener_menus()
+            except Error:
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_mensaje_editar_nombre_duplicado()
+                self.vista.mostrar_opciones_editar_prompt()
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya

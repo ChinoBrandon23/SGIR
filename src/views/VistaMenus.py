@@ -265,6 +265,7 @@ class VistaMenus(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_menus_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_menus.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                        choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
@@ -274,6 +275,7 @@ class VistaMenus(VistaBase):
             self.mostrar_menu_menus_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_menus: list[Menu]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice del menú a mostrar",
                                            choices=[str(menu.num) for menu in lista_menus],
                                            show_choices=False)
@@ -283,6 +285,7 @@ class VistaMenus(VistaBase):
             self.mostrar_abrir_detalles_prompt(lista_menus)
 
     def mostrar_opciones_busqueda_av_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción",
                                          choices=["1", "2", "3", "4"],
                                          show_choices=False)
@@ -292,6 +295,7 @@ class VistaMenus(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_detalles_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
@@ -301,6 +305,7 @@ class VistaMenus(VistaBase):
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_menu_prompt(self):
+        self.refrescar_pantalla()
         confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar este menú, confirma para continuar[/bold red]",
                                   choices=["S","N"])
 
@@ -310,6 +315,7 @@ class VistaMenus(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_menu.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                show_choices=False)
@@ -319,6 +325,7 @@ class VistaMenus(VistaBase):
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre del menú[/bold yellow]")
 
         if len(info) > 0:
@@ -333,6 +340,7 @@ class VistaMenus(VistaBase):
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_vigencia_prompt(self):
+        self.refrescar_pantalla()
         fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial en el siguiente formato o 0 para salir[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
 
         if fecha_inicial == "0":
@@ -350,10 +358,12 @@ class VistaMenus(VistaBase):
         return None, None
 
     def mostrar_editar_platillos_menu_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                  choices=["1","2","3","4", ",", "."], show_choices=False)
 
     def mostrar_agregar_platillo_prompt(self, opciones):
+        self.refrescar_pantalla()
         if len(opciones) == 0:
             rich.print("[bold green]No hay platillos disponibles para agregar a este menú, volviendo al menú editar...[/bold green]")
             time.sleep(5)
@@ -383,6 +393,7 @@ class VistaMenus(VistaBase):
         return None, None
 
     def mostrar_editar_precio_platillo_prompt(self, opciones):
+        self.refrescar_pantalla()
         if len(opciones) == 0:
             rich.print("[bold green]El menú actual no tiene platillos que editar, volviendo al menú editar...[/bold green]")
             time.sleep(5)
@@ -408,6 +419,7 @@ class VistaMenus(VistaBase):
 
 
     def mostrar_remover_platillo_prompt(self, opciones):
+        self.refrescar_pantalla()
         if len(opciones) == 0:
             rich.print("[bold green]El menú actual no tiene platillos que borrar, volviendo al menú editar...[/bold green]")
             time.sleep(5)
@@ -456,12 +468,6 @@ class VistaMenus(VistaBase):
 
         return None
 
-    def mostrar_prompt_cambiar_pagina_menus(self):
-        mov = self.input_cambiar_pagina_menus.imprimir(
-            "[bold yellow]Ingresa [bold white]','[/bold white] para retroceder o [bold white]'.'[/bold white] para avanzar'[/bold yellow]",
-            choices=[",", "."])
-        return mov
-
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
         paginas = f"[bold magenta]Página {pag_actual}/{pag_total}[/bold magenta]"
@@ -482,6 +488,14 @@ class VistaMenus(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_mensaje_crear_menu_duplicado(self):
+        rich.print("[bold red]Error: El menú que intenta guardar ya existe. Cambia el nombre actual o edita la receta existente.[/bold red]")
+        time.sleep(3)
+
+    def mostrar_mensaje_editar_nombre_duplicado(self):
+        rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita la receta existente.[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):
