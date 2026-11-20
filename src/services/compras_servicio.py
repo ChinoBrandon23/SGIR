@@ -17,11 +17,13 @@ class CompraServicio:
         self._compra_dao = compra_dao
         self._insumo_dao = insumo_dao
 
-    
 
     #def registrar_compra(self, fecha_creacion:date, proveedor:Proveedor, detalles_compra:DetalleCompra):
     def registrar_compra(self, compra_nueva:Compra):
         importes:List[float] = []
+
+        # formateando fecha de creacion
+        compra_nueva.fecha_creacion = self._formatear_a_iso(compra_nueva.fecha_creacion) # type: ignore
 
         # validaciones
         if not compra_nueva.proveedor:
@@ -38,8 +40,8 @@ class CompraServicio:
                 raise ValueError(f"Servicio: El precio unitario de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
 
             # formatear fecha
-            detalle_compra.fecha_caducidad = datetime.strptime(str(detalle_compra.fecha_caducidad), '%d-%m-%Y').strftime('%Y-%m-%d')
-            detalle_compra.fecha_compra = datetime.strptime(str(detalle_compra.fecha_compra), '%d-%m-%Y').strftime('%Y-%m-%d')
+            detalle_compra.fecha_caducidad = self._formatear_a_iso(detalle_compra.fecha_caducidad) # type: ignore
+            detalle_compra.fecha_compra = self._formatear_a_iso(detalle_compra.fecha_compra) # type: ignore
 
             # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
             detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
@@ -50,9 +52,7 @@ class CompraServicio:
             # agregando stock nuevo al insumo
             #self._abastecer_insumo(detalle_compra.insumo,detalle_compra.cantidad_comprada)
 
-        # formateando fecha
-        compra_nueva.fecha_creacion = datetime.strptime(str(compra_nueva.fecha_creacion), '%d-%m-%Y').strftime('%Y-%m-%d')
-
+        # calculando total bruto
         compra_nueva.total_bruto = self._calcular_total_bruto(importes)
 
         try:
@@ -62,7 +62,6 @@ class CompraServicio:
 
     def _calcular_importe(self, monto_unit:float, cantidad:float) -> float:
         return monto_unit * cantidad
-
 
     def _calcular_total_bruto(self, importes:List[float]) -> float:
         return sum(importes)
@@ -79,6 +78,14 @@ class CompraServicio:
             return self._compra_dao.obtener_compras()
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al obtener las compras. {err}')
+
+    def obtener_compra_por_numero(self, num_compra:int) -> Compra:
+        try:
+            return self._compra_dao.obtener_compra_por_numero(num_compra)
+        except IndexError as err:
+            raise IndexError(f'Servicio: No existe la compra con numero {num_compra}. {err}')
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al obtener compra numero {num_compra}. {err}')
     
     def obtener_insumo_por_nombre(self, nombre_insumo:str) -> Insumo:
         try:
@@ -105,23 +112,20 @@ class CompraServicio:
                 raise ValueError(f"Servicio: El precio unitario de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
 
             # formatear fecha
-            detalle_compra.fecha_caducidad = self._formatear_a_iso(detalle_compra.fecha_caducidad)
-            detalle_compra.fecha_compra = self._formatear_a_iso(detalle_compra._fecha_compra)
+            detalle_compra.fecha_caducidad = self._formatear_a_iso(detalle_compra.fecha_caducidad) # type: ignore
+            detalle_compra.fecha_compra = self._formatear_a_iso(detalle_compra._fecha_compra) # type: ignore
 
-            # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+            # recalcular importes de cada detalle compra, que es precio unitario por cantidad comprada
             detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
             # agregar a lista de importes para posterior suma
             importes.append(detalle_compra.importe)
             # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
-            detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
+            #detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
             # agregando stock nuevo al insumo
             #self._abastecer_insumo(detalle_compra.insumo,detalle_compra.cantidad_comprada)
-
-        # formateando fecha
-        compra_act.fecha_creacion = datetime.strptime(str(compra_act.fecha_creacion), '%d-%m-%Y').strftime('%Y-%m-%d')
-
+        
+        # actualizando total bruto
         compra_act.total_bruto = self._calcular_total_bruto(importes)
-
         try:
             return self._compra_dao.actualizar_compra_completa(compra_act)
         except Error as err:

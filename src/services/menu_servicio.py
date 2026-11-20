@@ -108,12 +108,12 @@ class MenuServicio:
     def obtener_menus_por_rango_fecha(self, fecha_inicial:str, fecha_final:str) -> List[Menu]:
         try:
             # obtengo el objeto date a partir del str basado en el formato en que lo ingresó el usuario
-            fecha_inicial = datetime.datetime.strptime(fecha_inicial, '%d-%m-%Y')
-            fecha_final = datetime.datetime.strptime(fecha_final, '%d-%m-%Y')
+            fecha_inicial = datetime.datetime.strptime(fecha_inicial, '%d-%m-%Y') # type: ignore
+            fecha_final = datetime.datetime.strptime(fecha_final, '%d-%m-%Y') # type: ignore
 
             # ahora se convierte al formato que mysql usa y se pasa de nuevo a str
-            fecha_inicial_formateada = datetime.datetime.strftime(fecha_inicial, '%Y-%m-%d')
-            fecha_final_formateada = datetime.datetime.strftime(fecha_final, '%Y-%m-%d')
+            fecha_inicial_formateada = datetime.datetime.strftime(fecha_inicial, '%Y-%m-%d') # type: ignore
+            fecha_final_formateada = datetime.datetime.strftime(fecha_final, '%Y-%m-%d') # type: ignore
 
             menus = self._menu_dao.obtener_menus_disponibles_por_rango_fecha(fecha_inicial_formateada, fecha_final_formateada)
 
