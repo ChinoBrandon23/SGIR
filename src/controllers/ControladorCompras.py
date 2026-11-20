@@ -388,7 +388,6 @@ class ControladorCompras:
 
                 num_insumo = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
 
-
                 # Si el usuario quiere crear un insumo, se desvía el flow de la creación de detalle compra
                 # para crearlo de cero
                 if num_insumo == "0":
