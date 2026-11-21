@@ -529,8 +529,8 @@ class VistaMenus(VistaBase):
 
     def mostrar_mensaje_platillos_conflicto(self, fecha_inicial, fecha_final):
         self.refrescar_pantalla()
-        eleccion = self.input_platillos_conflicto.imprimir(f"[bold yellow]Atención: Cambiar la vigencia del menú actual a {fecha_inicial} - {fecha_final} resultará en la remoción de los siguientes platillos."
-                                                           f" ¿Deseas continuar?[/bold yellow]", choices=["S", "N", ",", "."])
+        eleccion = self.input_platillos_conflicto.imprimir(f"[bold yellow]Atención: Cambiar la vigencia del menú a {fecha_inicial} - {fecha_final} resultará en la remoción de los siguientes platillos."
+                                                           f" ¿Deseas continuar?[/bold yellow][italic magenta][S, N][/italic magenta]", choices=["S", "N", ",", "."])
         if eleccion is "," or eleccion is ".":
             self.mostrar_mensaje_platillos_conflicto(fecha_inicial, fecha_final)
 
