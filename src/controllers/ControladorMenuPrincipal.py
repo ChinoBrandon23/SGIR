@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from Validaciones.validadorInventario import validadorInventario
 from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorInventario import ControladorInventario
 from controllers.ControladorMenus import ControladorMenus
@@ -138,7 +139,9 @@ class ControladorMenuPrincipal:
         insumo_dao = InsumoDAO(self.db)
         compra_dao = CompraDAO(self.db)
         inventario_servicio = InventarioServicio(insumo_dao=insumo_dao, compra_dao=compra_dao)
-        ControladorInventario(vista, inventario_servicio)
+        validador_inventario = validadorInventario()
+
+        ControladorInventario(vista, inventario_servicio, validador_inventario)
 
     def abrir_vista_merma(self):
         vista = VistaMerma(self.vista.console)
