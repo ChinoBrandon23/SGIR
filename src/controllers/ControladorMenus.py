@@ -143,7 +143,8 @@ class ControladorMenus:
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         self.menus_a_mostrar = self.servicio.obtener_menus()
         self.cancelar_edicion_actual()
-        self.mostrar_detalles_menu(menu_actual_num)
+        self.menu_actual = self.servicio.obtener_menu_por_id(menu_actual_num)
+        self.mostrar_detalles_menu()
 
     def asignar_vigencia(self, fecha_inicial, fecha_final):
         # debería validar el formato de la fecha y usar un servicio y eso
@@ -237,9 +238,11 @@ class ControladorMenus:
                 if borrar and self.menu_actual:
                     self.servicio.eliminar_menu(self.menu_actual.num)
                 
-                self.cancelar_edicion_actual()
-                self.menus_a_mostrar = self.servicio.obtener_menus()
-                self.mostrar_lista_menus()
+                    self.cancelar_edicion_actual()
+                    self.menus_a_mostrar = self.servicio.obtener_menus()
+                    self.mostrar_lista_menus()
+
+                self.mostrar_detalles_menu()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()

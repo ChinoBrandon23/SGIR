@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from models.menu import Menu, DetalleMenu
 from models.platillo import Platillo
@@ -171,6 +172,10 @@ class MenuServicio:
     def crear_menu(self, nuevo_menu: Menu):
         try:
             self._menu_dao.crear_menu(menu=nuevo_menu)
+            nuevo_num = self.obtener_menu_por_nombre(nuevo_menu.nombre).num
+            nuevo_menu.num = nuevo_num
+            self.actualizar_menu(nuevo_menu)
+
         except mysql.connector.Error as err:
             raise Error(f'Error en crear menu en la BD - {err}')
 

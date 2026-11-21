@@ -293,7 +293,7 @@ class VistaMenus(VistaBase):
     def mostrar_opciones_busqueda_av_prompt(self):
         self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "3", "4"],
+                                         choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_detalles.user_input is None:

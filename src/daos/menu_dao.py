@@ -193,7 +193,8 @@ class MenuDAO:
                     m.fechaInicial fechaInicial,
                     m.fechaFinal fechaFinal
                     FROM menu m
-                    WHERE m.nombre LIKE('{insumo_nombre}%');
+                    WHERE m.nombre LIKE('%{insumo_nombre}%')
+                    ORDER BY m.nombre;
                 '''
                 cursor.execute(sql)
                 filas = cursor.fetchall()
@@ -320,7 +321,7 @@ class MenuDAO:
 
     ''' funciones de creacion '''
 
-    def crear_menu(self, menu:Menu) -> Menu:
+    def crear_menu(self, menu:Menu) -> int:
         '''Crea un menu vacio en la BD y 
         regresa el numero de menu de lo actualizado de la BD.'''
         connection = self.db.get_connection()
