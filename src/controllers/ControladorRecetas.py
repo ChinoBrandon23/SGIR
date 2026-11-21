@@ -120,7 +120,7 @@ class ControladorRecetas:
         if self.servicio.receta_existe(self.receta_actual.num):
             try:
                 self.servicio.actualizar_receta(self.receta_actual)
-                receta_actual_num = self.receta_actual.num
+                receta_num = self.receta_actual.num
             except Error:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_error_receta_nombre_duplicado()
@@ -128,7 +128,7 @@ class ControladorRecetas:
         else:
             try:
                 self.servicio.crear_receta(self.receta_actual)
-                receta_actual_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
+                receta_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
                 self.recetas_a_mostrar = self.servicio.obtener_recetas()
             except ValueError:
                 self.vista.refrescar_pantalla()
@@ -139,7 +139,8 @@ class ControladorRecetas:
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         self.recetas_a_mostrar = self.servicio.obtener_recetas()
         self.cancelar_edicion_actual()
-        self.mostrar_detalles_receta(receta_actual_num)
+        self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+        self.mostrar_detalles_receta()
 
     def agregar_edicion_instruccion(self, dic_inst):
         lista_inst_editadas_idx = [next(iter(inst)) for inst in self.formulario["instrucciones"]]
