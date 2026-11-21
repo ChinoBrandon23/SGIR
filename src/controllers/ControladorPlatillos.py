@@ -1,15 +1,17 @@
 import math
 from mysql.connector import Error
 
+from Validaciones.validadorPlatillos import validadorPlatillos
 from models.platillo import Platillo
 from views.VistaPlatillos import VistaPlatillos
 
 
 class ControladorPlatillos:
-    def __init__(self, vista:VistaPlatillos, servicio_platillos=None, servicio_recetas=None):
+    def __init__(self, vista:VistaPlatillos, servicio_platillos, servicio_recetas, validador:validadorPlatillos):
         self.vista = vista
         self.servicio_platillos = servicio_platillos
         self.servicio_recetas = servicio_recetas
+        self.validador = validador
         self.platillo_actual = None
         self.formulario = {}
 
@@ -149,8 +151,17 @@ class ControladorPlatillos:
                 self.mostrar_formulario_crear_platillo()
                 nombre = self.vista.mostrar_prompt_crear_platillo()
                 if nombre is not None:
-                    # debería llamar al servicio para crear un platillo nuevo
-                    self.platillo_actual = Platillo(0, nombre)
+                    resultado_val_nombre = self.validador.edicion_nombre_platillo(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_prompt_crear_platillo()
+                        if nombre is None:
+                            self.mostrar_lista_platillos()
+                        else:
+                            resultado_val_nombre = self.validador.edicion_nombre_platillo(nombre)
+
+                    self.platillo_actual = Platillo(0, resultado_val_nombre[1])
                     self.mostrar_formulario_crear_platillo()
                 else:
                     self.mostrar_lista_platillos()
@@ -250,6 +261,16 @@ class ControladorPlatillos:
                 nombre = self.vista.mostrar_editar_nombre_prompt()
                 # checa que haya una respuesta del usuario y si es así lo debe validar
                 if nombre is not None:
+                    resultado_val_nombre = self.validador.edicion_nombre_platillo(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_editar_nombre_prompt()
+                        if nombre is None:
+                            self.mostrar_detalles_platillo()
+                        else:
+                            resultado_val_nombre = self.validador.edicion_nombre_platillo(nombre)
+
                     self.platillo_actual.nombre = nombre
                     self.formulario["nombre"] = nombre
 
@@ -272,6 +293,13 @@ class ControladorPlatillos:
                     nombre_cat = self.vista.mostrar_crear_categoria_prompt()
 
                     if nombre_cat is not None:
+                        resultado_val_categoria = self.validador.creacion_categoria(nombre_cat)
+
+                        while not resultado_val_categoria[0]:
+                            self.vista.mostrar_mensaje_error_validacion(resultado_val_categoria[1])
+                            nombre_cat = self.vista.mostrar_crear_categoria_prompt()
+                            resultado_val_categoria = self.validador.creacion_categoria(nombre_cat)
+
                         self.servicio_platillos.crear_categoria(nombre_cat)
                         categoria = self.servicio_platillos.obtener_categoria_por_nombre(nombre_cat)
 

@@ -380,6 +380,7 @@ class VistaPlatillos(VistaBase):
                 return None
 
     def mostrar_prompt_crear_platillo(self):
+        self.refrescar_pantalla()
         nombre = Prompt.ask("Para comenzar, ingresa el nombre del nuevo platillo o 0 para cancelar")
 
         if len(nombre) == 0:
@@ -436,6 +437,10 @@ class VistaPlatillos(VistaBase):
     def mostrar_mensaje_editar_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita el platillo existente.[/bold red]")
         time.sleep(2)
+
+    def mostrar_mensaje_error_validacion(self, error:str):
+        rich.print(f"[bold red]{error}[/bold red]")
+        time.sleep(3)
 
     def refrescar_pantalla(self):
         try:
