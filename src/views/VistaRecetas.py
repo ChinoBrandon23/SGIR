@@ -435,28 +435,9 @@ class VistaRecetas(VistaBase):
 
         while len(unidad_m) == 0:
             self.refrescar_pantalla()
-            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para este ingrediente[/bold yellow]")
+            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para este ingrediente\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml[/bold yellow]")
 
         return unidad_m
-
-    def mostrar_modificar_ingrediente_prompt(self):
-        cantidad = ""
-        unidad_m = ""
-
-        while len(cantidad) == 0:
-            self.refrescar_pantalla()
-            cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad para el ingrediente seleccionado[/bold yellow]")
-
-        while len(unidad_m) == 0:
-            self.refrescar_pantalla()
-            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para el ingrediente seleccionado[/bold yellow]")
-
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar modificar[/bold yellow] "
-                                    f"[italic white]{cantidad} {unidad_m}[/italic white]", choices=["S", "N"])
-        if confirmacion == "S":
-            return cantidad, unidad_m
-        else:
-            return None
 
     def mostrar_borrar_ingrediente_prompt(self, opciones):
         if len(opciones) == 0:
