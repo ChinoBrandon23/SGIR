@@ -310,7 +310,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_prompt_eliminar_receta_prompt(self):
         self.refrescar_pantalla()
-        confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, confirma para continuar[/bold red]",
+        confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, cualquier platillo vinculado a ella será eliminado también\nConfirma para continuar[/bold red]",
                                   choices=["S","N"])
 
         if confirmacion == "S":
