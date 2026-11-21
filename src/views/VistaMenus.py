@@ -35,6 +35,7 @@ class VistaMenus(VistaBase):
         self.input_menu_editar_platillo = InputEmisor()
         self.input_menu_filtros = InputEmisor()
         self.input_seleccion_platillos_disp = InputEmisor()
+        self.input_platillos_conflicto = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -133,7 +134,11 @@ class VistaMenus(VistaBase):
         if platillos_editados and len(platillos_editados) > 0:
             # agrega los platillos nuevos
             for platillo in platillos_editados:
-                idx_platillo = [item for item in mapa_idx if mapa_idx[item] == platillo.platillo.nombre][0]
+                try:
+                    idx_platillo = [item for item in mapa_idx if mapa_idx[item] == platillo.platillo.nombre][0]
+                except IndexError:
+                    # quiere decir que se borró el platillo del
+                    continue
 
                 self.tabla_detalles_menu.add_row(f"[bold red]{idx_platillo}[/bold red]",
                                                 f"[bold red]{platillo.platillo.nombre}[/bold red]",
@@ -166,6 +171,32 @@ class VistaMenus(VistaBase):
 
         self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
 
+    def mostrar_platillos_conflicto(self, lista_platillos: list[Platillo], pag_actual, total_pag):
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
+        columnas = ["#", "Nombre"]
+
+        tabla = Table(title="Platillos en conflicto de fechas")
+
+        for col in columnas:
+            tabla.add_column(col)
+
+        for i in range(len(lista_platillos)):
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_platillos[i].nombre)
+
+        self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
+
     def mostrar_crear_menu(self, menu: Menu | None):
         self.resetear_vista()
 
@@ -174,7 +205,8 @@ class VistaMenus(VistaBase):
         self.layout["panel_menu"].size = 4
 
         panel = Panel(renderable=f"[bold white]Crear menú\n"
-                                 f"{menu.nombre if menu else "[bold magenta]Nombre del menú[/bold magenta]"}[/bold white]")
+                                 f"{menu.nombre if menu else "[bold magenta]Nombre del menú[/bold magenta]"}\n"
+                                 f"{f"Vigencia: {menu.fecha_inicial} - {menu.fecha_final}" if menu else "[bold magenta]Vigencia: N/A[/bold magenta]"}[/bold white]")
 
         panel.height = 4
 
@@ -418,7 +450,6 @@ class VistaMenus(VistaBase):
 
         return None, None
 
-
     def mostrar_remover_platillo_prompt(self, opciones):
         self.refrescar_pantalla()
         if len(opciones) == 0:
@@ -498,6 +529,15 @@ class VistaMenus(VistaBase):
     def mostrar_mensaje_editar_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita la receta existente.[/bold red]")
         time.sleep(3)
+
+    def mostrar_mensaje_platillos_conflicto(self, fecha_inicial, fecha_final):
+        self.refrescar_pantalla()
+        eleccion = self.input_platillos_conflicto.imprimir(f"[bold yellow]Atención: Cambiar la vigencia del menú actual a {fecha_inicial} - {fecha_final} resultará en la remoción de los siguientes platillos."
+                                                           f" ¿Deseas continuar?[/bold yellow]", choices=["S", "N", ",", "."])
+        if eleccion is "," or eleccion is ".":
+            self.mostrar_mensaje_platillos_conflicto(fecha_inicial, fecha_final)
+
+        return eleccion
 
     def refrescar_pantalla(self):
         try:

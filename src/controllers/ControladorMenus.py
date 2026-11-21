@@ -5,15 +5,17 @@ from datetime import datetime
 import datetime
 from mysql.connector import Error
 
+from Validaciones.validadorMenus import validadorMenu
 from models.menu import Menu
 from views.VistaMenus import VistaMenus
 
 from services.menu_servicio import MenuServicio
 
 class ControladorMenus:
-    def __init__(self, vista:VistaMenus, servicio:MenuServicio):
+    def __init__(self, vista:VistaMenus, servicio:MenuServicio, validador:validadorMenu):
         self.vista = vista
         self.servicio = servicio
+        self.validador = validador
         self.menu_actual = None
         self.formulario = {"platillos":[], "item_borrado":False}
         self.platillo_idx = {}
@@ -21,6 +23,9 @@ class ControladorMenus:
         self.pagina_actual_lista_menus = 1
         self.pagina_actual_lista_detalles = 1
         self.pagina_actual_lista_platillos_disp = 1
+        self.pagina_actual_platillos_conflicto = 1
+
+        self.platillos_conflicto = None
 
         self.menus_a_mostrar = None
 
@@ -42,6 +47,7 @@ class ControladorMenus:
         self.vista.input_menu_editar_menu.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_menu_editar_platillo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_seleccion_platillos_disp.agregar_escuchante(self.cambiar_pagina_lista_platillos_disp)
+        self.vista.input_platillos_conflicto.agregar_escuchante(self.cambiar_pagina_lista_platillos_conflicto)
 
     def mostrar_lista_menus(self, pag_lista_menus=None):
         """
@@ -178,7 +184,7 @@ class ControladorMenus:
         self.formulario["platillos"].append(detalle_pl)
 
     def filtrar_platillos_duplicados(self):
-        lista_platillos_actual = self.servicio.obtener_platillos()
+        lista_platillos_actual = self.servicio.obtener_platillos_disponibles(self.menu_actual.fecha_inicial, self.menu_actual.fecha_final)
         lista_platillos_en_menu = [pl.platillo.nombre for pl in self.menu_actual.detalles]
         idx_plat_disp = {i + 1: lista_platillos_actual[i] for i in range(len(lista_platillos_actual)) if
                          lista_platillos_actual[i].nombre not in lista_platillos_en_menu}
@@ -211,6 +217,7 @@ class ControladorMenus:
                     self.menu_actual = Menu(num=0, nombre=nombre, cantidad_platillos=0,
                                     fecha_inicial=datetime.date.today(),
                                     fecha_final=datetime.date.today())
+                    self.formulario["nombre"] = nombre
                     self.mostrar_formulario_crear_menu()
                 else:
                     self.mostrar_lista_menus()
@@ -307,7 +314,40 @@ class ControladorMenus:
                 f_inicial, f_final = self.vista.mostrar_editar_vigencia_prompt()
 
                 if f_inicial is not None and f_final is not None:
-                    self.asignar_vigencia(f_inicial, f_final)
+                    fecha_incial_dt = datetime.date.strptime(f_inicial, "%d-%m-%Y")
+                    fecha_final_dt = datetime.date.strptime(f_final, "%d-%m-%Y")
+
+                    self.platillos_conflicto = self.servicio.obtener_platillos_invalidos_menu(self.menu_actual, fecha_incial_dt, fecha_final_dt)
+
+                    if len(self.platillos_conflicto):
+                        # se avisa al usuario que el cambio resultaría en platillos en conflicto de fechas
+                        total_pag = self.obtener_total_paginas_detalles(self.platillos_conflicto)
+                        pagina, prox_pag = self.paginar_lista_detalles(self.platillos_conflicto, self.pagina_actual_platillos_conflicto)
+
+                        self.vista.mostrar_platillos_conflicto(pagina, self.pagina_actual_platillos_conflicto, total_pag)
+                        eleccion = self.vista.mostrar_mensaje_platillos_conflicto(f_inicial, f_final)
+
+                        if eleccion == "S":
+                            self.asignar_vigencia(f_inicial, f_final)
+
+                            platillo_invalidos = self.servicio.obtener_platillos_invalidos_menu(self.menu_actual, self.menu_actual.fecha_inicial,
+                                                                                       self.menu_actual.fecha_inicial)
+                            platillo_invalidos_idx = [plat.num for plat in platillo_invalidos]
+
+                            for detalle in self.menu_actual.detalles:
+                                if detalle.platillo.num in platillo_invalidos_idx:
+                                    self.menu_actual.detalles.remove(detalle)
+
+                        else:
+                            self.pagina_actual_platillos_conflicto = 1
+                            self.platillos_conflicto = []
+                            self.formulario["item_borrado"] = True
+                            self.mostrar_detalles_menu()
+                    else:
+                        self.asignar_vigencia(f_inicial, f_final)
+
+                self.pagina_actual_platillos_conflicto = 1
+                self.platillos_conflicto = []
                 self.mostrar_detalles_menu()
 
             case "3":
@@ -356,7 +396,8 @@ class ControladorMenus:
 
                 if num_platillo and precio:
                     nombre = lista_plat_disp[int(num_platillo)-1].nombre
-                    lista_platillos_en_menu = self.servicio.obtener_platillos()
+                    lista_platillos_en_menu = self.servicio.obtener_platillos_disponibles(
+                        self.menu_actual.fecha_inicial, self.menu_actual.fecha_final)
 
                     for plat in lista_platillos_en_menu:
                         if plat.nombre == nombre:
@@ -495,6 +536,30 @@ class ControladorMenus:
                 total_pag = self.obtener_total_paginas_detalles(lista_platillos)
 
                 self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos_disp, total_pag)
+
+    def cambiar_pagina_lista_platillos_conflicto(self, mov):
+        if mov == ",":
+            if self.pagina_actual_platillos_conflicto == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_platillos_conflicto -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.platillos_conflicto,
+                                                               self.pagina_actual_platillos_conflicto)
+                total_pag = self.obtener_total_paginas_detalles(self.platillos_conflicto)
+
+                self.vista.mostrar_platillos_conflicto(pagina, self.pagina_actual_platillos_conflicto, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(self.platillos_conflicto, self.pagina_actual_platillos_conflicto)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_platillos_conflicto += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.platillos_conflicto,
+                                                               self.pagina_actual_platillos_conflicto)
+                total_pag = self.obtener_total_paginas_detalles(self.platillos_conflicto)
+
+                self.vista.mostrar_platillos_conflicto(pagina, self.pagina_actual_platillos_conflicto, total_pag)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
         consola_size = self.vista.console.size[1]
