@@ -412,43 +412,36 @@ class VistaMenus(VistaBase):
                                 choices=opciones,
                                 show_choices=False)
 
-        precio = Prompt.ask("[bold yellow]Ingresa el precio del platillo para este menú[bold yellow]", )
 
-        if len(precio):
-            confirmacion = Prompt.ask("[bold yellow]Confirmar agregar platillo[/bold yellow]",
+        confirmacion = Prompt.ask("[bold yellow]Confirmar agregar platillo[/bold yellow]",
                                       choices=["S","N"])
 
-            if confirmacion == "S":
-                return num_receta, precio
-            else:
-                return None, None
+        if confirmacion == "S":
+            return num_receta
+        else:
+            return None
 
-        return None, None
+    def mostrar_ingresar_precio_prompt(self):
+        self.refrescar_pantalla()
+        precio = ""
 
-    def mostrar_editar_precio_platillo_prompt(self, opciones):
+        while len(precio) == 0:
+            precio = Prompt.ask("[bold yellow]Ingresa el precio del platillo para este menú[bold yellow]")
+
+        return precio
+
+    def mostrar_seleccionar_editar_platillo_prompt(self, opciones):
         self.refrescar_pantalla()
         if len(opciones) == 0:
             rich.print("[bold green]El menú actual no tiene platillos que editar, volviendo al menú editar...[/bold green]")
             time.sleep(5)
-
-            return None, None
+            return None
 
         num_plat = Prompt.ask("[bold yellow]Selecciona el platillo a modificar[/bold yellow]",
                               choices=opciones,
                               show_choices=False)
 
-        precio = Prompt.ask(f"[bold yellow]Ingresa el nuevo precio del platillo #{num_plat} para este menú")
-
-        if len(precio):
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar asignar precio ${precio} al platillo #{num_plat}",
-                                      choices=["S","N"])
-
-            if confirmacion == "S":
-                return num_plat, precio
-            else:
-                return None, None
-
-        return None, None
+        return num_plat
 
     def mostrar_remover_platillo_prompt(self, opciones):
         self.refrescar_pantalla()
@@ -528,6 +521,10 @@ class VistaMenus(VistaBase):
 
     def mostrar_mensaje_editar_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita la receta existente.[/bold red]")
+        time.sleep(3)
+
+    def mostrar_mensaje_error_validacion(self, error:str):
+        rich.print(f"[bold red]{error}[/bold red]")
         time.sleep(3)
 
     def mostrar_mensaje_platillos_conflicto(self, fecha_inicial, fecha_final):

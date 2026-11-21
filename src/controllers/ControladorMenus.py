@@ -214,7 +214,14 @@ class ControladorMenus:
                 if nombre:
                     # mejor se crea el objeto para permitir la edición de este pero no se guarda hasta que el usuario
                     # escoge la opción guardar manualmente
-                    self.menu_actual = Menu(num=0, nombre=nombre, cantidad_platillos=0,
+                    resultado_val_nombre = self.validador.validar_nombre(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_prompt_crear_menu()
+                        resultado_val_nombre = self.validador.validar_nombre(nombre)
+
+                    self.menu_actual = Menu(num=0, nombre=resultado_val_nombre[1], cantidad_platillos=0,
                                     fecha_inicial=datetime.date.today(),
                                     fecha_final=datetime.date.today())
                     self.formulario["nombre"] = nombre
@@ -304,8 +311,15 @@ class ControladorMenus:
                 nombre = self.vista.mostrar_editar_nombre_prompt()
                 # checa que haya una respuesta del usuario y si es así lo debe validar
                 if nombre is not None:
-                    self.formulario["nombre"] = nombre
-                    self.menu_actual.nombre = nombre
+                    resultado_val_nombre = self.validador.validar_nombre(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_prompt_crear_menu()
+                        resultado_val_nombre = self.validador.validar_nombre(nombre)
+
+                    self.formulario["nombre"] = resultado_val_nombre[1]
+                    self.menu_actual.nombre = resultado_val_nombre[1]
                 self.mostrar_detalles_menu()
 
             case "2":
@@ -314,8 +328,18 @@ class ControladorMenus:
                 f_inicial, f_final = self.vista.mostrar_editar_vigencia_prompt()
 
                 if f_inicial is not None and f_final is not None:
-                    fecha_incial_dt = datetime.date.strptime(f_inicial, "%d-%m-%Y")
-                    fecha_final_dt = datetime.date.strptime(f_final, "%d-%m-%Y")
+                    resultados_val_fecha = self.validador.validar_fecha(f_inicial,f_final)
+
+                    while not resultados_val_fecha[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultados_val_fecha[1])
+                        f_inicial, f_final = self.vista.mostrar_editar_vigencia_prompt()
+                        if f_inicial and f_final:
+                            resultados_val_fecha = self.validador.validar_fecha(f_inicial, f_final)
+                        else:
+                            self.mostrar_detalles_menu()
+
+                    fecha_incial_dt = resultados_val_fecha[1]["fecha_inicio"]
+                    fecha_final_dt = resultados_val_fecha[1]["fecha_fin"]
 
                     self.platillos_conflicto = self.servicio.obtener_platillos_invalidos_menu(self.menu_actual, fecha_incial_dt, fecha_final_dt)
 
@@ -363,7 +387,8 @@ class ControladorMenus:
                 # cancela la edición actual y vuelve a detalles
                 if self.menu_actual.num in [menu.num for menu in self.servicio.obtener_menus()]:
                     self.cancelar_edicion_actual()
-                    self.mostrar_detalles_menu(self.vista.input_abrir_detalles.user_input)
+                    self.menu_actual = self.servicio.obtener_menu_por_id(self.vista.input_abrir_detalles.user_input)
+                    self.mostrar_detalles_menu()
                 else:
                     self.cancelar_edicion_actual()
                     self.mostrar_lista_menus()
@@ -392,16 +417,25 @@ class ControladorMenus:
                 self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos_disp, total_pag)
                 self.vista.refrescar_pantalla()
 
-                num_platillo, precio = self.vista.mostrar_agregar_platillo_prompt(opciones)
+                num_platillo= self.vista.mostrar_agregar_platillo_prompt(opciones)
 
-                if num_platillo and precio:
+                if num_platillo:
+                    precio = self.vista.mostrar_ingresar_precio_prompt()
+
+                    resultado_val_precio = self.validador.precio_platillo(precio)
+
+                    while not resultado_val_precio[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_precio[1])
+                        precio = self.vista.mostrar_ingresar_precio_prompt()
+                        resultado_val_precio = self.validador.precio_platillo(precio)
+
                     nombre = lista_plat_disp[int(num_platillo)-1].nombre
                     lista_platillos_en_menu = self.servicio.obtener_platillos_disponibles(
                         self.menu_actual.fecha_inicial, self.menu_actual.fecha_final)
 
                     for plat in lista_platillos_en_menu:
                         if plat.nombre == nombre:
-                            self.menu_actual.agregar_platillo(plat, float(precio))
+                            self.menu_actual.agregar_platillo(plat, resultado_val_precio[1])
                             self.agregar_edicion_platillos(copy.deepcopy(self.menu_actual.detalles[-1]))
                             self.menu_actual.cantidad_platillos += 1
 
@@ -418,13 +452,22 @@ class ControladorMenus:
                 self.vista.mostrar_platillos_disponibles(lista_platillos, self.pagina_actual_lista_platillos_disp, total_pag_platillos)
                 self.vista.refrescar_pantalla()
 
-                num, precio = self.vista.mostrar_editar_precio_platillo_prompt(opciones)
+                num = self.vista.mostrar_seleccionar_editar_platillo_prompt(opciones)
 
-                if num and precio:
+                if num:
+                    precio = self.vista.mostrar_ingresar_precio_prompt()
+
+                    resultado_val_precio = self.validador.precio_platillo(precio)
+
+                    while not resultado_val_precio[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_precio[1])
+                        precio = self.vista.mostrar_ingresar_precio_prompt()
+                        resultado_val_precio = self.validador.precio_platillo(precio)
+
                     nombre = self.platillo_idx[int(num)]
                     for plDetalles in self.menu_actual.detalles:
                         if plDetalles.platillo.nombre == nombre:
-                            plDetalles.precio = precio
+                            plDetalles.precio = resultado_val_precio[1]
                             self.agregar_edicion_platillos(copy.deepcopy(plDetalles))
 
                 self.mostrar_detalles_menu()
