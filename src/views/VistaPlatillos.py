@@ -76,7 +76,6 @@ class VistaPlatillos(VistaBase):
         self.layout["panel_platillo"].size = 3
 
         nombre_platillo = datos_editados["nombre"] if "nombre" in datos_editados else platillo.nombre
-        nombre_platillo += "**" if "nombre" in datos_editados else ""
 
         panel = Panel(renderable=f"{"[bold red]" if "nombre" in datos_editados else "[bold yellow]"}"
                                  f"{nombre_platillo}"
@@ -86,7 +85,7 @@ class VistaPlatillos(VistaBase):
 
         if platillo.categoria is not None:
             if "categoria" in datos_editados:
-                self.tabla_detalles.add_row("Categoría", f"[bold red]{platillo.categoria.nombre}**[/bold red]")
+                self.tabla_detalles.add_row("Categoría", f"[bold red]{platillo.categoria.nombre}[/bold red]")
             else:
                 self.tabla_detalles.add_row("Categoría", platillo.categoria.nombre)
         else:
@@ -94,7 +93,7 @@ class VistaPlatillos(VistaBase):
 
         if platillo.receta is not None:
             if "receta" in datos_editados:
-                self.tabla_detalles.add_row("Receta base", f"[bold red]{platillo.receta.nombre}**[/bold red]")
+                self.tabla_detalles.add_row("Receta base", f"[bold red]{platillo.receta.nombre}[/bold red]")
             else:
                 self.tabla_detalles.add_row("Receta base", platillo.receta.nombre)
         else:
