@@ -137,7 +137,6 @@ class VistaInventario(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Volver a inventario",
                     "[2] Editar insumo",
-                    "[3] Eliminar insumo",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -188,7 +187,7 @@ class VistaInventario(VistaBase):
 
     def mostrar_menu_insumos_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_inventario.imprimir("Selecciona una opción",
+        self.input_menu_inventario.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                             choices=["1", "2", "m", ",", "."],
                                             show_choices=False)
 
@@ -206,8 +205,8 @@ class VistaInventario(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m", ",", "."],
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                          choices=["1", "2", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -215,8 +214,8 @@ class VistaInventario(VistaBase):
 
     def mostrar_opciones_busqueda_av_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_filtros.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "3", "4", "5", "6"],
+        self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                         choices=["1", "2", "3", "4", "5", "6", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
@@ -234,7 +233,7 @@ class VistaInventario(VistaBase):
 
     def mostrar_opciones_editar_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_inventario.imprimir("Selecciona una opción",
+        self.input_menu_editar_inventario.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                    choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                    show_choices=False)
 
@@ -380,7 +379,7 @@ class VistaInventario(VistaBase):
 
         while len(tipo_ins) == 0 or tipo_ins == "," or tipo_ins == ".":
             self.refrescar_pantalla()
-            tipo_ins = self.input_seleccion_tipo_insumo.imprimir( "[bold yellow]Selecciona el tipo de insumo a buscar de entre las opciones[/bold yellow]",
+            tipo_ins = self.input_seleccion_tipo_insumo.imprimir( "[bold yellow]Selecciona el tipo de insumo a buscar de entre las opciones o cambia de página [',' '.'][/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
@@ -394,7 +393,7 @@ class VistaInventario(VistaBase):
 
         while len(marca_num) == 0 or marca_num == "," or marca_num == ".":
             self.refrescar_pantalla()
-            marca_num = self.input_seleccion_marca.imprimir("[bold yellow]Selecciona la marca a buscar de entre las opciones[/bold yellow]",
+            marca_num = self.input_seleccion_marca.imprimir("[bold yellow]Selecciona la marca a buscar de entre las opciones o cambia de página [',' '.'][/bold yellow]",
                               choices=opciones,
                               show_choices=False)
 
@@ -440,6 +439,10 @@ class VistaInventario(VistaBase):
 
     def mostrar_mensaje_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita el insumo existente.[/bold red]")
+        time.sleep(3)
+
+    def mostrar_mensaje_error_validacion(self, error:str):
+        rich.print(f"[bold red]{error}[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):
