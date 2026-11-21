@@ -257,7 +257,6 @@ class VistaPlatillos(VistaBase):
                                            show_choices=False)
 
         if self.input_menu_platillos.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_menu_platillos_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_platillos: list[Platillo]):
@@ -267,7 +266,6 @@ class VistaPlatillos(VistaBase):
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_platillos)
 
     def mostrar_opciones_detalles_prompt(self):
@@ -277,7 +275,6 @@ class VistaPlatillos(VistaBase):
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
@@ -286,9 +283,8 @@ class VistaPlatillos(VistaBase):
                                           choices=["1", "2", "3", "4", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
-            self.mostrar_opciones_detalles_prompt()
+        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+            self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_prompt_eliminar_platillo_prompt(self):
         self.refrescar_pantalla()
@@ -307,7 +303,6 @@ class VistaPlatillos(VistaBase):
                                                show_choices=False)
 
         if self.input_menu_editar_platillo.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
@@ -349,7 +344,6 @@ class VistaPlatillos(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_categoria_prompt()
 
     def mostrar_editar_receta_base_prompt(self, opciones):
