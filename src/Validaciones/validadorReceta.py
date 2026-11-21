@@ -10,7 +10,7 @@ class validadorReceta:
         if not instruccion or len(instruccion) == 0:
             return False, "Error: La instrucción no puede estar vacía."
 
-        if not instruccion.isalnum():
+        if not instruccion.replace(" ", "").isalnum():
             return False, "Error: La instrucción no puede contener caractéres especiales."
 
         if len(instruccion) > 50:
@@ -115,7 +115,7 @@ class validadorReceta:
         #Eliminar espacios al inicio y final de la cadena
         nombre_limpio = cadena_entrada.strip()
 
-        if not nombre_limpio.isalnum():
+        if not nombre_limpio.replace(" ", "").isalnum():
             return False, "Error: El nombre de la receta no puede contener caractéres especiales."
             
         # Verificar que no esté vacío

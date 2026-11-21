@@ -53,7 +53,7 @@ class validadorPlatillos:
         if not (5 <= len(nombre_limpio) <= 25):
             return False, "Error: El nombre tiene un largo inválido. Debe tener entre 3 y 25."
 
-        if not nombre_limpio.isalnum():
+        if not nombre_limpio.replace(" ", "").isalnum():
             return False, "Error: El nombre del platillo no puede contener caractéres especiales."
             
         return True, nombre_limpio.capitalize()

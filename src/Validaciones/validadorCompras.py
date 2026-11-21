@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from utils.conversor_unidades import ConversorUnidades
+
+
 class validadorCompras:
         UNIDADES_VALIDAS = {
         "kilo", "kilos", "kg", "gramo", "gramos", "g", 
@@ -7,7 +10,7 @@ class validadorCompras:
         "taza", "tazas", "cucharada", "cucharadas"
         }
 
-        def ticket_compra(self, fecha: str):
+        def validar_formato_fecha(self, fecha: str):
 
             fecha_limpia = fecha.strip()
 
@@ -15,13 +18,109 @@ class validadorCompras:
                 return False, "Error: La fecha del ticket no puede estar vacia."
 
             #Verificar que la fecha sea valida
-            formato = "%d/%m/%Y"
+            formato = "%d-%m-%Y"
             try:
-                datetime.strptime(fecha_limpia, formato)
+                fecha_limpia = datetime.strptime(fecha_limpia, formato)
             except ValueError:
                 return False, "Error: La fecha no es valida."
 
             return True, fecha_limpia
+
+        def validar_nombre_insumo(self, nombre:str):
+            nombre = nombre.strip()
+
+            if len(nombre) > 35:
+                return False, "Error: El nombre del insumo debe ser de 35 caractéres máximo."
+
+            if not nombre.replace(" ", "").isalnum():
+                return False, "Error: El nombre no puede contener caractéres especiales."
+
+            return True, nombre.capitalize()
+
+        def validar_nombre_proveedor(self, nombre:str):
+            nombre = nombre.strip()
+
+            if len(nombre) > 30:
+                return False, "Error: El nombre del insumo debe ser de 30 caractéres máximo."
+
+            if not nombre.replace(" ", "").isalnum():
+                return False, "Error: El nombre no puede contener caractéres especiales."
+
+            return True, nombre.capitalize()
+
+        def validar_umbral(self, umbral:str):
+            umbral = umbral.strip()
+
+            try:
+                umbral = float(umbral)
+            except ValueError:
+                return False, "Error: El umbral debe ser un valor numérico."
+
+            if umbral < 1:
+                return False, "Error: El umbral no puede ser menor a 1."
+
+            return True, umbral
+
+        def validar_nombre_marca(self, marca_nombre:str):
+            marca_nombre = marca_nombre.strip().lower()
+
+            if len(marca_nombre) > 20:
+                return False, "Error: El nombre de la marca debe ser de 20 caractéres máximo."
+
+            if not marca_nombre.replace(" ", "").isalnum():
+                return False, "Error: El nombre de la marca no debe contener caractéres especiales."
+
+            return True, marca_nombre.capitalize()
+
+        def validar_nombre_tipo_ins(self, nombre_tipo:str):
+            nombre_tipo = nombre_tipo.strip().lower()
+
+            if len(nombre_tipo) > 20:
+                return False, "Error: El nombre de la marca debe ser de 20 caractéres máximo."
+
+            if not nombre_tipo.replace(" ", "").isalnum():
+                return False, "Error: El nombre de la marca no debe contener caractéres especiales."
+
+            return True, nombre_tipo.capitalize()
+
+        def validar_cantidad_insumo(self, cantidad:str):
+            cantidad = cantidad.strip()
+
+            try:
+                cantidad = float(cantidad)
+            except ValueError:
+                return False, "Error: La cantidad debe ser un valor numérico."
+
+            if cantidad < 1:
+                return False, "Error: La cantidad no puede ser menor a 1."
+
+            return True, cantidad
+
+        def validar_unidad_medida(self, unidad: str):
+            # Verificar que la unidad de medida sea válida y de un largo adecuado
+            if ConversorUnidades.es_valida(unidad):
+                unidad_limpia = ConversorUnidades.normalizar(unidad)
+
+                if not (2 <= len(unidad_limpia) <= 15):
+                    return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 1 y 15 caracteres)."
+            else:
+                return False, f"Error: {unidad} no es una unidad reconocida en el sistema."
+
+            return True, unidad_limpia
+
+        def validar_monto_insumo(self, monto: str):
+            monto = monto.strip()
+
+            try:
+                monto = float(monto)
+            except ValueError:
+                return False, "Error: El monto debe ser un valor numérico."
+
+            if monto < 0:
+                return False, "Error: El monto no puede ser menor a 0."
+
+            return True, monto
+
 
         def insumo_comprado(self, insumo: str, cantidad: str, unidad: str, fecha: str, monto: str):
 

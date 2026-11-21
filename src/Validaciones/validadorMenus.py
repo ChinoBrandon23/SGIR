@@ -44,7 +44,7 @@ class validadorMenu:
         #Quitar espacios al inicio y final
         nombre_limpio = nombre.strip()
 
-        if not nombre_limpio.isalnum():
+        if not nombre_limpio.replace(" ", "").isalnum():
             return False, "Error: El nombre no puede contener caractéres especiales."
 
         #El nombre sea de un largo correcto

@@ -9,7 +9,7 @@ class validadorInventario:
         if  len(nombre) > 35:
             return False, "Error: El nombre excede el límite de 35 caractéres."
 
-        if not nombre.isalpha():
+        if not nombre.replace(" ", "").isalnum():
             return False, "Error: El nombre no puede contener caractéres especiales."
 
         return True, nombre
