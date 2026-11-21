@@ -222,7 +222,10 @@ class ControladorMenus:
                     while not resultado_val_nombre[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
                         nombre = self.vista.mostrar_prompt_crear_menu()
-                        resultado_val_nombre = self.validador.validar_nombre(nombre)
+                        if nombre:
+                            resultado_val_nombre = self.validador.validar_nombre(nombre)
+                        else:
+                            self.mostrar_lista_menus()
 
                     self.menu_actual = Menu(num=0, nombre=resultado_val_nombre[1], cantidad_platillos=0,
                                     fecha_inicial=datetime.date.today(),
