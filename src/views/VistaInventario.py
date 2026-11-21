@@ -173,8 +173,9 @@ class VistaInventario(VistaBase):
                     "[1] Editar nombre",
                     "[2] Editar umbral",
                     "[3] Editar tipo de insumo",
-                    "[4] Guardar",
-                    "[5] Cancelar",
+                    "[4] Editar marca",
+                    "[5] Guardar",
+                    "[6] Cancelar",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -234,7 +235,7 @@ class VistaInventario(VistaBase):
     def mostrar_opciones_editar_prompt(self):
         self.refrescar_pantalla()
         self.input_menu_editar_inventario.imprimir("Selecciona una opción o cambia de página [',' '.']",
-                                                   choices=["1", "2", "3", "4", "5", "m", ",", "."],
+                                                   choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                    show_choices=False)
 
         if self.input_menu_editar_inventario.user_input is None:
@@ -329,6 +330,39 @@ class VistaInventario(VistaBase):
             self.layout["tabla_detalles_insumo"].update(Align.center(tabla, vertical="middle"))
         except KeyError:
             self.layout["main"].update(Align.center(tabla, vertical="middle"))
+
+    def mostrar_editar_marca_prompt(self, opciones):
+        opciones.append("0")
+        opciones.append(",")
+        opciones.append(".")
+
+        marca_num = ""
+
+        while len(marca_num) == 0 or marca_num == "," or marca_num == ".":
+            self.refrescar_pantalla()
+            marca_num = self.input_seleccion_marca.imprimir("[bold yellow]Selecciona la marca de entre las opciones disponibles o cambia de página [',' '.'] o presiona 0 para registrar una nueva",
+                                   choices=opciones,
+                                   show_choices=False)
+
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de marca[/bold yellow]", choices=["S", "N"])
+
+        if confirmacion == "S":
+            return marca_num
+        return None
+
+    def mostrar_crear_marca_prompt(self):
+        marca_nom = ""
+
+        while len(marca_nom) == 0:
+            self.refrescar_pantalla()
+            marca_nom = Prompt.ask("[bold yellow]Ingresa el nombre de la nueva marca[/bold yellow]")
+
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre de la nueva marca: [italic white]{marca_nom}[/italic white][/bold yellow]", choices=["S", "N"])
+
+            if confirmacion == "S":
+                return marca_nom
+            else:
+                marca_nom = ""
 
     def mostrar_editar_tipo_insumo_prompt(self, opciones):
         opciones.append("0")

@@ -340,9 +340,55 @@ class ControladorInventario:
                 self.pagina_actual_tipos_insumo_disp = 1
                 self.mostrar_detalles_insumo()
             case "4":
+            # editar marca
+                marca = None
+
+                marcas_disponibles = self.servicio.obtener_marcas()
+                opciones_marca = [str(idx + 1) for idx in range(len(marcas_disponibles))]
+
+                pagina, prox_pag = self.paginar_lista_detalles(marcas_disponibles, self.pagina_actual_marcas_disp)
+                total_pag = self.obtener_total_paginas_detalles(marcas_disponibles)
+
+                self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_marcas_disp, total_pag)
+                self.vista.refrescar_pantalla()
+
+                marca_num = self.vista.mostrar_editar_marca_prompt(opciones_marca)
+
+                # Desviación para crear una marca nueva
+                if marca_num == "0":
+                    marca_validada = False
+                    nueva_marca_nom = ""
+
+                    while not marca_validada:
+                        nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                        resultado_val_marca = self.validador.validar_nombre_marca(nueva_marca_nom)
+
+                        while not resultado_val_marca[0]:
+                            self.vista.mostrar_mensaje_error_validacion(resultado_val_marca[1])
+                            nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                            resultado_val_marca = self.validador.validar_nombre_marca(nueva_marca_nom)
+
+                        if self.servicio.marca_existe(resultado_val_marca[1]):
+                            self.vista.mostrar_mensaje_nombre_duplicado()
+                        else:
+                            marca_validada = True
+                            nueva_marca_nom = resultado_val_marca[1]
+
+                    self.servicio.crear_marca(nueva_marca_nom)
+                    marca = self.servicio.obtener_marca_por_nombre(nueva_marca_nom)
+                    self.insumo_actual.marca = marca
+                    self.formulario["marca"] = marca.nombre
+                else:
+                    marca = marcas_disponibles[int(marca_num) - 1]
+                    self.insumo_actual.marca = marca
+                    self.formulario["marca"] = marca.nombre
+
+                self.pagina_actual_marcas_disp = 1
+                self.mostrar_detalles_insumo()
+            case "5":
                 # llama a la función para guardar
                 self.guardar_editar_menu()
-            case "5":
+            case "6":
                 # cancela la edición actual y vuelve a detalles
                 if self.insumo_actual.num in [menu.num for menu in self.insumos_a_mostrar]:
                     self.cancelar_edicion_actual()
