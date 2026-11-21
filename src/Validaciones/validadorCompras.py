@@ -101,7 +101,7 @@ class validadorCompras:
             if ConversorUnidades.es_valida(unidad):
                 unidad_limpia = ConversorUnidades.normalizar(unidad)
 
-                if not (2 <= len(unidad_limpia) <= 15):
+                if not (1 <= len(unidad_limpia) <= 15):
                     return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 1 y 15 caracteres)."
             else:
                 return False, f"Error: {unidad} no es una unidad reconocida en el sistema."
