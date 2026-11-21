@@ -193,7 +193,6 @@ class VistaInventario(VistaBase):
                                             show_choices=False)
 
         if self.input_menu_inventario.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_menu_insumos_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_insumos: list[Insumo]):
@@ -203,7 +202,6 @@ class VistaInventario(VistaBase):
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_insumos)
 
     def mostrar_opciones_detalles_prompt(self):
@@ -213,7 +211,6 @@ class VistaInventario(VistaBase):
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
@@ -222,9 +219,8 @@ class VistaInventario(VistaBase):
                                          choices=["1", "2", "3", "4", "5", "6"],
                                          show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
-            self.mostrar_opciones_detalles_prompt()
+        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+            self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_prompt_eliminar_insumo_prompt(self):
         self.refrescar_pantalla()
@@ -243,7 +239,6 @@ class VistaInventario(VistaBase):
                                                    show_choices=False)
 
         if self.input_menu_editar_inventario.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
@@ -258,7 +253,6 @@ class VistaInventario(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_umbral_prompt(self):
@@ -273,7 +267,6 @@ class VistaInventario(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_umbral_prompt()
 
     def mostrar_tipos_insumo_disponibles(self, lista_tipos:list[TipoInsumo], pag_actual, total_pag):
