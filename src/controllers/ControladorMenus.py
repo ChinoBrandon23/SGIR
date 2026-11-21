@@ -165,6 +165,9 @@ class ControladorMenus:
         # resetea formulario y menu actual
         self.menu_actual = None
         self.pagina_actual_lista_menus = 1
+        self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_lista_platillos_disp = 1
+        self.pagina_actual_platillos_conflicto = 1
         self.formulario = {"platillos":[], "item_borrado":False}
 
     def usuario_esta_editando(self):

@@ -132,6 +132,8 @@ class ControladorPlatillos:
     def cancelar_edicion_actual(self):
         # resetea formulario y platillo actual
         self.pagina_actual_lista_platillos = 1
+        self.pagina_actual_lista_categorias = 1
+        self.pagina_actual_lista_recetas = 1
         self.platillo_actual = None
         self.formulario = {}
 

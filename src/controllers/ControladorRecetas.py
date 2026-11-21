@@ -180,6 +180,8 @@ class ControladorRecetas:
     def cancelar_edicion_actual(self):
         self.pagina_actual_lista_recetas = 1
         self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_lista_insumos_disponibles = 1
+        self.pagina_actual_lista_recetas_disponibles = 1
         self.receta_actual = None
         self.formulario = {"ingredientes": [], "instrucciones": [], "item_borrado": False}
 
