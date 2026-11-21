@@ -8,6 +8,8 @@ from controllers.ControladorMerma import ControladorMerma
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
+from daos.platillos_dao import PlatillosDAO
+from services.platillos_servicio import PlatillosServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
@@ -89,7 +91,13 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorPlatillos(vista)
+        receta_dao = RecetaDAO(DatabaseConnection)
+        receta_servicio = RecetaServicio(receta_dao=receta_dao)
+
+        menu_dao = PlatillosDAO(DatabaseConnection)
+        platillos_servicio = PlatillosServicio(platillos_dao=menu_dao)
+
+        ControladorPlatillos(vista, servicio_recetas=receta_servicio, servicio_platillos=platillos_servicio)
 
     def abrir_vista_menus(self):
         vista = VistaMenus(self.vista.console)
