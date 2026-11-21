@@ -341,7 +341,8 @@ class ControladorRecetas:
                 # cancela la edición actual y vuelve a detalles
                 if self.receta_actual.num in [receta.num for receta in self.recetas_a_mostrar]:
                     self.cancelar_edicion_actual()
-                    self.mostrar_detalles_receta(self.vista.input_abrir_detalles.user_input)
+                    self.receta_actual = self.servicio.obtener_receta_por_id(self.vista.input_abrir_detalles.user_input)
+                    self.mostrar_detalles_receta()
                 else:
                     self.cancelar_edicion_actual()
                     self.mostrar_lista_recetas()
