@@ -274,7 +274,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_menu_recetas_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_recetas.imprimir("Selecciona una opción",
+        self.input_menu_recetas.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
 
@@ -292,7 +292,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_detalles.imprimir("Selecciona una opción",
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
@@ -301,7 +301,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_busqueda_av_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_filtros.imprimir("Selecciona una opción",
+        self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
@@ -320,7 +320,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_editar_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_receta.imprimir("Selecciona una opción",
+        self.input_menu_editar_receta.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
 
@@ -400,7 +400,7 @@ class VistaRecetas(VistaBase):
         while ins_num is None or ins_num == "," or ins_num == ".":
             self.refrescar_pantalla()
             ins_num = self.input_seleccionar_insumo.imprimir(
-                "[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
+                "[bold yellow]Ingresa el índice del ingrediente a agregar o cambia de página [',' '.'][/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
@@ -415,7 +415,7 @@ class VistaRecetas(VistaBase):
         while receta_num is None or receta_num == "," or receta_num == ".":
             self.refrescar_pantalla()
             receta_num = self.input_seleccionar_receta.imprimir(
-                "[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
+                "[bold yellow]Ingresa el índice del ingrediente a agregar o cambia de página [',' '.'][/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
@@ -459,7 +459,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_editar_ing_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_ing.imprimir("Selecciona una opción",
+        self.input_menu_editar_ing.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                             choices=["1", "2", "3", "4", ",", "."],
                                             show_choices=False)
 
@@ -469,7 +469,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_editar_inst_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_inst.imprimir("Selecciona una opción",
+        self.input_menu_editar_inst.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                              choices=["1", "2", "3", "4", ",", "."],
                                              show_choices=False)
 
