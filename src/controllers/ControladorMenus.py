@@ -632,7 +632,12 @@ class ControladorMenus:
 
         lineas_disp = size_sin_prompt - 6
 
-        return math.ceil(len(items) / lineas_disp)
+        total = math.ceil(len(items) / lineas_disp)
+
+        if len(items):
+            return 1
+
+        return total
 
     def obtener_total_paginas_detalles(self, items: list):
         consola_size = self.vista.console.size[1]
@@ -642,7 +647,7 @@ class ControladorMenus:
 
         total = math.ceil(len(items) / lineas_disp)
 
-        if total == 0:
+        if len(items):
             return 1
 
         return total
