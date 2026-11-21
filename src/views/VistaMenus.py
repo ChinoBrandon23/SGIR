@@ -276,7 +276,7 @@ class VistaMenus(VistaBase):
                                        choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
 
-        if self.input_menu_menus.user_input is None:
+        if self.input_menu_menus.user_input == "," or self.input_menu_menus.user_input == ".":
             self.refrescar_pantalla()
             self.mostrar_menu_menus_prompt()
 
@@ -286,19 +286,15 @@ class VistaMenus(VistaBase):
                                            choices=[str(i+1) for i in range(len(lista_menus))],
                                            show_choices=False)
 
-        if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
-            self.mostrar_abrir_detalles_prompt(lista_menus)
-
     def mostrar_opciones_busqueda_av_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_filtros.imprimir("Selecciona una opción",
+        self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
+        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
             self.refrescar_pantalla()
-            self.mostrar_opciones_detalles_prompt()
+            self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_opciones_detalles_prompt(self):
         self.refrescar_pantalla()
@@ -306,7 +302,7 @@ class VistaMenus(VistaBase):
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
+        if self.input_menu_detalles == "." or self.input_menu_detalles == ".":
             self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
 
@@ -326,7 +322,7 @@ class VistaMenus(VistaBase):
                                                choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                show_choices=False)
 
-        if self.input_menu_editar_menu.user_input is None:
+        if self.input_menu_editar_menu == "," or self.input_menu_editar_menu == ".":
             self.refrescar_pantalla()
             self.mostrar_opciones_editar_prompt()
 
@@ -367,6 +363,10 @@ class VistaMenus(VistaBase):
         self.refrescar_pantalla()
         self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                  choices=["1","2","3","4", ",", "."], show_choices=False)
+
+        if self.input_menu_editar_platillo == "," or self.input_menu_editar_platillo == ".":
+            self.refrescar_pantalla()
+            self.mostrar_editar_platillos_menu_prompt()
 
     def mostrar_agregar_platillo_prompt(self, opciones):
         self.refrescar_pantalla()
