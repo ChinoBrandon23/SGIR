@@ -505,7 +505,8 @@ class VistaCompras(VistaBase):
 
         while len(unidad_medida) == 0:
             self.refrescar_pantalla()
-            unidad_medida = Prompt.ask("[bold yellow]Ingresa la unidad de medida para la cantidad del insumo[/bold yellow]")
+            from utils.conversor_unidades import ConversorUnidades
+            unidad_medida = Prompt.ask(f"[bold yellow]Ingresa la unidad de medida para la cantidad del insumo.\nDisponibles ->[/bold yellow] [bold green]kg / g / mg / lb / oz / l / ml / gal / pza [/bold green]")
 
             if len(unidad_medida):
                 confirmacion = Prompt.ask(
