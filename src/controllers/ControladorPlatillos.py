@@ -341,7 +341,13 @@ class ControladorPlatillos:
 
             case "5":
                 # cancela la edición actual y vuelve a detalles
-                self.cancelar_edicion_actual()
+                if self.platillo_actual and self.platillo_actual.num != "0":
+                    num = self.platillo_actual.num
+                    self.cancelar_edicion_actual()
+                    self.platillo_actual = self.servicio_platillos.obtener_platillo_por_num(num)
+                else:
+                    self.cancelar_edicion_actual()
+                self.mostrar_detalles_platillo()
             case "m":
                 # vuelve al menú
                 self.cancelar_edicion_actual()
