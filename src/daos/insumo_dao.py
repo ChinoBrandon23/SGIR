@@ -247,7 +247,8 @@ class InsumoDAO:
                     FROM insumo ins
                     INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
                     INNER JOIN marca mc ON ins.marca = mc.num
-                    WHERE ins.nombre LIKE('{nombre_insumo}%');
+                    WHERE ins.nombre LIKE('%{nombre_insumo}%')
+                    ORDER BY ins.nombre;
                         '''
                 cursor.execute(sql)
                 filas = cursor.fetchall()
