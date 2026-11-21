@@ -435,7 +435,7 @@ class VistaRecetas(VistaBase):
 
         while len(unidad_m) == 0:
             self.refrescar_pantalla()
-            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para este ingrediente\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml[/bold yellow]")
+            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para este ingrediente\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml[/bold green]")
 
         return unidad_m
 
