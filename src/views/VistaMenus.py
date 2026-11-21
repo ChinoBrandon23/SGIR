@@ -277,7 +277,6 @@ class VistaMenus(VistaBase):
                                        show_choices=False)
 
         if self.input_menu_menus.user_input == "," or self.input_menu_menus.user_input == ".":
-            self.refrescar_pantalla()
             self.mostrar_menu_menus_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_menus: list[Menu]):
@@ -293,7 +292,6 @@ class VistaMenus(VistaBase):
                                          show_choices=False)
 
         if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
-            self.refrescar_pantalla()
             self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_opciones_detalles_prompt(self):
@@ -303,7 +301,6 @@ class VistaMenus(VistaBase):
                                           show_choices=False)
 
         if self.input_menu_detalles == "." or self.input_menu_detalles == ".":
-            self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_menu_prompt(self):
@@ -323,7 +320,6 @@ class VistaMenus(VistaBase):
                                                show_choices=False)
 
         if self.input_menu_editar_menu == "," or self.input_menu_editar_menu == ".":
-            self.refrescar_pantalla()
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
@@ -338,7 +334,6 @@ class VistaMenus(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_vigencia_prompt(self):
