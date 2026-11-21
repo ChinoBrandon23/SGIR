@@ -279,7 +279,6 @@ class VistaRecetas(VistaBase):
                                          show_choices=False)
 
         if self.input_menu_recetas.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_menu_recetas_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_recetas:list[Receta]):
@@ -289,7 +288,6 @@ class VistaRecetas(VistaBase):
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_recetas)
 
     def mostrar_opciones_detalles_prompt(self):
@@ -299,7 +297,6 @@ class VistaRecetas(VistaBase):
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
@@ -308,9 +305,8 @@ class VistaRecetas(VistaBase):
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
-            self.mostrar_opciones_detalles_prompt()
+        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+            self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_prompt_eliminar_receta_prompt(self):
         self.refrescar_pantalla()
@@ -329,7 +325,6 @@ class VistaRecetas(VistaBase):
                                                show_choices=False)
 
         if self.input_menu_editar_receta.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
@@ -344,7 +339,6 @@ class VistaRecetas(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_porciones_prompt(self):
@@ -359,7 +353,6 @@ class VistaRecetas(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_porciones_prompt()
 
     def mostrar_crear_ingrediente_prompt(self):
