@@ -58,7 +58,8 @@ class RecetaDAO:
                 cursor.execute(sql, (nombre_receta,))
                 respuesta = cursor.fetchone()
                 if not respuesta:
-                    raise IndexError('DAO:  No existe la receta en la BD.')
+                    return respuesta
+
                 receta = Receta(
                         num=respuesta['NumReceta'],
                         nombre=respuesta['NomReceta'],
@@ -156,7 +157,7 @@ class RecetaDAO:
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-                sql = f"SELECT num NumReceta, nombre NomReceta, numPorciones NumPor FROM receta WHERE nombre LIKE ('{nombre_receta}%')"
+                sql = f"SELECT num NumReceta, nombre NomReceta, numPorciones NumPor FROM receta WHERE nombre LIKE ('%{nombre_receta}%') ORDER BY nombre"
                 cursor.execute(sql)
                 filas = cursor.fetchall()
 
@@ -528,14 +529,21 @@ class RecetaDAO:
 
         try:
             with connection.cursor(dictionary=True) as cursor:
-                sql = '''
+                sql_borra_ingredientes = '''
                         DELETE FROM lista_ingredientes WHERE receta = %s;
-                        DELETE FROM instrucciones WHERE receta = %s;
-                        UPDATE platillo 
-                        SET receta = NULL WHERE receta = %s;
-                        DELETE FROM receta WHERE num = %s;
                         '''
-                cursor.execute(sql,(num_receta,))
+                cursor.execute(sql_borra_ingredientes,(num_receta, ))
+
+                sql_borra_instrucciones = '''DELETE FROM instrucciones WHERE receta = %s;'''
+                cursor.execute(sql_borra_instrucciones, (num_receta,))
+
+                sql_update_platillo = '''UPDATE platillo 
+                        SET receta = NULL WHERE receta = %s;'''
+                cursor.execute(sql_update_platillo, (num_receta,))
+
+                sql_borra_receta = '''DELETE FROM receta WHERE num = %s;'''
+                cursor.execute(sql_borra_receta, (num_receta,))
+                
                 connection.commit()
                 # devuele el numero de filas que se actualizaron
                 return cursor.rowcount > 0

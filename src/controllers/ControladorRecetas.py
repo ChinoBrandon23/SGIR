@@ -224,8 +224,11 @@ class ControladorRecetas:
                 if borrar:
                     self.servicio.borrar_receta(self.receta_actual.num)
 
-                self.cancelar_edicion_actual()
-                self.mostrar_lista_recetas()
+                    self.cancelar_edicion_actual()
+                    self.recetas_a_mostrar = self.servicio.obtener_recetas()
+                    self.mostrar_lista_recetas()
+
+                self.mostrar_detalles_receta()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
