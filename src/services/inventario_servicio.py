@@ -82,6 +82,12 @@ class InventarioServicio:
                 return self._insumo_dao.obtener_marcas()
             except mysql.connector.Error as err:
                 raise IndexError(f"Servicio: Error al consultar las marcas: {err}")
+
+    def obtener_marcas_disponibles_insumo(self, insumo_nombre:str) -> List[Marca]:
+            try:
+                return self._insumo_dao.obtener_marcas_disponibles_insumo(insumo_nombre)
+            except mysql.connector.Error as err:
+                raise IndexError(f"Servicio: Error al consultar las marcas: {err}")
         
     def actualizar_insumo(self, insumo_act:Insumo):
         try:
@@ -139,3 +145,53 @@ class InventarioServicio:
             self._insumo_dao.crear_tipo_insumo(tipo_insumo=TipoInsumo(clave, nombre_tipo))
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al crear tipo de insumo. {err}')
+
+    def obtener_marca_por_nombre(self, nombre_marca:str):
+        try:
+            return self._insumo_dao.obtener_marca_por_nombre(nombre_marca)
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Error al marca: {err}\n')
+
+    def marca_existe(self, nombre_marca:str):
+        try:
+            marca = self.obtener_marca_por_nombre(nombre_marca)
+            if marca:
+                return True
+            return False
+
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Error al obtener marca: {err}\n')
+
+    def crear_marca(self, marca_nombre:str):
+        try:
+            # verifica si ya existe el tipo de insumo
+            if self.marca_existe(marca_nombre):
+                raise ValueError(f'Servicio: La marca ya existe')
+            self._insumo_dao.crear_marca(nombre_marca=marca_nombre)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al crear marca. {err}')
+
+    def insumo_existe(self, nombre_insumo:str, nombre_marca:str):
+        try:
+            insumo = self.obtener_insumo_por_nombre_marca(nombre_insumo, nombre_marca)
+            if insumo:
+                return True
+            return False
+
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Error al obtener insumo: {err}\n')
+
+    def obtener_insumo_por_nombre_marca(self, nombre:str, marca:str):
+        try:
+            return self._insumo_dao.obtener_insumo_nombre_marca(nombre, marca)
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Error al obtener insumo: {err}\n')
+
+    def crear_insumo(self, insumo:Insumo):
+        try:
+            # verifica si ya existe un insumo de la misma marca y nombre
+            if self.insumo_existe(insumo.nombre, insumo.marca.nombre):
+                raise ValueError(f'Servicio: El insumo ya existe')
+            self._insumo_dao.crear_insumo(insumo)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al crear marca. {err}')

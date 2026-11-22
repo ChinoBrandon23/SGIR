@@ -964,6 +964,11 @@ class VistaCompras(VistaBase):
         rich.print(f"[bold red]{error}[/bold red]")
         time.sleep(3)
 
+    def mostrar_mensaje_solucionar_insumo_duplicado(self):
+        self.refrescar_pantalla()
+        respuesta = Prompt.ask("[bold blue]Para utilizar el insumo existente presione 'S', para cancelar la operación presione 'N'[/bold blue]", choices=["S", "N"], show_choices=False)
+        return respuesta
+
     def refrescar_pantalla(self):
         try:
             subprocess.run('cls' if os.name == 'nt' else 'clear')

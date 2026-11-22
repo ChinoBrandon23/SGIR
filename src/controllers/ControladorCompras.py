@@ -517,8 +517,15 @@ class ControladorCompras:
                         # un nuevo detalle de compra
 
                         # obtiene el del insumo en la BD
-                        self.servicio_inventario.crear_insumo(Insumo(0, nombre, umbral, 0, tipo, marca))
-                        insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre(nombre)
+                        try:
+                            self.servicio_inventario.crear_insumo(Insumo(0, nombre, umbral, 0, tipo, marca))
+                            insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre(nombre)
+                        except ValueError:
+                            self.vista.mostrar_mensaje_error_validacion("Error: Este insumo ya existe")
+                            res = self.vista.mostrar_mensaje_solucionar_insumo_duplicado()
+
+                            if res == "S":
+                                insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre_marca(nombre, marca.nombre)
 
                 elif num_insumo:
                     insumo_obj = idx_ins_disp[int(num_insumo)]
