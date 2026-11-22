@@ -22,6 +22,7 @@ from views.VistaVentas import VistaVentas
 from Validaciones.validadorReceta import validadorReceta
 from Validaciones.validadorPlatillos import validadorPlatillos
 from Validaciones.validadorMenus import validadorMenu
+from Validaciones.validadorCompras import validadorCompras
 
 
 from daos.connection import DatabaseConnection
@@ -126,8 +127,9 @@ class ControladorMenuPrincipal:
 
         compra_servicio = CompraServicio(compra_dao=CompraDAO(DatabaseConnection),insumo_dao=InsumoDAO(DatabaseConnection))
         inventario_servicio = InventarioServicio(insumo_dao=InsumoDAO(DatabaseConnection),compra_dao=CompraDAO(DatabaseConnection))
-        
-        ControladorCompras(vista,compra_servicio=compra_servicio,inventario_servicio=inventario_servicio)
+        validador_compras = validadorCompras()
+
+        ControladorCompras(vista,compra_servicio=compra_servicio,inventario_servicio=inventario_servicio, validador=validador_compras)
 
     def abrir_vista_inventario(self):
         vista = VistaInventario(self.vista.console)
