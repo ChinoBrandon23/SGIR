@@ -114,7 +114,7 @@ class RecetaServicio:
         if receta.instrucciones:
             # llama funcion del dao para agregar instrucciones a la receta
             for num,instruccion in receta.instrucciones.items():
-                self._receta_dao.agregar_instruccion_a_receta(receta.num,num,instruccion)
+                self._receta_dao.agregar_instruccion_a_receta(receta_registrada.num,num,instruccion)
 
     def actualizar_receta(self,receta:Receta):
 

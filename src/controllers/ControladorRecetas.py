@@ -5,13 +5,14 @@ from mysql.connector import Error
 from models.ingrediente import Ingrediente
 from models.receta import Receta
 from views.VistaRecetas import VistaRecetas
-
+from Validaciones.validadorReceta import validadorReceta
 from services.receta_servicio import RecetaServicio
 
 class ControladorRecetas:
-    def __init__(self, vista:VistaRecetas, servicio_receta:RecetaServicio):
+    def __init__(self, vista:VistaRecetas, servicio_receta:RecetaServicio, validador:validadorReceta):
         self.vista = vista
         self.servicio = servicio_receta
+        self.validador = validador
         self.receta_actual = None
         self.formulario = {"ingredientes":[], "instrucciones":[], "item_borrado":False}
         self.ing_idx = {}
@@ -120,7 +121,7 @@ class ControladorRecetas:
         if self.servicio.receta_existe(self.receta_actual.num):
             try:
                 self.servicio.actualizar_receta(self.receta_actual)
-                receta_actual_num = self.receta_actual.num
+                receta_num = self.receta_actual.num
             except Error:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_error_receta_nombre_duplicado()
@@ -128,7 +129,7 @@ class ControladorRecetas:
         else:
             try:
                 self.servicio.crear_receta(self.receta_actual)
-                receta_actual_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
+                receta_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
                 self.recetas_a_mostrar = self.servicio.obtener_recetas()
             except ValueError:
                 self.vista.refrescar_pantalla()
@@ -139,7 +140,8 @@ class ControladorRecetas:
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
         self.recetas_a_mostrar = self.servicio.obtener_recetas()
         self.cancelar_edicion_actual()
-        self.mostrar_detalles_receta(receta_actual_num)
+        self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+        self.mostrar_detalles_receta()
 
     def agregar_edicion_instruccion(self, dic_inst):
         lista_inst_editadas_idx = [next(iter(inst)) for inst in self.formulario["instrucciones"]]
@@ -178,6 +180,8 @@ class ControladorRecetas:
     def cancelar_edicion_actual(self):
         self.pagina_actual_lista_recetas = 1
         self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_lista_insumos_disponibles = 1
+        self.pagina_actual_lista_recetas_disponibles = 1
         self.receta_actual = None
         self.formulario = {"ingredientes": [], "instrucciones": [], "item_borrado": False}
 
@@ -190,9 +194,25 @@ class ControladorRecetas:
             case "2":
                 # Aquí crea receta
                 self.mostrar_formulario_crear_receta()
-                nombre, porciones = self.vista.mostrar_prompt_crear_receta()
-                if nombre is not None and porciones is not None:
-                    self.receta_actual = Receta(0, nombre, porciones, {})
+                nombre = self.vista.mostrar_prompt_crear_receta_nombre()
+
+                if nombre is not None:
+                    resultado_val_nombre = self.validador.editar_nombre(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_prompt_crear_receta_nombre()
+                        resultado_val_nombre = self.validador.editar_nombre(nombre)
+
+                    porciones = self.vista.mostrar_prompt_crear_receta_porciones()
+                    resultado_val_porcion = self.validador.validar_editar_porciones(porciones)
+
+                    while not resultado_val_porcion[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_porcion[1])
+                        porciones = self.vista.mostrar_prompt_crear_receta_porciones()
+                        resultado_val_porcion = self.validador.validar_editar_porciones(porciones)
+
+                    self.receta_actual = Receta(0, resultado_val_nombre[1], resultado_val_porcion[1], {})
                     self.mapear_ingredientes()
                     self.mostrar_formulario_crear_receta()
                 else:
@@ -223,8 +243,11 @@ class ControladorRecetas:
                 if borrar:
                     self.servicio.borrar_receta(self.receta_actual.num)
 
-                self.cancelar_edicion_actual()
-                self.mostrar_lista_recetas()
+                    self.cancelar_edicion_actual()
+                    self.recetas_a_mostrar = self.servicio.obtener_recetas()
+                    self.mostrar_lista_recetas()
+
+                self.mostrar_detalles_receta()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
@@ -274,10 +297,16 @@ class ControladorRecetas:
             case "1":
                 # abre prompt para cambiar el nombre de la receta
                 nombre = self.vista.mostrar_editar_nombre_prompt()
-                # checa que haya una respuesta del usuario y si es así lo debe validar
                 if nombre is not None:
-                    self.receta_actual.nombre = nombre
-                    self.formulario["nombre"] = nombre
+                    resultado_val_nombre = self.validador.editar_nombre(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_editar_nombre_prompt()
+                        resultado_val_nombre = self.validador.editar_nombre(nombre)
+
+                    self.receta_actual.nombre = resultado_val_nombre[1]
+                    self.formulario["nombre"] = resultado_val_nombre[1]
                 self.mostrar_detalles_receta()
 
             case "2":
@@ -285,8 +314,15 @@ class ControladorRecetas:
                 porciones = self.vista.mostrar_editar_porciones_prompt()
                 # checa que haya un valor y luego valida el num de porciones
                 if porciones is not None:
-                    self.receta_actual.num_porciones = porciones
-                    self.formulario["porciones"] = porciones
+                    resultado_val_porciones = self.validador.validar_editar_porciones(porciones)
+
+                    while not resultado_val_porciones[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_porciones[1])
+                        nombre = self.vista.mostrar_editar_porciones_prompt()
+                        resultado_val_porciones = self.validador.validar_editar_porciones(nombre)
+
+                    self.receta_actual.num_porciones = resultado_val_porciones[1]
+                    self.formulario["porciones"] = resultado_val_porciones[1]
                 self.mostrar_detalles_receta()
 
             case "3":
@@ -307,7 +343,8 @@ class ControladorRecetas:
                 # cancela la edición actual y vuelve a detalles
                 if self.receta_actual.num in [receta.num for receta in self.recetas_a_mostrar]:
                     self.cancelar_edicion_actual()
-                    self.mostrar_detalles_receta(self.vista.input_abrir_detalles.user_input)
+                    self.receta_actual = self.servicio.obtener_receta_por_id(self.vista.input_abrir_detalles.user_input)
+                    self.mostrar_detalles_receta()
                 else:
                     self.cancelar_edicion_actual()
                     self.mostrar_lista_recetas()
@@ -340,10 +377,22 @@ class ControladorRecetas:
                     ing_obj = ing_disponibles[int(ins_num)-1]
 
                     cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                    resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
+
+                    while not resultado_val_cantidad[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_cantidad[1])
+                        cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                        resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                     unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+                    resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
 
-                    self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=cantidad, unidad_medida=unidad_medida)
+                    while not resultado_val_unidad_m[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_unidad_m[1])
+                        unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+                        resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
+
+                    self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=resultado_val_cantidad[1], unidad_medida=resultado_val_unidad_m[1])
 
                     self.pagina_actual_lista_insumos_disponibles = 1
                     self.formulario["ingredientes"].append(ing_obj.nombre)
@@ -365,11 +414,23 @@ class ControladorRecetas:
                     ing_obj = ing_disponibles[int(ins_num)-1]
 
                     cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                    resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
+
+                    while not resultado_val_cantidad[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_cantidad[1])
+                        cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                        resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                     unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+                    resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
 
-                    self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=cantidad,
-                                                          unidad_medida=unidad_medida)
+                    while not resultado_val_unidad_m[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_unidad_m[1])
+                        unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+                        resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
+
+                    self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=resultado_val_cantidad[1],
+                                                          unidad_medida=resultado_val_unidad_m[1])
 
                     self.pagina_actual_lista_recetas_disponibles = 1
                     self.formulario["ingredientes"].append(ing_obj.nombre)
@@ -380,16 +441,30 @@ class ControladorRecetas:
                 # modificar ingrediente
                 opciones_idx = [str(ing) for ing in self.ing_idx]
 
-                num_ing, cantidad, unidad_m = self.vista.mostrar_modificar_ingrediente_prompt(opciones_idx)
+                num_ing = self.vista.mostrar_seleccionar_ingrediente_prompt(opciones_idx)
 
-                if cantidad is not None and unidad_m is not None:
-                    # busca el ing con el num y asigna los datos
-                    self.receta_actual.lista_ingredientes[int(num_ing)-1].cantidad = cantidad
-                    self.receta_actual.lista_ingredientes[int(num_ing) - 1].unidad_medida = unidad_m
+                cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
-                    nombre = self.receta_actual.lista_ingredientes[int(num_ing)-1].ingrediente.nombre
+                while not resultado_val_cantidad[0]:
+                    self.vista.mostrar_error_validacion(resultado_val_cantidad[1])
+                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                    resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
-                    self.formulario["ingredientes"].append(nombre)
+                unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+                resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
+
+                while not resultado_val_unidad_m[0]:
+                    self.vista.mostrar_error_validacion(resultado_val_unidad_m[1])
+                    unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
+                    resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
+
+                self.receta_actual.lista_ingredientes[int(num_ing)-1].cantidad = cantidad
+                self.receta_actual.lista_ingredientes[int(num_ing) - 1].unidad_medida = unidad_medida
+
+                nombre = self.receta_actual.lista_ingredientes[int(num_ing)-1].ingrediente.nombre
+
+                self.formulario["ingredientes"].append(nombre)
 
                 self.mostrar_detalles_receta()
 
@@ -397,7 +472,6 @@ class ControladorRecetas:
                 #borra ingrediente
                 opciones_idx = [str(ing) for ing in self.ing_idx]
                 num_ing = self.vista.mostrar_borrar_ingrediente_prompt(opciones_idx)
-                # debería validar aquí
                 if num_ing is not None:
                     # busca el nombre del ing basado en el num ingresado,
                     # luego busca el obj IngredientesReceta de la receta actual basado en el nombre
@@ -419,6 +493,13 @@ class ControladorRecetas:
             case "1":
                 instruccion = self.vista.mostrar_agregar_instruccion_prompt()
                 if instruccion is not None:
+                    resultado_val_instruccion = self.validador.validar_crear_instruccion(instruccion)
+
+                    while not resultado_val_instruccion[0]:
+                        self.vista.mostrar_error_validacion(resultado_val_instruccion[1])
+                        instruccion = self.vista.mostrar_agregar_instruccion_prompt()
+                        resultado_val_instruccion = self.validador.validar_crear_instruccion(instruccion)
+
                     lista_indices = [key for key in self.receta_actual.instrucciones]
 
                     if len(lista_indices) > 0:
@@ -426,15 +507,25 @@ class ControladorRecetas:
                     else:
                         idx = 1
 
-                    self.receta_actual.instrucciones[idx] = instruccion
-                    self.agregar_edicion_instruccion({idx:instruccion})
+                    self.receta_actual.instrucciones[idx] = resultado_val_instruccion[1]
+                    self.agregar_edicion_instruccion({idx:resultado_val_instruccion[1]})
                 self.mostrar_detalles_receta()
 
             case "2":
                 opciones = [str(idx) for idx in self.receta_actual.instrucciones]
-                idx, instruccion = self.vista.mostrar_editar_instruccion_prompt(opciones)
+                idx = self.vista.mostrar_seleccionar_instruccion_prompt(opciones)
 
-                if instruccion is not None:
+                if idx is not None:
+                    instruccion = self.vista.mostrar_editar_instruccion_prompt()
+
+                    if instruccion:
+                        resultado_val_instruccion = self.validador.validar_crear_instruccion(instruccion)
+
+                        while not resultado_val_instruccion[0]:
+                            self.vista.mostrar_error_validacion(resultado_val_instruccion[1])
+                            instruccion = self.vista.mostrar_agregar_instruccion_prompt()
+                            resultado_val_instruccion = self.validador.validar_crear_instruccion(instruccion)
+
                     self.receta_actual.instrucciones[int(idx)] = instruccion
                     self.agregar_edicion_instruccion({idx:instruccion})
 

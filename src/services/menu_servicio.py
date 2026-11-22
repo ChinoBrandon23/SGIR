@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from models.menu import Menu, DetalleMenu
 from models.platillo import Platillo
@@ -29,6 +30,21 @@ class MenuServicio:
         except mysql.connector.Error as err:
             raise ValueError(f'Servicio: Ocurrio un error: {err}\n')
 
+    def obtener_platillos_invalidos_menu(self, menu: Menu, fecha_inicial: date, fecha_final: date):
+        try:
+            platillos_disponibles = self.obtener_platillos_disponibles(fecha_inicial, fecha_final)
+            platillos_disponibles_idx = [plat.num for plat in platillos_disponibles]
+
+            platillos_invalidos = []
+
+            for detalle in menu.detalles:
+                if detalle.platillo.num not in platillos_disponibles_idx:
+                    platillos_invalidos.append(detalle.platillo)
+
+            return platillos_invalidos
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Ocurrió un error {err}\n')
+
     def platillo_existe(self, num_platillo:int) -> bool:
         try:
             if self._menu_dao.obtener_platillo_por_numero(num_platillo):
@@ -42,6 +58,16 @@ class MenuServicio:
     def obtener_platillos(self) -> List[Platillo]:
         try:
             return self._menu_dao.obtener_platillos()
+        except mysql.connector.Error as err:
+            raise Error(f'Error en la BD. {err}')
+
+    def obtener_platillos_disponibles(self, fecha_inicial, fecha_final) -> List[Platillo]:
+        try:
+            # ahora se convierte al formato que mysql usa y se pasa de nuevo a str
+            fecha_inicial_formateada = datetime.datetime.strftime(fecha_inicial, '%Y-%m-%d') # type: ignore
+            fecha_final_formateada = datetime.datetime.strftime(fecha_final, '%Y-%m-%d') # type: ignore
+
+            return self._menu_dao.obtener_platillos_disponibles(fecha_inicial, fecha_final)
         except mysql.connector.Error as err:
             raise Error(f'Error en la BD. {err}')
 
@@ -171,6 +197,10 @@ class MenuServicio:
     def crear_menu(self, nuevo_menu: Menu):
         try:
             self._menu_dao.crear_menu(menu=nuevo_menu)
+            nuevo_num = self.obtener_menu_por_nombre(nuevo_menu.nombre).num
+            nuevo_menu.num = nuevo_num
+            self.actualizar_menu(nuevo_menu)
+
         except mysql.connector.Error as err:
             raise Error(f'Error en crear menu en la BD - {err}')
 
