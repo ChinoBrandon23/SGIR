@@ -37,6 +37,10 @@ class VistaCompras(VistaBase):
         self.input_menu_editar_compra = InputEmisor()
         self.input_menu_editar_insumo = InputEmisor()
         self.input_menu_filtros = InputEmisor()
+        self.input_seleccionar_proveedor = InputEmisor()
+        self.input_seleccionar_insumo = InputEmisor()
+        self.input_seleccionar_marca = InputEmisor()
+        self.input_seleccionar_tipo_insumo = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -65,16 +69,18 @@ class VistaCompras(VistaBase):
         for columna in columnas:
             self.tabla_compras.add_column(columna)
 
-    def crear_elemento_tabla_compras(self, compra: Compra):
-        self.tabla_compras.add_row(str(compra.num), str(compra.fecha_creacion), f"${str(compra.total_bruto)}", compra.proveedor.nombre)
+    def crear_elemento_tabla_compras(self, compra: Compra, idx_ui:int):
+        self.tabla_compras.add_row(str(idx_ui), str(compra.fecha_creacion), f"${str(compra.total_bruto)}", compra.proveedor.nombre)
 
-    def mostrar_detalles_compra(self, compra: Compra | None, datos_editados, mapa_insumos):
+    def mostrar_detalles_compra(self, compra: Compra | None, lista_compras:list[DetalleCompra], pag_actual:int, pag_total:int, datos_editados, mapa_insumos):
         self.resetear_vista()
+
+        self.mostrar_conteo_paginas(pag_actual, pag_total)
 
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_compra"))
         self.layout["panel_menu"].size = 6
 
-        panel = Panel(renderable=f"[bold yellow]Compra #{compra.num}\n"
+        panel = Panel(renderable=f"[bold yellow]Compra #{compra.num if compra and compra.num != 0 else "-"}\n"
                                  f"[bold white]Fecha de creación:[/bold white] {compra.fecha_creacion if compra.fecha_creacion else ""}\n"
                                  f"{"[bold red]" if "total_bruto" in datos_editados else ""}"
                                  f"[bold white]Total bruto:[/bold white] {f"${compra.total_bruto}" if compra.total_bruto else ""}"
@@ -86,8 +92,8 @@ class VistaCompras(VistaBase):
 
         panel.height = 6
 
-        if compra and len(compra.lista_compras):
-            self.llenar_tabla_detalles_compra(compra.lista_compras, mapa_insumos, datos_editados["insumos"])
+        if compra and len(lista_compras):
+            self.llenar_tabla_detalles_compra(lista_compras, mapa_insumos, datos_editados["insumos"])
 
         self.layout["panel_menu"].update(panel)
         self.layout["tabla_detalles_compra"].update(Align.center(self.tabla_detalles_menu, vertical="middle"))
@@ -152,16 +158,28 @@ class VistaCompras(VistaBase):
                                                     f"[bold red]{str(detalle_compra.fecha_compra)}[/bold red]",
                                                     f"[bold red]{str(detalle_compra.fecha_caducidad)}[/bold red]")
 
-    def mostrar_proveedores_disponibles(self, lista_proveedores:list[Proveedor]):
+    def mostrar_proveedores_disponibles(self, lista_proveedores:list[Proveedor], pag_actual, total_pag):
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Proveedores disponibles")
+
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
 
         for col in columnas:
             tabla.add_column(col)
 
         for i in range(len(lista_proveedores)):
-            tabla.add_row(str(i+1), lista_proveedores[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_proveedores[i].nombre)
 
         try:
             self.layout["tabla_detalles_compra"].update(Align.center(tabla, vertical="middle"))
@@ -169,7 +187,7 @@ class VistaCompras(VistaBase):
             self.layout["main"].split_column(Layout(name="tabla_detalles_compra"))
             self.layout["tabla_detalles_compra"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_insumos_disponibles(self, lista_insumos:list[Insumo]):
+    def mostrar_insumos_disponibles(self, lista_insumos:list[Insumo], pag_actual, total_pag):
         columnas = ["#", "Nombre", "Marca"]
 
         tabla = Table(title="Insumos disponibles")
@@ -177,15 +195,27 @@ class VistaCompras(VistaBase):
         for col in columnas:
             tabla.add_column(col)
 
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
         if len(lista_insumos):
             for i in range(len(lista_insumos)):
-                tabla.add_row(str(i+1), lista_insumos[i].nombre, lista_insumos[i].marca.nombre)
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_insumos[i].nombre, lista_insumos[i].marca.nombre)
         else:
             tabla.add_row(" " * 10, " " * 10, " " * 10)
 
         self.layout["tabla_detalles_compra"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_marcas_disponibles(self, lista_marcas:list[Marca]):
+    def mostrar_marcas_disponibles(self, lista_marcas:list[Marca], pag_actual, total_pag):
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Marcas disponibles")
@@ -193,15 +223,27 @@ class VistaCompras(VistaBase):
         for col in columnas:
             tabla.add_column(col)
 
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
         if len(lista_marcas):
             for i in range(len(lista_marcas)):
-                tabla.add_row(str(i+1), lista_marcas[i].nombre)
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_marcas[i].nombre)
         else:
             tabla.add_row(" " * 10, " " * 10)
 
         self.layout["tabla_detalles_compra"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_tipos_insumo_disponibles(self, lista_tipos:list[TipoInsumo]):
+    def mostrar_tipos_insumo_disponibles(self, lista_tipos:list[TipoInsumo], pag_actual, total_pag):
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Tipos de insumo disponibles")
@@ -209,9 +251,21 @@ class VistaCompras(VistaBase):
         for col in columnas:
             tabla.add_column(col)
 
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 18
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
         if len(lista_tipos):
             for i in range(len(lista_tipos)):
-                tabla.add_row(str(i+1), lista_tipos[i].nombre)
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_tipos[i].nombre)
         else:
             tabla.add_row(" " * 10, " " * 10)
 
@@ -224,7 +278,7 @@ class VistaCompras(VistaBase):
 
         self.layout["panel_menu"].size = 6
 
-        panel = Panel(renderable=f"[bold yellow]Compra {f"#{compra.num}" if compra else ""}\n"
+        panel = Panel(renderable=f"[bold yellow]Compra {f"#{compra.num}" if compra and compra.num != 0 else "#-"}\n"
                                  f"Fecha de creación: {compra.fecha_creacion if compra else ""}\n"
                                  f"Total bruto: {f"${compra.total_bruto}" if compra else ""}\n"
                                  f"Proveedor: {compra.proveedor.nombre if compra and compra.proveedor else ""}[/bold yellow]")
@@ -261,6 +315,21 @@ class VistaCompras(VistaBase):
                     "[1] Volver a compras",
                     "[2] Editar compra",
                     "[3] Eliminar compra",
+                    "[M] Volver al menú"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
+    def crear_banda_opciones_detalles_edicion_des(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Volver a compras",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -318,8 +387,7 @@ class VistaCompras(VistaBase):
                     "[3] Editar monto unitario",
                     "[4] Editar fecha de compra",
                     "[5] Editar caducidad",
-                    "[6] Editar marca",
-                    "[7] Volver"]
+                    "[6] Volver"]
 
         opciones_columna.expand = True
         self.layout["opciones"].size = 1
@@ -330,42 +398,52 @@ class VistaCompras(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_compras_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_compras.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_compras.user_input is None:
-            self.refrescar_pantalla()
+        if self.input_menu_compras.user_input == "," or self.input_menu_compras.user_input == ".":
             self.mostrar_menu_compras_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_compras: list[Compra]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice de la compra a mostrar",
-                                           choices=[str(compra.num) for compra in lista_compras],
+                                           choices=[str(idx+1) for idx in range(len(lista_compras))],
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_compras)
 
     def mostrar_opciones_busqueda_av_prompt(self):
-        self.input_menu_filtros.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "3", "4"],
+        self.refrescar_pantalla()
+        self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                         choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
-            self.mostrar_opciones_detalles_prompt()
+        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+            self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_opciones_detalles_prompt(self):
-        self.input_menu_detalles.imprimir("Selecciona una opción",
+        self.refrescar_pantalla()
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
+        if self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
+            self.mostrar_opciones_detalles_prompt()
+
+    def mostrar_opciones_detalles_edicion_des_prompt(self):
+        self.refrescar_pantalla()
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                          choices=["1", "m", ",", "."],
+                                          show_choices=False)
+
+        if self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_compra_prompt(self):
+        self.refrescar_pantalla()
         confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta compra, confirma para continuar[/bold red]",
                                   choices=["S","N"])
 
@@ -375,15 +453,16 @@ class VistaCompras(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
-        self.input_menu_editar_compra.imprimir("Selecciona una opción",
+        self.refrescar_pantalla()
+        self.input_menu_editar_compra.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
 
-        if self.input_menu_editar_compra.user_input is None:
-            self.refrescar_pantalla()
+        if self.input_menu_editar_compra.user_input == "," or self.input_menu_editar_compra.user_input == ".":
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_fecha_creacion_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa la nueva fecha de creación de la compra en el siguiente formato[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
 
         if len(info) > 0:
@@ -394,10 +473,10 @@ class VistaCompras(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_fecha_creacion_prompt()
 
     def mostrar_editar_total_bruto_prompt(self):
+        self.refrescar_pantalla()
         total = Prompt.ask("[bold yellow]Ingresa el nuevo total bruto[/bold yellow]")
 
         if len(total):
@@ -408,15 +487,20 @@ class VistaCompras(VistaBase):
 
             return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_total_bruto_prompt()
 
     def mostrar_editar_proveedor_prompt(self, opciones):
         opciones.append("0")
+        opciones.append(",")
+        opciones.append(".")
 
-        prov = Prompt.ask(f"[bold yellow]Selecciona uno de los proveedores disponibles o ingresa 0 para crear un proveedor",
-                          choices=opciones,
-                          show_choices=False)
+        prov = ""
+
+        while len(prov) == 0 or prov == "," or prov == ".":
+            self.refrescar_pantalla()
+            prov = self.input_seleccionar_proveedor.imprimir(f"[bold yellow]Selecciona uno de los proveedores disponibles o cambia de página [',' '.'] o ingresa 0 para crear un proveedor",
+                              choices=opciones,
+                              show_choices=False)
 
         if prov == "0":
             return prov
@@ -444,15 +528,21 @@ class VistaCompras(VistaBase):
         return None
 
     def mostrar_editar_insumos_menu_prompt(self):
-        self.input_menu_editar_insumo.imprimir("Selecciona una opción",
-                                               choices=["1","2","3","4","5","6","7", ",", "."], show_choices=False)
+        self.input_menu_editar_insumo.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                               choices=["1","2","3","4","5","6", ",", "."], show_choices=False)
 
     def mostrar_seleccionar_insumo_prompt(self, opciones):
         opciones.append("0")
+        opciones.append(",")
+        opciones.append(".")
 
-        num_insumo = Prompt.ask("[bold yellow]Selecciona uno de los insumos de la lista o ingresa 0 para crear uno[/bold yellow]",
-                                choices=opciones,
-                                show_choices=False)
+        num_insumo = ""
+
+        while num_insumo is None or len(num_insumo) == 0 or num_insumo == "," or num_insumo == ".":
+            self.refrescar_pantalla()
+            num_insumo = self.input_seleccionar_insumo.imprimir("[bold yellow]Selecciona uno de los insumos de la lista o cambia de página [',' '.']  o ingresa 0 para crear uno[/bold yellow]",
+                                    choices=opciones,
+                                    show_choices=False)
 
         if num_insumo == "0":
             return num_insumo
@@ -466,68 +556,10 @@ class VistaCompras(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_seleccionar_insumo_prompt(opciones)
 
-    def mostrar_agregar_insumo_prompt(self):
-        monto_unitario = ""
-        importe = ""
-        fecha_compra = ""
+    def mostrar_agregar_insumo_fecha_cad_prompt(self):
         fecha_caducidad = ""
-        cantidad = ""
-        unidad_medida = ""
-
-        while len(fecha_compra) == 0:
-            self.refrescar_pantalla()
-            fecha_compra = Prompt.ask("[bold yellow]Ingresa la fecha de compra del insumo en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
-
-            if len(fecha_compra):
-                confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma fecha de compra: [italic white]{fecha_compra}[/italic white][/bold yellow]", choices=["S", "N"])
-
-                if confirmacion == "S":
-                    break
-                else:
-                    fecha_compra = ""
-
-        while len(cantidad) == 0:
-            self.refrescar_pantalla()
-            cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad comprada del insumo[/bold yellow]")
-
-            if len(cantidad):
-                confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma cantidad: [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])
-
-                if confirmacion == "S":
-                    break
-                else:
-                    cantidad = ""
-
-        while len(unidad_medida) == 0:
-            self.refrescar_pantalla()
-            from utils.conversor_unidades import ConversorUnidades
-            unidad_medida = Prompt.ask(f"[bold yellow]Ingresa la unidad de medida para la cantidad del insumo.\nDisponibles ->[/bold yellow] [bold green]kg / g / mg / lb / oz / l / ml / gal / pza [/bold green]")
-
-            if len(unidad_medida):
-                confirmacion = Prompt.ask(
-                    f"[bold yellow]Confirma cantidad: [italic white]{unidad_medida}[/italic white][/bold yellow]", choices=["S", "N"])
-
-                if confirmacion == "S":
-                    break
-                else:
-                    unidad_medida = ""
-
-        while len(monto_unitario) == 0:
-            self.refrescar_pantalla()
-            monto_unitario = Prompt.ask("[bold yellow]Ingresa el monto unitario del insumo[/bold yellow]")
-
-            if len(monto_unitario):
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma monto unitario: [italic white]{monto_unitario}[/italic white][/bold yellow]", choices=["S", "N"])
-
-                if confirmacion == "S":
-                    break
-                else:
-                    monto_unitario = ""
 
         while len(fecha_caducidad) == 0:
             self.refrescar_pantalla()
@@ -542,11 +574,82 @@ class VistaCompras(VistaBase):
                 else:
                     fecha_caducidad = ""
 
-        return monto_unitario, fecha_compra, fecha_caducidad, cantidad, unidad_medida
+        return fecha_caducidad
 
-    def mostrar_crear_insumo_prompt(self):
+    def mostrar_agregar_insumo_monto_prompt(self):
+        monto_unitario = ""
+
+        while len(monto_unitario) == 0:
+            self.refrescar_pantalla()
+            monto_unitario = Prompt.ask("[bold yellow]Ingresa el monto unitario del insumo[/bold yellow]")
+
+            if len(monto_unitario):
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma monto unitario: [italic white]{monto_unitario}[/italic white][/bold yellow]", choices=["S", "N"])
+
+                if confirmacion == "S":
+                    break
+                else:
+                    monto_unitario = ""
+
+        return monto_unitario
+
+    def mostrar_agregar_insumo_unidad_prompt(self):
+        unidad_medida = ""
+
+        while len(unidad_medida) == 0:
+            self.refrescar_pantalla()
+            from utils.conversor_unidades import ConversorUnidades
+            unidad_medida = Prompt.ask(f"[bold yellow]Ingresa la unidad de medida para la cantidad del insumo.\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml [/bold green]")
+
+            if len(unidad_medida):
+                confirmacion = Prompt.ask(
+                    f"[bold yellow]Confirma cantidad: [italic white]{unidad_medida}[/italic white][/bold yellow]", choices=["S", "N"])
+
+                if confirmacion == "S":
+                    break
+                else:
+                    unidad_medida = ""
+
+        return unidad_medida
+
+    def mostrar_agregar_insumo_cantidad_com_prompt(self):
+        cantidad = ""
+
+        while len(cantidad) == 0:
+            self.refrescar_pantalla()
+            cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad comprada del insumo[/bold yellow]")
+
+            if len(cantidad):
+                confirmacion = Prompt.ask(
+                    f"[bold yellow]Confirma cantidad: [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])
+
+                if confirmacion == "S":
+                    break
+                else:
+                    cantidad = ""
+
+        return cantidad
+
+    def mostrar_agregar_insumo_fecha_com_prompt(self):
+        fecha_compra = ""
+
+        while len(fecha_compra) == 0:
+            self.refrescar_pantalla()
+            fecha_compra = Prompt.ask("[bold yellow]Ingresa la fecha de compra del insumo en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+            if len(fecha_compra):
+                confirmacion = Prompt.ask(
+                    f"[bold yellow]Confirma fecha de compra: [italic white]{fecha_compra}[/italic white][/bold yellow]", choices=["S", "N"])
+
+                if confirmacion == "S":
+                    break
+                else:
+                    fecha_compra = ""
+
+        return fecha_compra
+
+    def mostrar_crear_insumo_nombre_prompt(self):
         nombre = ""
-        umbral = ""
 
         while len(nombre) == 0:
             self.refrescar_pantalla()
@@ -558,6 +661,11 @@ class VistaCompras(VistaBase):
                     break
                 else:
                     nombre = ""
+
+        return nombre
+
+    def mostrar_crear_insumo_umbral_prompt(self):
+        umbral = ""
 
         while len(umbral) == 0:
             self.refrescar_pantalla()
@@ -571,27 +679,20 @@ class VistaCompras(VistaBase):
                 else:
                     umbral = ""
 
-        return nombre, umbral
+        return umbral
 
     def mostrar_seleccionar_marca_prompt(self, opciones):
         opciones.append("0")
+        opciones.append(",")
+        opciones.append(".")
 
-        marca_num = Prompt.ask("[bold yellow]Selecciona la marca de entre las opciones disponibles o presiona 0 para registrar una nueva",
-                               choices=opciones,
-                               show_choices=False)
+        marca_num = ""
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de marca[/bold yellow]", choices=["S", "N"])
-
-        if confirmacion == "S":
-            return marca_num
-        return None
-
-    def mostrar_editar_marca_prompt(self, opciones):
-        opciones.append("0")
-
-        marca_num = Prompt.ask("[bold yellow]Selecciona la marca de entre las opciones disponibles o presiona 0 para registrar una nueva",
-                               choices=opciones,
-                               show_choices=False)
+        while len(marca_num) == 0 or marca_num == "," or marca_num == ".":
+            self.refrescar_pantalla()
+            marca_num = self.input_seleccionar_marca.imprimir("[bold yellow]Selecciona la marca de entre las opciones disponibles o cambia de página [',' '.'] o presiona 0 para registrar una nueva",
+                                   choices=opciones,
+                                   show_choices=False)
 
         confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de marca[/bold yellow]", choices=["S", "N"])
 
@@ -606,24 +707,32 @@ class VistaCompras(VistaBase):
             self.refrescar_pantalla()
             marca_nom = Prompt.ask("[bold yellow]Ingresa el nombre de la nueva marca[/bold yellow]")
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre de la nueva marca: [italic white]{marca_nom}[/italic white][/bold yellow]", choices=["S", "N"])
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar nombre de la nueva marca: [italic white]{marca_nom}[/italic white][/bold yellow]", choices=["S", "N"])
 
-        if confirmacion == "S":
-            return marca_nom
-        return None
+            if confirmacion == "S":
+                return marca_nom
+            else:
+                marca_nom = ""
 
     def mostrar_seleccionar_tipo_insumo_prompt(self, opciones):
         opciones.append("0")
+        opciones.append(".")
+        opciones.append(",")
 
-        tipo_ins = Prompt.ask("[bold yellow]Selecciona el tipo de insumo de entre las opciones o presiona 0 para crear un nuevo tipo[/bold yellow]",
-                              choices=opciones,
-                              show_choices=False)
+        tipo_ins = ""
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de tipo de insumo[bold yellow]", choices=["S", "N"])
+        while len(tipo_ins) == 0 or tipo_ins == "," or tipo_ins == ".":
+            self.refrescar_pantalla()
+            tipo_ins = self.input_seleccionar_tipo_insumo.imprimir("[bold yellow]Selecciona el tipo de insumo de entre las opciones o cambia de página [',' '.'] o presiona 0 para crear un nuevo tipo[/bold yellow]",
+                                  choices=opciones,
+                                  show_choices=False)
 
-        if confirmacion == "S":
-            return tipo_ins
-        return None
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de tipo de insumo[bold yellow]", choices=["S", "N"])
+
+            if confirmacion == "S":
+                return tipo_ins
+            else:
+                tipo_ins = ""
 
     def mostrar_crear_tipo_insumo_prompt(self):
         tipo_nombre = ""
@@ -644,7 +753,7 @@ class VistaCompras(VistaBase):
             rich.print("[bold green]La compra actual no tiene insumos que editar, volviendo al menú anterior...[/bold green]")
             time.sleep(5)
 
-            return None, None
+            return None
 
         num_insumo = Prompt.ask("[bold yellow]Selecciona el insumo a modificar[/bold yellow]",
                                choices=opciones,
@@ -800,12 +909,25 @@ class VistaCompras(VistaBase):
         return fecha
 
     def mostrar_buscar_por_proveedor(self, opciones):
-        prov_num = Prompt.ask("Selecciona el proveedor a buscar", choices=opciones, show_choices=False)
+        opciones.append(",")
+        opciones.append(".")
+        prov_num = ""
+
+        while len(prov_num) == 0 or prov_num == "," or prov_num == ".":
+            self.refrescar_pantalla()
+            prov_num = self.input_seleccionar_proveedor.imprimir("Selecciona el proveedor a buscar", choices=opciones, show_choices=False)
 
         return prov_num
 
-    def mostrar_prompt_registrar_compra(self):
-        proveedor = Prompt.ask("Para comenzar, ingresa el índice del proveedor de la compra o 0 para registrar uno nuevo")
+    def mostrar_prompt_registrar_compra(self, opciones):
+        opciones.append(".")
+        opciones.append(",")
+        opciones.append("0")
+        proveedor = ""
+
+        while len(proveedor) == 0 or proveedor == "," or proveedor == ".":
+            self.refrescar_pantalla()
+            proveedor = self.input_seleccionar_proveedor.imprimir("Para comenzar, ingresa el índice del proveedor de la compra o 0 para registrar uno nuevo", choices=opciones)
 
         if len(proveedor) == 0:
             return proveedor
@@ -829,6 +951,18 @@ class VistaCompras(VistaBase):
     def mostrar_mensaje_no_pagina_siguiente(self):
         rich.print("[bold green]Error: no hay página siguiente")
         time.sleep(2)
+
+    def mostrar_mensaje_no_resultados_busqueda_av(self):
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_mensaje_nombre_duplicado(self):
+        rich.print("[bold red]Error: El nombre ingresado ya existe, intenta de nuevo.[/bold red]")
+        time.sleep(3)
+
+    def mostrar_mensaje_error_validacion(self, error:str):
+        rich.print(f"[bold red]{error}[/bold red]")
+        time.sleep(3)
 
     def refrescar_pantalla(self):
         try:
