@@ -180,7 +180,7 @@ class RecetaServicio:
             raise IndexError(f'Servicio: La receta no existe. {ie}\n')
 
         # valida que la receta no sea la receta de un ingrediente
-        if self._receta_dao.es_receta_de_ingrediente(num_receta):
+        if self._receta_dao.es_ingrediente_de_receta(num_receta):
             raise ValueError('Servicio: No se puede eliminar una receta, la cual es receta de un ingrediente.\n')
 
         # si se pasan las validaciones, se realiza la eliminacion.
@@ -192,9 +192,22 @@ class RecetaServicio:
 
     def crear_ingrediente(self, ingrediente: Ingrediente):
         try:
-            self._receta_dao.crear_ingrediente(ingrediente)
+            self._receta_dao.crear_ingrediente_de_receta(ingrediente)
         except mysql.connector.Error as err:
             raise Error(f'Error al crear ingrediente en la BD - {err}')
+
+    def receta_es_ingrediente(self, num_receta):
+        try:
+            return self._receta_dao.es_ingrediente_de_receta(num_receta)
+        except mysql.connector.Error as err:
+            raise Error(f'Error al obtener ingrediente en la BD - {err}')
+
+    def receta_es_de_ingredientes_simples(self, receta:Receta) -> bool:
+        for detalle_ing in receta.lista_ingredientes:
+            if not detalle_ing.ingrediente.receta:
+                return True
+
+        return False
 
     def obtener_ingredientes_basados_en_insumo(self):
         lista_ingredientes: List[Ingrediente] = []
