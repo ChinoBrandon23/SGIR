@@ -14,6 +14,7 @@ from utils.conversor_unidades import ConversorUnidades
 from datetime import date, datetime
 from typing import List
 
+
 class CompraServicio:
     def __init__(self, compra_dao:CompraDAO, insumo_dao:InsumoDAO):
         self._compra_dao = compra_dao
@@ -24,19 +25,16 @@ class CompraServicio:
         importes:List[float] = []
 
         # evaluar fechas
-        #convirtiendo fecha a date
-        fecha_creacion = datetime.strptime(str(compra_nueva.fecha_creacion), "%d-%m-%Y").date()
-        # convirtiendo a formato anglosajon, (btw que palabra poco comun)
-        #fecha_creacion_ev = fecha_creacion.strftime("%Y-%m-%d")
+        fecha_creacion_formateada = datetime.strptime(str(compra_nueva.fecha_creacion), "%d-%m-%Y").date()
+        fecha_creacion_formateada = self._formatear_a_iso(fecha_creacion_formateada)
+        fecha_creacion_formateada = datetime.strptime(str(fecha_creacion_formateada), "%Y-%m-%d").date()
+
+        compra_nueva.fecha_creacion = str(fecha_creacion_formateada)
+
         hoy = date.today()
-
         # validando que la fecha de creacion sea "hoy"
-        if fecha_creacion < hoy:
+        if fecha_creacion_formateada < hoy:
             raise ValueError(f'La fecha de creacion de la compra no puede ser anterior a hoy.')
-        
-        # formateando fecha de creacion
-        compra_nueva.fecha_creacion = self._formatear_a_iso(compra_nueva.fecha_creacion) # type: ignore
-
         # validaciones
         if not compra_nueva.proveedor:
             raise ValueError("La compra debe tener un proveedor asignado.")
@@ -45,13 +43,20 @@ class CompraServicio:
             raise ValueError("La compra debe contener al menos un insumo agregado.")
 
         for detalle_compra in compra_nueva.lista_compras:
-            # validaciones
-            fecha_compra_ev = datetime.strptime(str(detalle_compra.fecha_compra), "%Y-%m-%d").date()
-            fecha_cad_ev = datetime.strptime(str(detalle_compra.fecha_caducidad), "%Y-%m-%d").date()
+            # formanteando fechas
+            fecha_compra_ev = datetime.strptime(str(detalle_compra.fecha_compra), "%d-%m-%Y").date()
+            fecha_compra_ev = self._formatear_a_iso(fecha_compra_ev)
+            fecha_compra_ev = datetime.strptime(str(fecha_compra_ev), "%Y-%m-%d").date()
+            detalle_compra.fecha_compra = str(fecha_compra_ev)
+            # formatenado fechas
+            fecha_caducidad_ev = datetime.strptime(str(detalle_compra.fecha_caducidad), "%d-%m-%Y").date()
+            fecha_caducidad_ev = self._formatear_a_iso(fecha_caducidad_ev)
+            fecha_caducidad_ev = datetime.strptime(str(fecha_caducidad_ev), "%Y-%m-%d").date()
+            detalle_compra.fecha_caducidad = str(fecha_caducidad_ev)
 
             if fecha_compra_ev < hoy:
                 raise ValueError(f"La fecha de compra para {detalle_compra.insumo.nombre} no puede ser anterior a hoy.")
-            if fecha_cad_ev < hoy:
+            if fecha_caducidad_ev < hoy:
                 raise ValueError(f"La fecha de caducidad para {detalle_compra.insumo.nombre} no puede ser anterior a hoy.")
             if detalle_compra.cantidad_comprada <= 0:
                 raise ValueError(f"Servicio: La cantidad de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
@@ -60,21 +65,40 @@ class CompraServicio:
             if not ConversorUnidades.es_valida(detalle_compra.unidad_medida):
                 raise ValueError(f'Unidad de medida ingresada invalida para el insumo {detalle_compra.insumo.nombre}.')
 
-            # formatear fecha
-            #detalle_compra.fecha_caducidad = self._formatear_a_iso(detalle_compra.fecha_caducidad) # type: ignore
-            #detalle_compra.fecha_compra = self._formatear_a_iso(detalle_compra.fecha_compra) # type: ignore
+            '''Convirtiendo unidad'''
+            # determinamos la unidad base para este insumo ('kg', 'l' o 'pza')
+            unidad_base = ConversorUnidades.obtener_unidad_base(detalle_compra.unidad_medida)
+            # si el usuario ingreso algo diferente a la base (p.e. 'g' en vez de 'kg')
+            if ConversorUnidades.normalizar(detalle_compra.unidad_medida) != unidad_base:
+                # 400 g -> 0.4 kg
+                cantidad_convertida = ConversorUnidades.convertir(
+                cantidad=detalle_compra.cantidad_comprada,
+                unidad_origen=detalle_compra.unidad_medida,
+                unidad_destino=unidad_base,
+                decimales=2
+            )
+                # asignamos los valores 'base' para la BD
+                detalle_compra.cantidad_comprada = cantidad_convertida  # 0.4
+                # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
+                detalle_compra.cantidad_actual = cantidad_convertida    # 0.4
+                detalle_compra.unidad_medida = unidad_base         # "kg"
+                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,cantidad_convertida)
+                assert False, f'Cantidad Comprada: {detalle_compra.cantidad_comprada} - Unidad medida: {detalle_compra.unidad_medida} - Importe {detalle_compra.importe} Monto Unitario {detalle_compra.monto_unitario}'
 
-            # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
-            detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
+            else:
+                # si ya venia en kg o l, solo se normaliza el texto
+                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
+                detalle_compra.unidad_medida = unidad_base
+                detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
+            
             # agregar a lista de importes para posterior suma
             importes.append(detalle_compra.importe)
-            # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
-            detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
-            # agregando stock nuevo al insumo
-            #self._abastecer_insumo(detalle_compra.insumo,detalle_compra.cantidad_comprada)
 
         # calculando total bruto
         compra_nueva.total_bruto = self._calcular_total_bruto(importes)
+        assert False
         try:
             return self._compra_dao.registrar_compra(compra_nueva)
         except Error as err:
@@ -118,26 +142,34 @@ class CompraServicio:
         importes:List[float] = []
 
         # evaluar fechas
-        #convirtiendo fecha a date
-        fecha_creacion = datetime.strptime(str(compra_act.fecha_creacion), "%d-%m-%Y").date()
-        # convirtiendo a formato anglosajon, (btw que palabra poco comun)
-        #fecha_creacion_ev = fecha_creacion.strftime("%Y-%m-%d")
+        fecha_creacion_formateada = datetime.strptime(str(compra_act.fecha_creacion), "%d-%m-%Y").date()
+        fecha_creacion_formateada = self._formatear_a_iso(fecha_creacion_formateada)
+        fecha_creacion_formateada = datetime.strptime(str(fecha_creacion_formateada), "%Y-%m-%d").date()
+
+        compra_act.fecha_creacion = str(fecha_creacion_formateada)
+        
         hoy = date.today()
 
         # validando que la fecha de creacion sea "hoy"
-        if fecha_creacion < hoy:
+        if fecha_creacion_formateada < hoy:
             raise ValueError(f'La fecha de creacion de la compra no puede ser anterior a hoy.')
         
-        # formateando fecha de creacion
-        compra_act.fecha_creacion = self._formatear_a_iso(compra_act.fecha_creacion) # type: ignore
-        
         for detalle_compra in compra_act.lista_compras:
-            fecha_compra_ev = datetime.strptime(str(detalle_compra.fecha_compra), "%Y-%m-%d").date()
-            fecha_cad_ev = datetime.strptime(str(detalle_compra.fecha_caducidad), "%Y-%m-%d").date()
+            # formanteando fechas
+            fecha_compra_ev = datetime.strptime(str(detalle_compra.fecha_compra), "%d-%m-%Y").date()
+            fecha_compra_ev = self._formatear_a_iso(fecha_compra_ev)
+            fecha_compra_ev = datetime.strptime(str(fecha_compra_ev), "%Y-%m-%d").date()
+            detalle_compra.fecha_compra = str(fecha_compra_ev)
+
+            # formatenado fechas
+            fecha_caducidad_ev = datetime.strptime(str(detalle_compra.fecha_caducidad), "%d-%m-%Y").date()
+            fecha_caducidad_ev = self._formatear_a_iso(fecha_caducidad_ev)
+            fecha_caducidad_ev = datetime.strptime(str(fecha_caducidad_ev), "%Y-%m-%d").date()
+            detalle_compra.fecha_caducidad = str(fecha_caducidad_ev)
 
             if fecha_compra_ev < hoy:
                 raise ValueError(f"La fecha de compra para {detalle_compra.insumo.nombre} no puede ser anterior a hoy.")
-            if fecha_cad_ev < hoy:
+            if fecha_caducidad_ev < hoy:
                 raise ValueError(f"La fecha de caducidad para {detalle_compra.insumo.nombre} no puede ser anterior a hoy.")
             if detalle_compra.cantidad_comprada <= 0:
                 raise ValueError(f"Servicio: La cantidad de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
@@ -146,11 +178,33 @@ class CompraServicio:
             if not ConversorUnidades.es_valida(detalle_compra.unidad_medida):
                 raise ValueError(f'Unidad de medida ingresada invalida para el insumo {detalle_compra.insumo.nombre}.')
             
-            # recalcular importes de cada detalle compra, que es precio unitario por cantidad comprada
-            detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
-            # agregar a lista de importes para posterior suma
-            importes.append(detalle_compra.importe)
-        
+            '''Convirtiendo unidad'''
+            # determinamos la unidad base para este insumo ('kg', 'l' o 'pza')
+            unidad_base = ConversorUnidades.obtener_unidad_base(detalle_compra.unidad_medida)
+            # si el usuario ingreso algo diferente a la base (p.e. 'g' en vez de 'kg')
+            if ConversorUnidades.normalizar(detalle_compra.unidad_medida) != unidad_base:
+                # 400 g -> 0.4 kg
+                cantidad_convertida = ConversorUnidades.convertir(
+                cantidad=detalle_compra.cantidad_comprada,
+                unidad_origen=detalle_compra.unidad_medida,
+                unidad_destino=unidad_base,
+                decimales=2
+            )
+                # asignamos los valores 'base' para la BD
+                detalle_compra.cantidad_comprada = cantidad_convertida  # 0.4
+                # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
+                detalle_compra.cantidad_actual = cantidad_convertida    # 0.4
+                detalle_compra.unidad_medida = unidad_base         # "kg"
+                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,cantidad_convertida)
+
+            else:
+                # si ya venia en kg o l, solo se normaliza el texto
+                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
+                detalle_compra.unidad_medida = unidad_base
+                detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
+
         # actualizando total bruto
         compra_act.total_bruto = self._calcular_total_bruto(importes)
         try:
@@ -159,7 +213,6 @@ class CompraServicio:
             raise ValueError(f"Servicio: Error en base de datos al actualizar compra: {err}")
 
     def eliminar_compra(self):
-        # pensando si usar o no
         pass
 
     ''' FUNCIONALIDAD '''

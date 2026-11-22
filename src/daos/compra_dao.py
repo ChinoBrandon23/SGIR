@@ -295,42 +295,12 @@ class CompraDAO:
                         detalle.cantidad_actual,
                         detalle.unidad_medida))
 
-                    # valor inicial
-                    cantidad_convertida_base = detalle.cantidad_comprada
-                    ## estandarizar unidades
-                    #try:
-                    #    categoria = ConversorUnidades.obtener_categoria(detalle.unidad_medida)
-                    #    if not categoria or categoria == None:
-                    #        raise Exception('Unidad invalida.')
-                    #    # evaluar que unidad estandar es
-                    #    if categoria == 'MASA':
-                    #        cantidad_convertida_base = ConversorUnidades.convertir(
-                    #                cantidad=detalle.cantidad_comprada,
-                    #                unidad_origen=detalle.unidad_medida,
-                    #                unidad_destino='kg'
-                    #            )
-                    #        assert False, f'Origen:'
-                    #    if categoria == 'VOLUMEN':
-                    #        cantidad_convertida_base = ConversorUnidades.convertir(
-                    #                cantidad=detalle.cantidad_comprada,
-                    #                unidad_origen=detalle.unidad_medida,
-                    #                unidad_destino='l'
-                    #        )
-                    #    if categoria == 'CONTEO':
-                    #        cantidad_convertida_base = ConversorUnidades.convertir(
-                    #                cantidad=detalle.cantidad_comprada,
-                    #                unidad_origen=detalle.unidad_medida,
-                    #                unidad_destino='pza'
-                    #        )
-                    #except ValueError as err:
-                    #    raise ValueError(err)
-                    ## actualiza el stock
                     sql_actualizar_stock = '''UPDATE insumo \
                                             SET stock = stock + %s \
                                             WHERE num = %s;'''
 
                     cursor.execute(sql_actualizar_stock, (
-                        cantidad_convertida_base,
+                        detalle.cantidad_comprada,
                         detalle.insumo.num
                     ))
 
