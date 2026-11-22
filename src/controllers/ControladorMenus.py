@@ -1,6 +1,5 @@
 import copy
 import math
-import time
 from datetime import datetime
 import datetime
 from mysql.connector import Error
