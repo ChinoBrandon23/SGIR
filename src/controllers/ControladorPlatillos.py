@@ -241,7 +241,6 @@ class ControladorPlatillos:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
                     self.vista.refrescar_pantalla()
-                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.pagina_actual_lista_categorias = 1
                 self.mostrar_lista_platillos()

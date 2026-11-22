@@ -210,7 +210,6 @@ class ControladorInventario:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
                     self.vista.refrescar_pantalla()
-                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_insumos()
 
@@ -237,7 +236,6 @@ class ControladorInventario:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
                     self.vista.refrescar_pantalla()
-                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_insumos()
 

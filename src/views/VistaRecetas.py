@@ -604,7 +604,7 @@ class VistaRecetas(VistaBase):
         time.sleep(2)
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
-        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
         time.sleep(3)
 
     def mostrar_error_crear_receta_duplicado(self):
