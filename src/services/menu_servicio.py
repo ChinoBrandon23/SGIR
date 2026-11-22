@@ -32,7 +32,7 @@ class MenuServicio:
 
     def obtener_platillos_invalidos_menu(self, menu: Menu, fecha_inicial: date, fecha_final: date):
         try:
-            platillos_disponibles = self.obtener_platillos_disponibles(fecha_inicial, fecha_final)
+            platillos_disponibles = self.obtener_platillos_disponibles(fecha_inicial, fecha_final, menu.num)
             platillos_disponibles_idx = [plat.num for plat in platillos_disponibles]
 
             platillos_invalidos = []
@@ -61,13 +61,13 @@ class MenuServicio:
         except mysql.connector.Error as err:
             raise Error(f'Error en la BD. {err}')
 
-    def obtener_platillos_disponibles(self, fecha_inicial, fecha_final) -> List[Platillo]:
+    def obtener_platillos_disponibles(self, fecha_inicial, fecha_final, menu_id) -> List[Platillo]:
         try:
             # ahora se convierte al formato que mysql usa y se pasa de nuevo a str
             fecha_inicial_formateada = datetime.datetime.strftime(fecha_inicial, '%Y-%m-%d') # type: ignore
             fecha_final_formateada = datetime.datetime.strftime(fecha_final, '%Y-%m-%d') # type: ignore
 
-            return self._menu_dao.obtener_platillos_disponibles(fecha_inicial, fecha_final)
+            return self._menu_dao.obtener_platillos_disponibles(fecha_inicial, fecha_final, menu_id)
         except mysql.connector.Error as err:
             raise Error(f'Error en la BD. {err}')
 
