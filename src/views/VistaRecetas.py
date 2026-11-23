@@ -274,12 +274,11 @@ class VistaRecetas(VistaBase):
 
     def mostrar_menu_recetas_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_recetas.imprimir("Selecciona una opción",
+        self.input_menu_recetas.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "m", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_recetas.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_menu_recetas_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_recetas:list[Receta]):
@@ -289,32 +288,29 @@ class VistaRecetas(VistaBase):
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_abrir_detalles_prompt(lista_recetas)
 
     def mostrar_opciones_detalles_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_detalles.imprimir("Selecciona una opción",
+        self.input_menu_detalles.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_filtros.imprimir("Selecciona una opción",
+        self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
-            self.mostrar_opciones_detalles_prompt()
+        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+            self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_prompt_eliminar_receta_prompt(self):
         self.refrescar_pantalla()
-        confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, confirma para continuar[/bold red]",
+        confirmacion = Prompt.ask("[bold red]¡Atención! estás a punto de eliminar esta receta, cualquier platillo vinculado a ella será eliminado también\nConfirma para continuar[/bold red]",
                                   choices=["S","N"])
 
         if confirmacion == "S":
@@ -324,12 +320,11 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_editar_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_receta.imprimir("Selecciona una opción",
+        self.input_menu_editar_receta.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
 
         if self.input_menu_editar_receta.user_input is None:
-            self.refrescar_pantalla()
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
@@ -344,7 +339,6 @@ class VistaRecetas(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_nombre_prompt()
 
     def mostrar_editar_porciones_prompt(self):
@@ -359,7 +353,6 @@ class VistaRecetas(VistaBase):
             else:
                 return None
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_porciones_prompt()
 
     def mostrar_crear_ingrediente_prompt(self):
@@ -407,7 +400,7 @@ class VistaRecetas(VistaBase):
         while ins_num is None or ins_num == "," or ins_num == ".":
             self.refrescar_pantalla()
             ins_num = self.input_seleccionar_insumo.imprimir(
-                "[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
+                "[bold yellow]Ingresa el índice del ingrediente a agregar o cambia de página [',' '.'][/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
@@ -422,7 +415,7 @@ class VistaRecetas(VistaBase):
         while receta_num is None or receta_num == "," or receta_num == ".":
             self.refrescar_pantalla()
             receta_num = self.input_seleccionar_receta.imprimir(
-                "[bold yellow]Ingresa el índice del ingrediente a agregar[/bold yellow]",
+                "[bold yellow]Ingresa el índice del ingrediente a agregar o cambia de página [',' '.'][/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
@@ -442,39 +435,9 @@ class VistaRecetas(VistaBase):
 
         while len(unidad_m) == 0:
             self.refrescar_pantalla()
-            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para este ingrediente[/bold yellow]")
+            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para este ingrediente\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml[/bold green]")
 
         return unidad_m
-
-    def mostrar_modificar_ingrediente_prompt(self, opciones):
-        self.refrescar_pantalla()
-
-        if len(opciones) == 0:
-            rich.print("[bold green]Error: No hay ingredientes para editar, volviendo al menú editar...[/bold green]")
-            time.sleep(5)
-            return None, None
-
-        cantidad = ""
-        unidad_m = ""
-
-        ing_idx = Prompt.ask("[bold yellow]Ingresa el número del ingrediente a modificar[/bold yellow]",
-                             choices=opciones,
-                             show_choices=False)
-
-        while len(cantidad) == 0:
-            self.refrescar_pantalla()
-            cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad para el ingrediente seleccionado[/bold yellow]")
-
-        while len(unidad_m) == 0:
-            self.refrescar_pantalla()
-            unidad_m = Prompt.ask("[bold yellow]Ingresa la unidad de medida para el ingrediente seleccionado[/bold yellow]")
-
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar modificar[/bold yellow] "
-                                    f"[italic white]{cantidad} {unidad_m}[/italic white]", choices=["S", "N"])
-        if confirmacion == "S":
-            return ing_idx, cantidad, unidad_m
-        else:
-            return None
 
     def mostrar_borrar_ingrediente_prompt(self, opciones):
         if len(opciones) == 0:
@@ -496,7 +459,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_editar_ing_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_ing.imprimir("Selecciona una opción",
+        self.input_menu_editar_ing.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                             choices=["1", "2", "3", "4", ",", "."],
                                             show_choices=False)
 
@@ -506,7 +469,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_opciones_editar_inst_prompt(self):
         self.refrescar_pantalla()
-        self.input_menu_editar_inst.imprimir("Selecciona una opción",
+        self.input_menu_editar_inst.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                              choices=["1", "2", "3", "4", ",", "."],
                                              show_choices=False)
 
@@ -515,6 +478,7 @@ class VistaRecetas(VistaBase):
             self.mostrar_opciones_editar_inst_prompt()
 
     def mostrar_agregar_instruccion_prompt(self):
+        self.refrescar_pantalla()
         info = Prompt.ask("[bold yellow]Ingresa la instrucción[/bold yellow]")
 
         if info is not None:
@@ -524,26 +488,32 @@ class VistaRecetas(VistaBase):
             else:
                 return None
 
-    def mostrar_editar_instruccion_prompt(self, opciones):
+    def mostrar_editar_instruccion_prompt(self):
+        self.refrescar_pantalla()
+        nueva_inst = Prompt.ask(f"[bold yellow]Ingresa la nueva instrucción[/bold yellow]")
+
+        if nueva_inst is not None:
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar agregar nueva instrucción[/bold yellow]", choices=["S", "N"])
+            if confirmacion == "S":
+                return nueva_inst
+            else:
+                return None
+
+    def mostrar_seleccionar_instruccion_prompt(self, opciones):
+        self.refrescar_pantalla()
         if len(opciones) == 0:
             rich.print("[bold green]Error: No hay instrucciones para editar, volviendo al menú editar...[/bold green]")
             time.sleep(5)
-            return None, None
+            return None
 
         inst_num = Prompt.ask("[bold yellow]Ingresa el número de la instrucción a modificar[/bold yellow]",
                               choices=opciones,
                               show_choices=False)
 
-        nueva_inst = Prompt.ask(f"[bold yellow]Ingresa la nueva instrucción #{inst_num}[/bold yellow]")
-
-        if nueva_inst is not None:
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar agregar nueva instrucción #{inst_num}[/bold yellow]", choices=["S", "N"])
-            if confirmacion == "S":
-                return inst_num, nueva_inst
-            else:
-                return None
+        return inst_num
 
     def mostrar_borrar_instruccion_prompt(self, opciones):
+        self.refrescar_pantalla()
         if len(opciones) == 0:
             rich.print("[bold green]Error: No hay instrucciones para editar, volviendo al menú editar...[/bold green]")
             time.sleep(5)
@@ -561,6 +531,20 @@ class VistaRecetas(VistaBase):
                 return inst_num
             else:
                 return None
+
+    def mostrar_seleccionar_ingrediente_prompt(self, opciones):
+        self.refrescar_pantalla()
+
+        if len(opciones) == 0:
+            rich.print("[bold green]Error: No hay ingredientes para editar, volviendo al menú editar...[/bold green]")
+            time.sleep(5)
+            return None, None
+
+        ing_idx = Prompt.ask("[bold yellow]Ingresa el número del ingrediente a modificar[/bold yellow]",
+                             choices=opciones,
+                             show_choices=False)
+
+        return ing_idx
 
     def mostrar_buscar_por_nombre_prompt(self):
         nombre = ""
@@ -580,22 +564,26 @@ class VistaRecetas(VistaBase):
 
         return num_porciones
 
-    def mostrar_prompt_crear_receta(self):
+    def mostrar_prompt_crear_receta_nombre(self):
         nombre = ""
-        porciones = ""
 
         if len(nombre) == 0 and nombre != "0":
             self.refrescar_pantalla()
             nombre = Prompt.ask("Para comenzar, ingresa el nombre de la nueva receta o 0 para cancelar")
 
         if nombre == "0":
-            return None, None
+            return None
+
+        return nombre
+
+    def mostrar_prompt_crear_receta_porciones(self):
+        porciones = ""
 
         if len(porciones) == 0:
             self.refrescar_pantalla()
             porciones = Prompt.ask("Ahora, ingresa el número de porciones de la receta")
 
-        return nombre, porciones
+        return porciones
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
@@ -625,6 +613,10 @@ class VistaRecetas(VistaBase):
 
     def mostrar_error_receta_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
+        time.sleep(3)
+
+    def mostrar_error_validacion(self, error:str):
+        rich.print(f"[bold red]{error}[/bold red]")
         time.sleep(3)
 
     def refrescar_pantalla(self):

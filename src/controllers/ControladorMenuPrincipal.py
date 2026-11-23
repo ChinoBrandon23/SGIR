@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from Validaciones.validadorInventario import validadorInventario
 from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorInventario import ControladorInventario
 from controllers.ControladorMenus import ControladorMenus
@@ -8,6 +9,8 @@ from controllers.ControladorMerma import ControladorMerma
 from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
+from daos.platillos_dao import PlatillosDAO
+from services.platillos_servicio import PlatillosServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
@@ -16,6 +19,9 @@ from views.VistaMerma import VistaMerma
 from views.VistaPlatillos import VistaPlatillos
 from views.VistaRecetas import VistaRecetas
 from views.VistaVentas import VistaVentas
+from Validaciones.validadorReceta import validadorReceta
+from Validaciones.validadorPlatillos import validadorPlatillos
+from Validaciones.validadorMenus import validadorMenu
 
 
 from daos.connection import DatabaseConnection
@@ -79,8 +85,9 @@ class ControladorMenuPrincipal:
 
         receta_dao = RecetaDAO(DatabaseConnection)
         receta_servicio = RecetaServicio(receta_dao=receta_dao)
+        receta_validador = validadorReceta()
 
-        ControladorRecetas(vista, servicio_receta=receta_servicio)
+        ControladorRecetas(vista, servicio_receta=receta_servicio, validador=receta_validador)
 
     def abrir_vista_platillos(self):
         vista = VistaPlatillos(self.vista.console)
@@ -89,7 +96,14 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_platillo.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorPlatillos(vista)
+        receta_dao = RecetaDAO(DatabaseConnection)
+        receta_servicio = RecetaServicio(receta_dao=receta_dao)
+
+        menu_dao = PlatillosDAO(DatabaseConnection)
+        platillos_servicio = PlatillosServicio(platillos_dao=menu_dao)
+        platillo_validador = validadorPlatillos()
+
+        ControladorPlatillos(vista, servicio_recetas=receta_servicio, servicio_platillos=platillos_servicio, validador=platillo_validador)
 
     def abrir_vista_menus(self):
         vista = VistaMenus(self.vista.console)
@@ -98,9 +112,10 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_menu.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
+        validador_menu = validadorMenu()
         menu_dao = MenuDAO(DatabaseConnection)
         menu_servicio = MenuServicio(menu_dao)
-        ControladorMenus(vista,menu_servicio)
+        ControladorMenus(vista,menu_servicio, validador_menu)
 
     def abrir_vista_compras(self):
         vista = VistaCompras(self.vista.console)
@@ -124,7 +139,9 @@ class ControladorMenuPrincipal:
         insumo_dao = InsumoDAO(self.db)
         compra_dao = CompraDAO(self.db)
         inventario_servicio = InventarioServicio(insumo_dao=insumo_dao, compra_dao=compra_dao)
-        ControladorInventario(vista, inventario_servicio)
+        validador_inventario = validadorInventario()
+
+        ControladorInventario(vista, inventario_servicio, validador_inventario)
 
     def abrir_vista_merma(self):
         vista = VistaMerma(self.vista.console)

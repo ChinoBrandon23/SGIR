@@ -193,7 +193,8 @@ class MenuDAO:
                     m.fechaInicial fechaInicial,
                     m.fechaFinal fechaFinal
                     FROM menu m
-                    WHERE m.nombre LIKE('{insumo_nombre}%');
+                    WHERE m.nombre LIKE('%{insumo_nombre}%')
+                    ORDER BY m.nombre;
                 '''
                 cursor.execute(sql)
                 filas = cursor.fetchall()
@@ -278,6 +279,66 @@ class MenuDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
+    def obtener_platillos_disponibles(self, fecha_inicial, fecha_final) -> List[Platillo]:
+        '''Retorna todos los platillos disponibles para su uso en un menú dada su vigencia.'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                # busca los platillos que están en menús con otra vigencia
+                sql_plat_disp_en_menus = '''
+                    SELECT
+                        p.num numPlatillo,
+                        p.nombre nombrePlatillo,
+                        cat.clave claveCat,
+                        cat.nombre nombreCat,
+                        p.receta numReceta
+                        FROM platillo p
+                        INNER JOIN categoria cat ON p.categoria = cat.clave
+                        INNER JOIN menu_platillo mp ON mp.platillo = p.num
+                        INNER JOIN menu m ON m.num = mp.menu
+                        WHERE %s not BETWEEN m.fechaInicial and m.fechaFinal and %s not BETWEEN m.fechaInicial and m.fechaFinal
+                '''
+                cursor.execute(sql_plat_disp_en_menus, (fecha_inicial, fecha_final))
+                filas_primer_filtro = cursor.fetchall()
+
+                # luego busca los platillos que no están activos en ningún menú
+                sql_plat_sin_menu = ''' SELECT
+                                        p.num numPlatillo,
+                                        p.nombre nombrePlatillo,
+                                        cat.clave claveCat,
+                                        cat.nombre nombreCat,
+                                        p.receta numReceta
+                                        FROM platillo p
+                                        INNER JOIN categoria cat ON p.categoria = cat.clave
+                                        LEFT JOIN menu_platillo mp ON mp.platillo = p.num
+                                        WHERE mp.menu is null
+                                         '''
+                cursor.execute(sql_plat_sin_menu)
+                filas_seg_filtro = cursor.fetchall()
+
+                lista_platillos: List[Platillo] = []
+
+                for fila in filas_primer_filtro:
+                    lista_platillos.append(Platillo(
+                                num=fila['numPlatillo'],
+                                nombre=fila['nombrePlatillo'],
+                                categoria=Categoria(clave=fila['claveCat'],nombre=fila['nombreCat']),
+                                receta=Receta(fila['numReceta'],'',0,{})))
+
+                for fila in filas_seg_filtro:
+                    lista_platillos.append(Platillo(
+                                num=fila['numPlatillo'],
+                                nombre=fila['nombrePlatillo'],
+                                categoria=Categoria(clave=fila['claveCat'],nombre=fila['nombreCat']),
+                                receta=Receta(fila['numReceta'],'',0,{})))
+
+                return lista_platillos
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
     
     def obtener_platillos_de_menu(self, num_menu:int) -> List[DetalleMenu]:
         '''Retorna los platillos de un menu.'''
@@ -320,7 +381,7 @@ class MenuDAO:
 
     ''' funciones de creacion '''
 
-    def crear_menu(self, menu:Menu) -> Menu:
+    def crear_menu(self, menu:Menu) -> int:
         '''Crea un menu vacio en la BD y 
         regresa el numero de menu de lo actualizado de la BD.'''
         connection = self.db.get_connection()

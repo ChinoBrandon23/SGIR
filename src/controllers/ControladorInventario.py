@@ -2,15 +2,17 @@ import copy
 import math
 import time
 
+from Validaciones.validadorInventario import validadorInventario
 from services.inventario_servicio import  InventarioServicio
 from views.VistaInventario import VistaInventario
 
 
 class ControladorInventario:
 
-    def __init__(self, vista:VistaInventario, servicio:InventarioServicio):
+    def __init__(self, vista:VistaInventario, servicio:InventarioServicio, validador:validadorInventario):
         self.vista = vista
         self.servicio = servicio
+        self.validador = validador
         self.insumo_actual = None
         self.detalles_insumo_actual = []
         self.formulario = {}
@@ -121,6 +123,9 @@ class ControladorInventario:
     def cancelar_edicion_actual(self):
         # resetea formulario e insumo actual
         self.pagina_actual_lista_inventario = 1
+        self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_tipos_insumo_disp = 1
+        self.pagina_actual_marcas_disp = 1
         self.insumo_actual = None
         self.detalles_insumo_actual = []
         self.formulario = {}
@@ -157,17 +162,6 @@ class ControladorInventario:
                 self.vista.crear_banda_opciones_editar()
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_opciones_editar_prompt()
-            case "3":
-                # comentado en lo que veo si se van a borrar insumos y cómo
-                # borrar = self.vista.mostrar_prompt_eliminar_insumo_prompt()
-                # if borrar:
-                #     for insumo in self.insumos_a_mostrar:
-                #         if insumo.nombre == self.insumo_actual.nombre:
-                #             self.insumos_a_mostrar.remove(insumo)
-                #             break
-
-                self.cancelar_edicion_actual()
-                self.mostrar_lista_insumos()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
@@ -277,8 +271,15 @@ class ControladorInventario:
                 nombre = self.vista.mostrar_editar_nombre_prompt()
                 # checa que haya una respuesta del usuario y si es así lo debe validar
                 if nombre is not None:
-                    self.formulario["nombre"] = nombre
-                    self.insumo_actual.nombre = nombre
+                    resultado_val_nombre = self.validador.validar_nombre(nombre)
+
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                        nombre = self.vista.mostrar_editar_nombre_prompt()
+                        resultado_val_nombre = self.validador.validar_nombre(nombre)
+
+                    self.formulario["nombre"] = resultado_val_nombre[1]
+                    self.insumo_actual.nombre = resultado_val_nombre[1]
                 self.mostrar_detalles_insumo()
 
             case "2":
@@ -287,8 +288,15 @@ class ControladorInventario:
                 umbral = self.vista.mostrar_editar_umbral_prompt()
 
                 if umbral is not None:
-                    self.insumo_actual.umbral = umbral
-                    self.formulario["umbral"] = umbral
+                    resultado_val_umbral = self.validador.validar_umbral(umbral)
+
+                    while not resultado_val_umbral[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_umbral[1])
+                        umbral = self.vista.mostrar_editar_umbral_prompt()
+                        resultado_val_umbral = self.validador.validar_umbral(umbral)
+
+                    self.insumo_actual.umbral = resultado_val_umbral[1]
+                    self.formulario["umbral"] = resultado_val_umbral[1]
                 self.mostrar_detalles_insumo()
 
             case "3":
@@ -332,13 +340,60 @@ class ControladorInventario:
                 self.pagina_actual_tipos_insumo_disp = 1
                 self.mostrar_detalles_insumo()
             case "4":
+            # editar marca
+                marca = None
+
+                marcas_disponibles = self.servicio.obtener_marcas()
+                opciones_marca = [str(idx + 1) for idx in range(len(marcas_disponibles))]
+
+                pagina, prox_pag = self.paginar_lista_detalles(marcas_disponibles, self.pagina_actual_marcas_disp)
+                total_pag = self.obtener_total_paginas_detalles(marcas_disponibles)
+
+                self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_marcas_disp, total_pag)
+                self.vista.refrescar_pantalla()
+
+                marca_num = self.vista.mostrar_editar_marca_prompt(opciones_marca)
+
+                # Desviación para crear una marca nueva
+                if marca_num == "0":
+                    marca_validada = False
+                    nueva_marca_nom = ""
+
+                    while not marca_validada:
+                        nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                        resultado_val_marca = self.validador.validar_nombre_marca(nueva_marca_nom)
+
+                        while not resultado_val_marca[0]:
+                            self.vista.mostrar_mensaje_error_validacion(resultado_val_marca[1])
+                            nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                            resultado_val_marca = self.validador.validar_nombre_marca(nueva_marca_nom)
+
+                        if self.servicio.marca_existe(resultado_val_marca[1]):
+                            self.vista.mostrar_mensaje_nombre_duplicado()
+                        else:
+                            marca_validada = True
+                            nueva_marca_nom = resultado_val_marca[1]
+
+                    self.servicio.crear_marca(nueva_marca_nom)
+                    marca = self.servicio.obtener_marca_por_nombre(nueva_marca_nom)
+                    self.insumo_actual.marca = marca
+                    self.formulario["marca"] = marca.nombre
+                else:
+                    marca = marcas_disponibles[int(marca_num) - 1]
+                    self.insumo_actual.marca = marca
+                    self.formulario["marca"] = marca.nombre
+
+                self.pagina_actual_marcas_disp = 1
+                self.mostrar_detalles_insumo()
+            case "5":
                 # llama a la función para guardar
                 self.guardar_editar_menu()
-            case "5":
+            case "6":
                 # cancela la edición actual y vuelve a detalles
                 if self.insumo_actual.num in [menu.num for menu in self.insumos_a_mostrar]:
                     self.cancelar_edicion_actual()
-                    self.mostrar_detalles_insumo(self.vista.input_abrir_detalles.user_input)
+                    self.insumo_actual = self.servicio.obtener_insumo_por_num(self.vista.input_abrir_detalles.user_input)
+                    self.mostrar_detalles_insumo()
                 else:
                     self.cancelar_edicion_actual()
                     self.mostrar_lista_insumos()
