@@ -161,3 +161,21 @@ class ConversorUnidades:
         for unidad, cat in cls._CATEGORIAS.items():
             resultado[cat].append(unidad)
         return resultado
+
+    @classmethod
+    def obtener_unidad_base(cls, unidad: str) -> str:
+        """
+        Retorna la unidad oficial que debe guardarse en la BD según la categoría:
+        - MASA    -> 'kg'
+        - VOLUMEN -> 'l'
+        - CONTEO  -> 'pza'
+        """
+        cat = cls.obtener_categoria(unidad)
+        if cat == "MASA":
+            return "kg"
+        elif cat == "VOLUMEN":
+            return "l"
+        elif cat == "CONTEO":
+            return "pza"
+        else:
+            raise ValueError(f"Unidad no reconocida: '{unidad}'")

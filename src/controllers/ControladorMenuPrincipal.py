@@ -10,7 +10,9 @@ from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from daos.platillos_dao import PlatillosDAO
+from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
+from services.venta_servicio import VentaServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
@@ -86,9 +88,9 @@ class ControladorMenuPrincipal:
 
         receta_dao = RecetaDAO(DatabaseConnection)
         receta_servicio = RecetaServicio(receta_dao=receta_dao)
-        receta_validador = validadorReceta()
+        validador_receta = validadorReceta()
 
-        ControladorRecetas(vista, servicio_receta=receta_servicio, validador=receta_validador)
+        ControladorRecetas(vista, servicio_receta=receta_servicio, validador=validador_receta)
 
     def abrir_vista_platillos(self):
         vista = VistaPlatillos(self.vista.console)
