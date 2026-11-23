@@ -350,9 +350,11 @@ class CompraServicio:
         except mysql.connector.Error as err:
             raise Error(f'Error al crear proveedor en la BD - {err}')
 
-    def eliminar_compra(self, num_compra:int):
+    def eliminar_compra(self, compra:Compra):
         try:
-            self._compra_dao.eliminar_compra(num_compra=num_compra)
+            self._compra_dao.eliminar_compra(num_compra=compra.num)
+            for detalle in compra.lista_compras:
+                self._insumo_dao.actualizar_stock_insumo(detalle.insumo)
         except mysql.connector.Error as err:
             raise Error(f'Error al eliminar la compra - {err}')
 

@@ -277,7 +277,7 @@ class ControladorCompras:
                 #borrar compra
                 borrar = self.vista.mostrar_prompt_eliminar_compra_prompt()
                 if borrar:
-                    self.servicio_compra.eliminar_compra(self.compra_actual.num)
+                    self.servicio_compra.eliminar_compra(self.compra_actual)
                     self.compras_testeo = self.servicio_compra.obtener_compras()
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_compras()
