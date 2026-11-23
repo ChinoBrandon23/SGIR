@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from Validaciones.validadorInventario import validadorInventario
+from Validaciones.validadorVentas import ValidadorVentas
 from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorInventario import ControladorInventario
 from controllers.ControladorMenus import ControladorMenus
@@ -163,4 +164,11 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorVentas(vista)
+        dao_venta = VentaDAO(self.db)
+        insumo_dao = InsumoDAO(self.db)
+        receta_dao = RecetaDAO(DatabaseConnection)
+        platillo_dao = PlatillosDAO(DatabaseConnection)
+        servicio_venta = VentaServicio(dao_venta, insumo_dao, receta_dao, platillo_dao)
+        validador_ventas = ValidadorVentas()
+
+        ControladorVentas(vista, servicio_venta, validador_ventas)
