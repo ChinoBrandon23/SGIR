@@ -108,21 +108,21 @@ class VistaCompras(VistaBase):
 
     def llenar_tabla_detalles_compra(self, lista_compras:list[DetalleCompra], mapa_idx, insumos_editados=None):
         for detalle_compra in lista_compras:
-            nombre_insumo = detalle_compra.insumo.nombre
+            num_insumo = detalle_compra.insumo.num
 
-            idx_insumo = [item for item in mapa_idx if mapa_idx[item].insumo.nombre == nombre_insumo][0]
+            idx_insumo = [item for item in mapa_idx if mapa_idx[item].insumo.num == num_insumo][0]
 
             if insumos_editados:
                 # checa si un platillo que fue agregado al dict de edición está en la lista original de ingredientes,
                 # lo que quiere decir que será editado, si es así entonces muestra el valor editado en vez del original
-                valor_editado = next(filter(lambda x: x.insumo.nombre == nombre_insumo, insumos_editados), None)
+                valor_editado = next(filter(lambda x: x.insumo.num == num_insumo, insumos_editados), None)
 
                 if valor_editado is not None:
                     # sobreescribe platillo editado (duplicado)
                     insumos_editados.remove(valor_editado)
 
                     self.tabla_detalles_menu.add_row(f"[bold red]{str(idx_insumo)}[/bold red]",
-                                                    f"[bold red]{nombre_insumo}[/bold red]",
+                                                    f"[bold red]{valor_editado.insumo.nombre}[/bold red]",
                                                     f"[bold red]{valor_editado.insumo.marca.nombre}[/bold red]",
                                                     f"[bold red]{str(valor_editado.cantidad_comprada)}[/bold red]",
                                                     f"[bold red]{valor_editado.unidad_medida}[/bold red]",
@@ -134,7 +134,7 @@ class VistaCompras(VistaBase):
                     continue
             # Agrega los platillos ya existentes
             self.tabla_detalles_menu.add_row(str(idx_insumo),
-                                             nombre_insumo,
+                                             detalle_compra.insumo.nombre,
                                              detalle_compra.insumo.marca.nombre,
                                              str(detalle_compra.cantidad_comprada),
                                              detalle_compra.unidad_medida,
@@ -146,10 +146,10 @@ class VistaCompras(VistaBase):
         if insumos_editados and len(insumos_editados) > 0:
             # agrega los platillos nuevos
             for detalle_compra in insumos_editados:
-                idx_insumo = [item for item in mapa_idx if mapa_idx[item] == detalle_compra.insumo.nombre][0]
+                idx_insumo = [item for item in mapa_idx if mapa_idx[item] == detalle_compra.insumo.num][0]
 
                 self.tabla_detalles_menu.add_row(f"[bold red]{str(idx_insumo)}[/bold red]",
-                                                    f"[bold red]{nombre_insumo}[/bold red]",
+                                                    f"[bold red]{detalle_compra.insumo.nombre}[/bold red]",
                                                     f"[bold red]{detalle_compra.insumo.marca.nombre}[/bold red]",
                                                     f"[bold red]{str(detalle_compra.cantidad_comprada)}[/bold red]",
                                                     f"[bold red]{detalle_compra.unidad_medida}[/bold red]"
@@ -272,6 +272,7 @@ class VistaCompras(VistaBase):
         self.layout["tabla_detalles_compra"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_crear_registro_compra(self, compra: Compra | None, insumo_idx):
+        self.mostrar_conteo_paginas(0, 0)
         self.resetear_vista()
 
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_compra"))
@@ -694,11 +695,12 @@ class VistaCompras(VistaBase):
                                    choices=opciones,
                                    show_choices=False)
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de marca[/bold yellow]", choices=["S", "N"])
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de marca[/bold yellow]", choices=["S", "N"])
 
-        if confirmacion == "S":
-            return marca_num
-        return None
+            if confirmacion == "S":
+                return marca_num
+            else:
+                marca_nom = ""
 
     def mostrar_crear_marca_prompt(self):
         marca_nom = ""
@@ -741,11 +743,12 @@ class VistaCompras(VistaBase):
             self.refrescar_pantalla()
             tipo_nombre = Prompt.ask("[bold yellow]Ingresa el nombre del nuevo tipo de insumo[/bold yellow]")
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirmar crear nuevo tipo de insumo: [italic white]{tipo_nombre}[/italic white][/bold yellow]", choices=["S", "N"])
+            confirmacion = Prompt.ask(f"[bold yellow]Confirmar crear nuevo tipo de insumo: [italic white]{tipo_nombre}[/italic white][/bold yellow]", choices=["S", "N"])
 
-        if confirmacion == "S":
-            return tipo_nombre
-        return None
+            if confirmacion == "S":
+                return tipo_nombre
+            else:
+                tipo_nombre = ""
 
     def mostrar_editar_insumo_prompt(self, opciones):
         self.refrescar_pantalla()
