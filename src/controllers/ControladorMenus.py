@@ -655,7 +655,7 @@ class ControladorMenus:
 
         total = math.ceil(len(items) / lineas_disp)
 
-        if len(items):
+        if len(items) == 0:
             return 1
 
         return total
@@ -668,7 +668,7 @@ class ControladorMenus:
 
         total = math.ceil(len(items) / lineas_disp)
 
-        if len(items):
+        if len(items) == 0:
             return 1
 
         return total
