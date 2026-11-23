@@ -128,61 +128,108 @@ class MermaDAO:
                 connection.close()
 
     ''' METODOS DE CREACION '''
-    def registrar_merma(self, merma:Merma) -> int:
-        '''Registra una merma.'''
+    
+    def registrar_merma(self, merma: Merma, cantidad: float) -> int:
+        '''
+        Registra la merma, descuenta el stock de lista_compra (el proximo a caducar)
+        y actualiza el stock general del insumo bajo una sola transacción.
+        '''
         # fecha, cantidad merma, unidad medida, insumo mermado, tipo merma -> (uno existento o 0 para nuevo)
-        # 1. Validar que la fecha no pueda ser mayor a hoy
-        # 2. validar que la fecha no sea mayor a 1 pasada semana
-        # 3. validar la cantidad de la merma, p.e. debe ser mayor e igual a 0
-        # 3. validar unidad de medida
-        # 4. validar que el insumo seleccionado exista buscando por su nombre en la bd y que el dao regrese un num
-            #(no se puede registrar una merma de un insumo inexistente)
-        # 5. validar que el tipo de merma exista, si no, crear uno. (esto va en el dao creo)
-        # 6. logica para convertir la cantidad a la unidad base y para que ese sea la nueva cantidad que se descontara del insumo
-        # 7. try: registrar merma dao. 
-        # 8. buscar el detalle insumo con la fecha mas antigua
-        # 9. mermar en el dao
+                # 1. Validar que la fecha no pueda ser mayor a hoy
+                # 2. validar que la fecha no sea mayor a 1 pasada semana
+                # 3. validar la cantidad de la merma, p.e. debe ser mayor e igual a 0
+                # 3. validar unidad de medida
+                # 4. validar que el insumo seleccionado exista buscando por su nombre en la bd y que el dao regrese un num
+                    #(no se puede registrar una merma de un insumo inexistente)
+                # 5. validar que el tipo de merma exista, si no, crear uno. (esto va en el dao creo)
+                # 6. logica para convertir la cantidad a la unidad base y para que ese sea la nueva cantidad que se descontara del insumo
+                # 7. try: registrar merma dao. 
+                # 8. buscar el detalle insumo con la fecha mas antigua
+                # 9. mermar en el dao
+
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-
-                # registra el proveedor de la compra si no existe
-                sql_reg_merma = '''
-                                INSERT INTO merma (descripcion, fecha, unidadMedida, cantidad, insumo, tipo_merma)
-                                VALUES (%s,%s,%s,%s,%s,%s);'''
-                cursor.execute(sql_reg_merma, (
-                    '', # descripcion inicia en ''
+                # 1. Obtener lotes de lista_compra ordenados por fecha de caducidad mas cercana
+                # se llaman lotes nomas para guiar
+                sql_lotes = '''
+                    SELECT compra, insumo, cantidadActual, fechaCaducidad
+                    FROM lista_compra
+                    WHERE insumo = %s AND cantidadActual > 0
+                    ORDER BY fechaCaducidad ASC;
+                '''
+                cursor.execute(sql_lotes, (merma.insumo.num,))
+                lotes = cursor.fetchall()
+                # 2. Descontar la cantidad mermada de los insumos por caducidad, aqui aplicamos el FEFO
+                por_descontar = cantidad
+                for lote in lotes:
+                    if por_descontar <= 0:
+                        break
+                    cant_actual = float(lote['cantidadActual'])
+                    descuento = min(cant_actual, por_descontar)
+                    nueva_cantidad = round(cant_actual - descuento, 4)
+                    cursor.execute('''
+                        UPDATE lista_compra
+                        SET cantidadActual = %s
+                        WHERE compra = %s AND insumo = %s;
+                    ''', (nueva_cantidad, lote['compra'], lote['insumo']))
+                    por_descontar -= descuento
+                # 3. Descontar del stock general de la tabla insumo
+                cursor.execute('''
+                    UPDATE insumo
+                    SET stock = stock - %s
+                    WHERE num = %s;
+                ''', (cantidad, merma.insumo.num))
+                # 4. Insertar el registro de la merma
+                sql_insert_merma = '''
+                    INSERT INTO merma (descripcion, fecha, unidadMedida, cantidad, insumo, tipo_merma)
+                    VALUES (%s, %s, %s, %s, %s, %s);
+                '''
+                cursor.execute(sql_insert_merma, (
+                    merma.descripcion or "",
                     merma.fecha,
                     merma.unidad_medida,
                     merma.cantidad,
-                    merma.insumo,
-                    merma.tipo_merma
-                )) 
-                
-                sql_mermar_insumo = '''
-                                    UPDATE insumo
-                                    SET stock = stock - %s
-                                    WHERE num = %s;
-                                    '''
-                cursor.execute(sql_mermar_insumo, (
-                    merma.cantidad, # cantidad previamente convertida e el servicio
-                    merma.insumo.num 
+                    merma.insumo.num,
+                    merma.tipo_merma.clave
                 ))
-
-                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                merma_id = int(cursor.lastrowid)
+                # Confirmamos todo junto
                 connection.commit()
-                return cursor.lastrowid
-            
+                return merma_id
         except Exception as err:
-            # si cualquiera de los updates, inserts o select fallo:
             connection.rollback()
-            raise Error(f"DAO: Error en la transaccion al registrar la merma. {err}")
+            raise Error(f"DAO: Error en la transacción al registrar merma: {err}")
         finally:
             if connection.is_connected():
                 connection.close()
-    
 
-
+    def actualizar_merma(self, merma: Merma) -> bool:
+        '''Actualiza algunos atributos de una merma, descripcion, fecha y tipo_merma.'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                    UPDATE merma
+                    SET descripcion = %s, fecha = %s, tipo_merma = %s
+                    WHERE num = %s;
+                '''
+                cursor.execute(sql, (
+                    merma.descripcion,
+                    merma.fecha,
+                    merma.tipo_merma.clave,
+                    merma.num
+                ))
+                connection.commit()
+                return cursor.rowcount > 0
+        except mysql.connector.Error as err:
+            connection.rollback()
+            raise Error(f"DAO: Error al actualizar la merma: {err}")
+        except Exception as err:
+            raise Error(f"DAO: Error al actualizar la merma: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
 
 
 

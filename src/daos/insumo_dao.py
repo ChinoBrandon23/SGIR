@@ -192,6 +192,38 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
+    def buscar_insumos_por_nombre_similar(self, texto_busqueda: str) -> List[Insumo]:
+        '''Busca insumos cuyo nombre contenga el texto buscado (generico o especifico).'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                    SELECT ins.num, ins.nombre, ins.umbral, ins.stock,
+                        ti.clave claveTipo, ti.nombre nombreTipo,
+                        ma.num numMarca, ma.nombre nombreMarca
+                    FROM insumo ins
+                    INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                    INNER JOIN marca ma ON ins.marca = ma.num
+                    WHERE LOWER(ins.nombre) LIKE LOWER(%s)
+                    ORDER BY ins.nombre ASC;
+                '''
+                cursor.execute(sql, (f"%{texto_busqueda.strip()}%",))
+                filas = cursor.fetchall()
+                return [
+                    Insumo(
+                        num=f['num'], nombre=f['nombre'], umbral=float(f['umbral']),
+                        stock=float(f['stock']),
+                        tipo_insumo=TipoInsumo(f['claveTipo'], f['nombreTipo']),
+                        marca=Marca(f['numMarca'], f['nombreMarca'])
+                    ) for f in filas
+                ]
+        except mysql.connector.Error as err:
+                    raise Error(f"DAO: Error al consultar insumos con nombre similar.: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+
     def obtener_insumo_por_tipo_insumo(self, tipo_insumo_clave:str) -> List[Insumo]:
         connection = self.db.get_connection()
         try:
@@ -377,7 +409,7 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
-    def obtener_marcas_disponibles_insumo(self, insumo_nombre:str) -> List[Marca]:
+    def obtener_marcas_disponibles_insumo2(self, insumo_nombre:str) -> List[Marca]:
         '''Obtiene las marcas que un insumo puede tener para no resultar en dos insumos o más con el
         mismo nombre y marcar (duplicados)'''
         connection = self.db.get_connection()
@@ -459,7 +491,7 @@ class InsumoDAO:
                 if connection.is_connected():
                     connection.close()
 
-    def obtener_marca_por_nombre(self, nombre_marca:str) -> Marca|None:
+    def obtener_marca_por_nombre2(self, nombre_marca:str) -> Marca|None:
         '''Obtiene una lista de todas las marcas disponibles.'''
         connection = self.db.get_connection()
         try:
@@ -567,7 +599,7 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
-    def crear_marca(self, nombre_marca:str):
+    def crear_marca2(self, nombre_marca:str):
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
@@ -587,7 +619,7 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
-    def crear_insumo(self, insumo:Insumo):
+    def crear_insumo2(self, insumo:Insumo):
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
@@ -729,3 +761,5 @@ class InsumoDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
+    

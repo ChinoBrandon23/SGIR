@@ -91,67 +91,72 @@ class MermaServicio:
         if fecha_ev > hoy:
             raise ValueError('La fecha de la merma no puede pasar de hoy.')
 
-        if not hace_7_dias <= fecha_ev:
+        if not hace_7_dias < fecha_ev:
             raise ValueError('La fecha de la merma no puede ser de hace mas de 7 dias.')
         
-        if not merma.cantidad or merma.cantidad <= 0:
+        if not merma.cantidad or float(merma.cantidad) <= 0:
             raise ValueError('La merma debe ser mayor a 0.')
 
         if not merma.unidad_medida or not ConversorUnidades.es_valida(merma.unidad_medida):
             raise ValueError('La unidad de medida no es valida.')
 
-        if not merma.tipo_merma or merma.tipo_merma.nombre == '':
+        if not merma.tipo_merma or merma.tipo_merma.nombre == '' or not merma.tipo_merma.clave:
             raise ValueError('La merma debe tener un tipo.')
 
         # obtienen los detalle_compra/lista_compra con el mismo nombre, lo que implica que son del mismo insumo aunque con diferente marca
-        try:
-            insumos = self._insumo_dao.obtener_insumo_por_nombre(merma.insumo.nombre)
-            if not insumos or len(insumos) == 0:
-                raise ValueError('El insumo seleccionado para mermar no existe.')
-            #if len(insumos) > 1:
-            #    raise IndexError('Insumo duplicado con el mismo nombre.')
-        except mysql.connector.Error as err:
-            raise IndexError(f"Error al consultar el insumo: {err}")
+        #try:
+        #    insumos = self._insumo_dao.obtener_insumo_por_nombre(merma.insumo.nombre)
+        #    if not insumos or len(insumos) == 0:
+        #        raise ValueError('El insumo seleccionado para mermar no existe.')
+        #    #if len(insumos) > 1:
+        #    #    raise IndexError('Insumo duplicado con el mismo nombre.')
+        #except mysql.connector.Error as err:
+        #    raise IndexError(f"Error al consultar el insumo: {err}")
         
-        # elige el insumo con la fecha de caducidad mas antigua
-        hoy = date.today()
-
-        for insumo in insumos:
-            fecha_ev:date =  datetime.strptime(self._formatear_fecha(insumo.), "%Y-%m-%d").date()
-            if merma.fecha >= hoy
-            proxima_futura = min(futuras, default=None)
-
-        merma.insumo = proxima_futura
-
-
-        # logica para convertir la cantidad. p.e. 400g -> 0.4 g | 345ml -> 0.345ml. Redondeado a 3 decimales
+        # elige el insumo con la fecha de caducidad mas antigua -----------------------------
+        # 3. Validar existencia del insumo en BD
+        insumo_bd = self._insumo_dao.obtener_insumo_por_num(merma.insumo.num)
+        if not insumo_bd:
+            raise ValueError('El insumo seleccionado para mermar no existe en la base de datos.')
+        # convertir cantidad a la unidad canónica ('kg', 'l' o 'pza')
+        unidad_base = ConversorUnidades.obtener_unidad_base(merma.unidad_medida)
         cantidad_convertida = ConversorUnidades.convertir(
-            cantidad=merma.cantidad,
+            cantidad=float(merma.cantidad),
             unidad_origen=merma.unidad_medida,
-            unidad_destino=ConversorUnidades.obtener_unidad_base(merma.unidad_medida),
-            decimales=3)
-        merma.cantidad = cantidad_convertida
-
+            unidad_destino=unidad_base,
+            decimales=4
+        )
+        # validar que no se intente mermar mas de lo que hay en stock 
+        if insumo_bd.stock < cantidad_convertida:
+            raise ValueError(
+                f"Stock insuficiente: Intentas mermar {cantidad_convertida} {unidad_base}, "
+                f"pero solo hay {insumo_bd.stock} {unidad_base} disponibles en el stock."
+            )
+        # llamar al dao
         try:
-            return self._merma_dao.registrar_merma(merma=merma)
-        except mysql.connector.Error as err:
-            raise IndexError('Error al registrar la nueva merma.')
+            return self._merma_dao.registrar_merma(merma=merma,cantidad=cantidad_convertida)
+        except Error as err:
+            raise ValueError(f"Servicio: Error al registrar la merma: {err}")
+
         except Exception as err:
             raise IndexError('Error al registrar la nueva merma.')
 
 
-
-    def editar_merma(self, merma:Merma):
-            # se permite editar... descripcion, fecha, cantidad, unidad m , y tipo de merma
-            # fecha, cantidad merma, unidad medida, insumo mermado, tipo merma -> (uno existento o 0 para nuevo)
-            # 1. Validar que la fecha no pueda ser mayor a hoy
-            # 2. validar que la fecha no sea mayor a 1 pasada semana
-            # 3. validar unidad de medida
-            # 4. validar que el insumo seleccionado exista buscando por su nombre en la bd y que el dao regrese un num
-            # 5. validar que el tipo de merma exista, si no, crear uno. (esto va en el dao creo)
-            # 6. try: registrar merma dao.
-            # 7. validar la descripcion, la cual se edita y no se crea al registrar la merma
-            pass
+    def editar_merma(self, merma: Merma) -> bool:
+        '''Actualiza una merma.'''
+        if not merma.descripcion or len(merma.descripcion.strip()) == 0:
+            raise ValueError('Debe ingresar una descripcion del motivo de la merma.')
+        fecha_ev = datetime.strptime(self._formatear_fecha(merma.fecha), "%Y-%m-%d").date()
+        merma.fecha = str(fecha_ev)
+        hoy = date.today()
+        if fecha_ev > hoy:
+            raise ValueError('La fecha no puede ser posterior a hoy.')
+        if fecha_ev < (hoy - timedelta(days=7)):
+            raise ValueError('La fecha no puede ser anterior a 7 días.')
+        try:
+            return self._merma_dao.actualizar_merma(merma)
+        except Error as err:
+            raise ValueError(f"Servicio: Error al editar la merma: {err}")
 
     @staticmethod
     def _formatear_fecha(fecha: str | date | datetime) -> str:
