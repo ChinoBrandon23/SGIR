@@ -86,6 +86,11 @@ class MermaDAO:
         mermas = self._consultar_mermas("WHERE me.num = %s", (num_merma,))
         return mermas[0] if mermas else None
 
+    def obtener_merma_por_nombre(self, nombre_merma: int) -> Merma | None:
+        """Obtiene una merma por su nombre."""
+        mermas = self._consultar_mermas("WHERE me.nombre = %s", (nombre_merma,))
+        return mermas[0] if mermas else None
+
     def obtener_mermas_por_rango_fecha(self, fecha_inicial: str, fecha_final: str) -> List[Merma]:
         """Obtiene las mermas registradas dentro de un rango de fechas inclusivo."""
         return self._consultar_mermas(
@@ -123,8 +128,58 @@ class MermaDAO:
                 connection.close()
 
     ''' METODOS DE CREACION '''
-    def registrar_merma(self, merma:Merma):
-        pass
+    def registrar_merma(self, merma:Merma) -> int:
+        '''Registra una merma.'''
+        # fecha, cantidad merma, unidad medida, insumo mermado, tipo merma -> (uno existento o 0 para nuevo)
+        # 1. Validar que la fecha no pueda ser mayor a hoy
+        # 2. validar que la fecha no sea mayor a 1 pasada semana
+        # 3. validar la cantidad de la merma, p.e. debe ser mayor e igual a 0
+        # 3. validar unidad de medida
+        # 4. validar que el insumo seleccionado exista buscando por su nombre en la bd y que el dao regrese un num
+            #(no se puede registrar una merma de un insumo inexistente)
+        # 5. validar que el tipo de merma exista, si no, crear uno. (esto va en el dao creo)
+        # 6. logica para convertir la cantidad a la unidad base y para que ese sea la nueva cantidad que se descontara del insumo
+        # 7. try: registrar merma dao. 
+        # 8. mermar en el dao
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+
+                # registra el proveedor de la compra si no existe
+                sql_reg_merma = '''
+                                INSERT INTO merma (descripcion, fecha, unidadMedida, cantidad, insumo, tipo_merma)
+                                VALUES (%s,%s,%s,%s,%s,%s);'''
+                cursor.execute(sql_reg_merma, (
+                    '', # descripcion inicia en ''
+                    merma.fecha,
+                    merma.unidad_medida,
+                    merma.cantidad,
+                    merma.insumo,
+                    merma.tipo_merma
+                )) 
+
+                sql_mermar_insumo = '''
+                                    UPDATE insumo
+                                    SET stock = stock - %s
+                                    WHERE num = %s;
+                                    '''
+                cursor.execute(sql_mermar_insumo, (
+                    merma.cantidad, # cantidad previamente convertida e el servicio
+                    merma.insumo.num 
+                ))
+
+                # si se llego hasta aqui sin lanzar excepcion, todo salio bien
+                connection.commit()
+                return cursor.lastrowid
+            
+        except Exception as err:
+            # si cualquiera de los updates, inserts o select fallo:
+            connection.rollback()
+            raise Error(f"DAO: Error en la transaccion al registrar la merma. {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+    
 
 
 
