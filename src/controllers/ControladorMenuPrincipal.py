@@ -11,8 +11,10 @@ from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from daos.platillos_dao import PlatillosDAO
-from daos.venta_dao import VentaDAO
+#from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
+#from services.venta_servicio import VentaServicio
+from daos.venta_dao import VentaDAO
 from services.venta_servicio import VentaServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
@@ -121,7 +123,23 @@ class ControladorMenuPrincipal:
         menu_servicio = MenuServicio(menu_dao)
         ControladorMenus(vista,menu_servicio, validador_menu)
 
+    @staticmethod
+    def _formatear_fecha(fecha: str | date | datetime) -> str:
+        if isinstance(fecha, (date, datetime)):
+            return fecha.strftime("%Y-%m-%d")
+
+        fecha_limpia = fecha.strip()
+        for formato in ("%Y-%m-%d", "%d-%m-%Y"):
+            try:
+                return datetime.strptime(fecha_limpia, formato).strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+        raise ValueError(
+            f"Formato de fecha no válido: {fecha!r}. Use DD-MM-AAAA o AAAA-MM-DD."
+        )
+
     def abrir_vista_compras(self):
+    
         vista = VistaCompras(self.vista.console)
 
         vista.input_menu_compras.agregar_escuchante(self.evaluar_redirigir_menu_principal)
