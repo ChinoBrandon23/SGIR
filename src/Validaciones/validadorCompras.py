@@ -1,4 +1,5 @@
-from datetime import datetime
+import datetime
+import time
 
 from utils.conversor_unidades import ConversorUnidades
 
@@ -11,7 +12,6 @@ class validadorCompras:
         }
 
         def validar_formato_fecha(self, fecha: str):
-
             fecha_limpia = fecha.strip()
 
             if not fecha_limpia:
@@ -19,8 +19,9 @@ class validadorCompras:
 
             #Verificar que la fecha sea valida
             formato = "%d-%m-%Y"
+
             try:
-                fecha_limpia = datetime.strptime(fecha_limpia, formato)
+                fecha_limpia = datetime.datetime.strptime(fecha_limpia, formato).strftime("%d-%m-%Y")
             except ValueError:
                 return False, "Error: La fecha no es valida."
 

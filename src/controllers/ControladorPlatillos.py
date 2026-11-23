@@ -69,6 +69,9 @@ class ControladorPlatillos:
         self.vista.mostrar_menu_platillos_prompt()
 
     def mostrar_detalles_platillo(self, platillo_num=None):
+        if platillo_num is None and self.platillo_actual is None:
+            self.vista.mostrar_abrir_detalles_prompt(self.servicio_platillos.obtener_platillos())
+
         if self.platillo_actual is None:
             # Si no tenemos un platillo actual, busca el platillo por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
@@ -241,7 +244,6 @@ class ControladorPlatillos:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
                     self.vista.refrescar_pantalla()
-                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.pagina_actual_lista_categorias = 1
                 self.mostrar_lista_platillos()

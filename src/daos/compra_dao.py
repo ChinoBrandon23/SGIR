@@ -1,3 +1,5 @@
+import time
+from datetime import datetime
 from typing import List
 from models.insumo import Insumo
 from models.compra import Compra, DetalleCompra
@@ -25,7 +27,7 @@ class CompraDAO:
                         SELECT
                         com.num numCompra,
                         com.total_bruto totalCompra,
-                        com.fechaCreacion comFecha,
+                        DATE_FORMAT(com.fechaCreacion, '%d-%m-%Y') comFecha,
                         com.proveedor numProv,
                         prov.nombre nombreProv
                         FROM compra com
@@ -39,7 +41,7 @@ class CompraDAO:
                 for fila in filas:
                     lista_compras.append(Compra(
                         num=fila['numCompra'],
-                        fecha_creacion=fila['comFecha'],
+                        fecha_creacion=datetime.strptime(fila['comFecha'], "%d-%m-%Y").strftime("%d-%m-%Y"),
                         total_bruto=float(fila['totalCompra']),
                         proveedor=Proveedor(fila['numProv'],fila['nombreProv'])
                     ))
@@ -54,11 +56,11 @@ class CompraDAO:
                                 ti.nombre nombreTipo,
                                 ma.num numeroMarca,
                                 ma.nombre nombreMarca,
-                                lc.fechaCompra fechaCompra,
+                                DATE_FORMAT(lc.fechaCompra, '%d-%m-%Y') fechaCompra,
                                 lc.cantidadComprada cantidadComprada,
                                 lc.cantidadActual cantidadActual,
                                 lc.unidadMedida unidadMedida,
-                                lc.fechaCaducidad fechaCad,
+                                DATE_FORMAT(lc.fechaCaducidad, '%d-%m-%Y') fechaCad,
                                 lc.montoUnitario montoUnit,
                                 lc.importe importe
                                 FROM insumo ins
@@ -82,11 +84,11 @@ class CompraDAO:
                                 tipo_insumo=TipoInsumo(fila['claveTipo'],fila['nombreTipo']),
                                 marca=Marca(fila['numeroMarca'],fila['nombreMarca'])
                             ),
-                            fecha_compra=fila['fechaCompra'],
+                            fecha_compra=datetime.strptime(fila['fechaCompra'], "%d-%m-%Y").strftime("%d-%m-%Y"),
                             cantidad_comprada=float(fila['cantidadComprada']),
                             cantidad_actual=float(fila['cantidadActual']),
                             unidad_medida=fila['unidadMedida'],
-                            fecha_caducidad=fila['fechaCad'],
+                            fecha_caducidad=datetime.strptime(fila['fechaCad'], "%d-%m-%Y").strftime("%d-%m-%Y"),
                             monto_unitario=float(fila['montoUnit']),
                             importe=float(fila['importe']))
                 # regresamos una lista de compras con sus detalles
@@ -106,7 +108,7 @@ class CompraDAO:
                         SELECT
                         com.num numCompra,
                         com.total_bruto totalCompra,
-                        com.fechaCreacion comFecha,
+                        DATE_FORMAT(com.fechaCreacion, '%d-%m-%Y') comFecha,
                         com.proveedor numProv,
                         prov.nombre nombreProv
                         FROM compra com
@@ -122,7 +124,7 @@ class CompraDAO:
                 
                 compra:Compra = Compra(
                         num=fila['numCompra'],
-                        fecha_creacion=fila['comFecha'],
+                        fecha_creacion=datetime.strptime(fila['comFecha'], "%d-%m-%Y").date(),
                         total_bruto=float(fila['totalCompra']),
                         proveedor=Proveedor(fila['numProv'],fila['nombreProv'])
                     )
@@ -137,11 +139,11 @@ class CompraDAO:
                                 ti.nombre nombreTipo,
                                 ma.num numeroMarca,
                                 ma.nombre nombreMarca,
-                                lc.fechaCompra fechaCompra,
+                                DATE_FORMAT(lc.fechaCompra, '%d-%m-%Y') fechaCompra,
                                 lc.cantidadComprada cantidadComprada,
                                 lc.cantidadActual cantidadActual,
                                 lc.unidadMedida unidadMedida,
-                                lc.fechaCaducidad fechaCad,
+                                DATE_FORMAT(lc.fechaCaducidad, '%d-%m-%Y') fechaCad,
                                 lc.montoUnitario montoUnit,
                                 lc.importe importe
                                 FROM insumo ins
@@ -164,11 +166,11 @@ class CompraDAO:
                             tipo_insumo=TipoInsumo(fila['claveTipo'],fila['nombreTipo']),
                             marca=Marca(fila['numeroMarca'],fila['nombreMarca'])
                         ),
-                        fecha_compra=fila['fechaCompra'],
+                        fecha_compra=datetime.strptime(fila['fechaCompra'], "%d-%m-%Y").strftime("%d-%m-%Y"),
                         cantidad_comprada=float(fila['cantidadComprada']),
                         cantidad_actual=float(fila['cantidadActual']),
                         unidad_medida=fila['unidadMedida'],
-                        fecha_caducidad=fila['fechaCad'],
+                        fecha_caducidad=datetime.strptime(fila['fechaCad'], "%d-%m-%Y").strftime("%d-%m-%Y"),
                         monto_unitario=float(fila['montoUnit']),
                         importe=float(fila['importe']))
                 # regresamos la compra completa
@@ -191,8 +193,8 @@ class CompraDAO:
                             unidadMedida     unidad_m, \
                             montoUnitario    monto, \
                             importe          imp, \
-                            fechaCompra      fechaCom, \
-                            fechaCaducidad   fechaCad
+                            DATE_FORMAT(fechaCompra, '%d-%m-%Y')      fechaCom, \
+                            DATE_FORMAT(fechaCaducidad, '%d-%m-%Y')   fechaCad
                     FROM lista_compra \
                     WHERE insumo = %s
                     '''
@@ -209,8 +211,8 @@ class CompraDAO:
                         unidad_medida=fila['unidad_m'],
                         importe=float(fila['imp']),
                         monto_unitario=float(fila['monto']),
-                        fecha_caducidad=fila['fechaCad'],
-                        fecha_compra=fila['fechaCom']))
+                        fecha_caducidad=datetime.strptime(fila['fechaCad'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                        fecha_compra=datetime.strptime(fila['fechaCom'], "%d-%m-%Y").strftime("%d-%m-%Y")))
 
                 return lista_detalles_compra
         except mysql.connector.Error as err:
@@ -238,6 +240,184 @@ class CompraDAO:
                 return proveedores
         except mysql.connector.Error as err:
             raise Error(f"DAO: Error al consultar los proovedores: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_proveedor_por_nombre(self, nombre_prov:str) -> Proveedor|None:
+        '''Obtiene una lista de todas los proveedores disponibles.'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''SELECT num, nombre
+                        FROM proveedor
+                        WHERE nombre = %s;'''
+                cursor.execute(sql, (nombre_prov,))
+                fila = cursor.fetchone()
+
+                if fila is None:
+                    return fila
+
+                proveedor: Proveedor = Proveedor(num=fila['num'], nombre=fila['nombre'])
+
+                return proveedor
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los proovedores: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_compras_por_fecha_creacion(self, fecha_creacion:str):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                      SELECT com.num                                    numCompra,
+                             com.total_bruto                            totalCompra,
+                             DATE_FORMAT(com.fechaCreacion, '%d-%m-%Y') comFecha,
+                             com.proveedor                              numProv,
+                             prov.nombre                                nombreProv
+                      FROM compra com
+                        INNER JOIN proveedor prov ON com.proveedor = prov.num
+                          WHERE com.fechaCreacion = %s;
+                      '''
+                cursor.execute(sql, (fecha_creacion,))
+                filas = cursor.fetchall()
+                lista_compras: List[Compra] = []
+
+                for fila in filas:
+                    lista_compras.append(Compra(
+                        num=fila['numCompra'],
+                        fecha_creacion=datetime.strptime(fila['comFecha'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                        total_bruto=float(fila['totalCompra']),
+                        proveedor=Proveedor(fila['numProv'], fila['nombreProv'])
+                    ))
+
+                sql_detalles = '''
+                               SELECT ins.num                                    numInsumo,
+                                      ins.nombre                                 nombreInsumo,
+                                      ins.umbral                                 umbral,
+                                      ins.stock                                  stock,
+                                      ti.clave                                   claveTipo,
+                                      ti.nombre                                  nombreTipo,
+                                      ma.num                                     numeroMarca,
+                                      ma.nombre                                  nombreMarca,
+                                      DATE_FORMAT(lc.fechaCompra, '%d-%m-%Y')    fechaCompra,
+                                      lc.cantidadComprada                        cantidadComprada,
+                                      lc.cantidadActual                          cantidadActual,
+                                      lc.unidadMedida                            unidadMedida,
+                                      DATE_FORMAT(lc.fechaCaducidad, '%d-%m-%Y') fechaCad,
+                                      lc.montoUnitario                           montoUnit,
+                                      lc.importe                                 importe
+                               FROM insumo ins
+                                        INNER JOIN marca ma ON ins.marca = ma.num
+                                        INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                                        INNER JOIN lista_compra lc ON lc.insumo = ins.num
+                                        INNER JOIN compra com ON lc.compra = com.num
+                               WHERE lc.compra = %s;
+                               '''
+                # obtenemos los detalles de cada compra y los agregamos a su respectiva compra
+                for compra in lista_compras:
+                    cursor.execute(sql_detalles, (compra.num,))
+                    filas = cursor.fetchall()
+                    for fila in filas:
+                        compra.agregar_insumo_compra(
+                            insumo=Insumo(
+                                num=fila['numInsumo'],
+                                nombre=fila['nombreInsumo'],
+                                umbral=float(fila['umbral']),
+                                stock=float(fila['stock']),
+                                tipo_insumo=TipoInsumo(fila['claveTipo'], fila['nombreTipo']),
+                                marca=Marca(fila['numeroMarca'], fila['nombreMarca'])
+                            ),
+                            fecha_compra=datetime.strptime(fila['fechaCompra'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                            cantidad_comprada=float(fila['cantidadComprada']),
+                            cantidad_actual=float(fila['cantidadActual']),
+                            unidad_medida=fila['unidadMedida'],
+                            fecha_caducidad=datetime.strptime(fila['fechaCad'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                            monto_unitario=float(fila['montoUnit']),
+                            importe=float(fila['importe']))
+                # regresamos una lista de compras con sus detalles
+                return lista_compras
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los insumos: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_compras_por_proveedor(self, proveedor_num:int):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                      SELECT com.num                                    numCompra,
+                             com.total_bruto                            totalCompra,
+                             DATE_FORMAT(com.fechaCreacion, '%d-%m-%Y') comFecha,
+                             com.proveedor                              numProv,
+                             prov.nombre                                nombreProv
+                      FROM compra com
+                               INNER JOIN proveedor prov ON com.proveedor = prov.num
+                      WHERE com.proveedor = %s;
+                      '''
+                cursor.execute(sql, (proveedor_num,))
+                filas = cursor.fetchall()
+                lista_compras: List[Compra] = []
+
+                for fila in filas:
+                    lista_compras.append(Compra(
+                        num=fila['numCompra'],
+                        fecha_creacion=datetime.strptime(fila['comFecha'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                        total_bruto=float(fila['totalCompra']),
+                        proveedor=Proveedor(fila['numProv'], fila['nombreProv'])
+                    ))
+
+                sql_detalles = '''
+                               SELECT ins.num                                    numInsumo,
+                                      ins.nombre                                 nombreInsumo,
+                                      ins.umbral                                 umbral,
+                                      ins.stock                                  stock,
+                                      ti.clave                                   claveTipo,
+                                      ti.nombre                                  nombreTipo,
+                                      ma.num                                     numeroMarca,
+                                      ma.nombre                                  nombreMarca,
+                                      DATE_FORMAT(lc.fechaCompra, '%d-%m-%Y')    fechaCompra,
+                                      lc.cantidadComprada                        cantidadComprada,
+                                      lc.cantidadActual                          cantidadActual,
+                                      lc.unidadMedida                            unidadMedida,
+                                      DATE_FORMAT(lc.fechaCaducidad, '%d-%m-%Y') fechaCad,
+                                      lc.montoUnitario                           montoUnit,
+                                      lc.importe                                 importe
+                               FROM insumo ins
+                                        INNER JOIN marca ma ON ins.marca = ma.num
+                                        INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                                        INNER JOIN lista_compra lc ON lc.insumo = ins.num
+                                        INNER JOIN compra com ON lc.compra = com.num
+                               WHERE lc.compra = %s;
+                               '''
+                for compra in lista_compras:
+                    cursor.execute(sql_detalles, (compra.num,))
+                    filas = cursor.fetchall()
+                    for fila in filas:
+                        compra.agregar_insumo_compra(
+                            insumo=Insumo(
+                                num=fila['numInsumo'],
+                                nombre=fila['nombreInsumo'],
+                                umbral=float(fila['umbral']),
+                                stock=float(fila['stock']),
+                                tipo_insumo=TipoInsumo(fila['claveTipo'], fila['nombreTipo']),
+                                marca=Marca(fila['numeroMarca'], fila['nombreMarca'])
+                            ),
+                            fecha_compra=datetime.strptime(fila['fechaCompra'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                            cantidad_comprada=float(fila['cantidadComprada']),
+                            cantidad_actual=float(fila['cantidadActual']),
+                            unidad_medida=fila['unidadMedida'],
+                            fecha_caducidad=datetime.strptime(fila['fechaCad'], "%d-%m-%Y").strftime("%d-%m-%Y"),
+                            monto_unitario=float(fila['montoUnit']),
+                            importe=float(fila['importe']))
+                # regresamos una lista de compras con sus detalles
+                return lista_compras
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los insumos: {err}")
         finally:
             if connection.is_connected():
                 connection.close()
@@ -457,8 +637,8 @@ class CompraDAO:
                     # asignando a los insumos sus ids de la BD y no los locales
                     sql_buscar_id = '''SELECT num
                                         FROM insumo
-                                        WHERE nombre = %s;'''
-                    cursor.execute(sql_buscar_id, (detalle.insumo.nombre,))
+                                        WHERE nombre = %s and marca = %s;'''
+                    cursor.execute(sql_buscar_id, (detalle.insumo.nombre,detalle.insumo.marca.num))
                     fila = cursor.fetchone()
                     id_bd_ins = int(fila['num']) if fila else detalle.insumo.num
 
@@ -535,3 +715,54 @@ class CompraDAO:
             if connection.is_connected():
                 connection.close()
 
+    def crear_proveedor(self, proveedor:Proveedor):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+
+                sql_insumo = '''
+                             INSERT INTO proveedor (nombre)
+                             VALUES (%s);
+                             '''
+                cursor.execute(sql_insumo, (proveedor.nombre,))
+
+                connection.commit()
+
+        except mysql.connector.Error as err:
+            connection.rollback()
+            raise Error(f"DAO: Error al crear proveedor: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def eliminar_compra(self, num_compra:int):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+
+                # actualiza la lista de compras
+                sql_lista_compra = '''
+                                    DELETE
+                                    FROM lista_compra
+                                    WHERE compra = %s;
+                                    '''
+                cursor.execute(sql_lista_compra, (num_compra,))
+
+                sql_menu = '''
+                           DELETE
+                           FROM compra
+                           WHERE num = %s;
+                           '''
+                cursor.execute(sql_menu, (num_compra,))
+
+                cursor.execute("ALTER TABLE compra AUTO_INCREMENT = 1")
+
+                connection.commit()
+
+        except mysql.connector.Error as err:
+            # si cualquiera de los updates, inserts o select fallo
+            connection.rollback()
+            raise Error(f"DAO: Error en la transacción al eliminar compra: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()

@@ -198,6 +198,7 @@ class VistaMenus(VistaBase):
         self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_crear_menu(self, menu: Menu | None):
+        self.mostrar_conteo_paginas(0, 0)
         self.resetear_vista()
 
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
@@ -512,7 +513,7 @@ class VistaMenus(VistaBase):
         time.sleep(2)
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
-        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
         time.sleep(3)
 
     def mostrar_mensaje_crear_menu_duplicado(self):

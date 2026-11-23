@@ -78,6 +78,9 @@ class ControladorInventario:
         self.vista.mostrar_menu_insumos_prompt()
 
     def mostrar_detalles_insumo(self, insumo_num=None):
+        if insumo_num is None and self.insumo_actual is None:
+            self.vista.mostrar_abrir_detalles_prompt(self.servicio.obtener_insumos())
+
         if self.insumo_actual is None:
             # Si no tenemos un insumo actual, busca el insumo por el num pasado como arg
             self.insumo_actual = self.insumos_a_mostrar[int(insumo_num)-1]
@@ -210,7 +213,6 @@ class ControladorInventario:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
                     self.vista.refrescar_pantalla()
-                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_insumos()
 
@@ -237,7 +239,6 @@ class ControladorInventario:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
                     self.vista.refrescar_pantalla()
-                    self.vista.mostrar_opciones_busqueda_av_prompt()
 
                 self.mostrar_lista_insumos()
 

@@ -31,7 +31,18 @@ class VistaMenuPrincipal(VistaBase):
         self.layout["contenido"].update(Align.center(self.tabla_menu, vertical="middle"))
 
     def mostrar_prompt_menu(self) :
+        self.refrescar_pantalla()
         self.input_menu.imprimir("Ingresa una opción", choices=[str(i) for i in range(1, 9)])
+
+        if self.input_menu.user_input is None or len(self.input_menu.user_input) == 0:
+            self.mostrar_prompt_menu()
+
+    def refrescar_pantalla(self):
+        try:
+            subprocess.run('cls' if os.name == 'nt' else 'clear')
+        except FileNotFoundError:
+            print(chr(27) + "[2J")
+        self.console.print(self.layout, justify="center")
 
     def mostrar_layout(self):
         try:

@@ -301,16 +301,24 @@ class RecetaDAO:
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
-                sql = ''' SELECT num, nombre, receta FROM ingrediente WHERE receta IS NOT NULL ORDER BY num '''
+                sql = ''' SELECT 
+                              ing.num ingNum, 
+                              ing.nombre ingNom, 
+                              rec.num recNum,
+                                rec.nombre recNom,
+                                rec.numPorciones numPorc
+                          FROM ingrediente ing
+                        INNER JOIN receta rec ON ing.receta = rec.num
+                          WHERE ing.receta IS NOT NULL ORDER BY ing.num;'''
                 cursor.execute(sql)
                 filas = cursor.fetchall()
 
                 lista_ingredientes: List[Ingrediente] = []
                 for fila in filas:
                     ingrediente = Ingrediente(
-                        num=fila['num'],
-                        nombre=fila['nombre'],
-                        receta=fila['receta'])
+                        num=fila['ingNum'],
+                        nombre=fila['ingNom'],
+                        receta=Receta(num=fila['recNum'], nombre=fila['recNom'], num_porciones=fila['numPorc'], instrucciones={}))
                     lista_ingredientes.append(ingrediente)
                 return lista_ingredientes
 
@@ -351,7 +359,7 @@ class RecetaDAO:
         #nombre receta, num porciones, ingredientes (nombre, cantidad, unidadMedida)
         #instrucciones(num,intruccion)
 
-    def crear_ingrediente(self, ingrediente:Ingrediente):
+    def crear_ingrediente_de_receta(self, ingrediente:Ingrediente):
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
@@ -361,8 +369,8 @@ class RecetaDAO:
                         '''
                 valores = (
                     ingrediente.nombre,
-                    ingrediente.insumo,
-                    ingrediente.receta
+                    None,
+                    ingrediente.receta.num
                 )
                 cursor.execute(query, valores)
                 connection.commit()
@@ -556,7 +564,7 @@ class RecetaDAO:
 
     ''' funciones de evaluacion '''
 
-    def es_receta_de_ingrediente(self, num_receta:int):
+    def es_ingrediente_de_receta(self, num_receta:int):
         '''Valida que la receta no sea de un ingrediente.'''
         connection = self.db.get_connection()
 
@@ -575,10 +583,10 @@ class RecetaDAO:
                 ''' si es True, significa que se encontro un valor, y por ende, 
                 es receta de un ingrediente, asi que 
                 ''' 
-                if respuesta:
-                    return True
-                else:
+                if respuesta is None:
                     return False
+                else:
+                    return True
 
         except mysql.connector.Error as err:
             connection.rollback()

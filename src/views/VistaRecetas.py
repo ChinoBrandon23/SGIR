@@ -145,7 +145,7 @@ class VistaRecetas(VistaBase):
 
     def mostrar_crear_receta(self, receta:Receta|None, mapa_idx_ing):
         self.resetear_vista()
-
+        self.mostrar_conteo_paginas(1, 1)
         self.layout["main"].split_column(Layout(name="panel_receta"), Layout(name="tablas"))
         self.layout["tablas"].split_row(Layout(name="tabla_ing"),
                                         Layout(name="tabla_ins"))
@@ -371,23 +371,35 @@ class VistaRecetas(VistaBase):
         consola_size = self.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 8
+        lineas_disp = size_sin_prompt - 9
 
         if pag_actual == 1:
             idx_ui = 0
         else:
             idx_ui = (pag_actual - 1) * lineas_disp
 
-        columnas = ["#", "Nombre"]
+        if lista_ingredientes[0].insumo:
+            columnas = ["#", "Nombre"]
 
-        tabla = Table(title="Ingredientes disponibles")
+            tabla = Table(title="Ingredientes disponibles")
 
-        for col in columnas:
-            tabla.add_column(col)
+            for col in columnas:
+                tabla.add_column(col)
 
-        for i in range(len(lista_ingredientes)):
-            idx_ui += 1
-            tabla.add_row(str(idx_ui), lista_ingredientes[i].nombre)
+            for i in range(len(lista_ingredientes)):
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_ingredientes[i].nombre)
+        else:
+            columnas = ["#", "Nombre", "Porciones por receta"]
+
+            tabla = Table(title="Ingredientes disponibles")
+
+            for col in columnas:
+                tabla.add_column(col)
+
+            for i in range(len(lista_ingredientes)):
+                idx_ui += 1
+                tabla.add_row(str(idx_ui), lista_ingredientes[i].nombre, str(lista_ingredientes[i].receta.num_porciones))
 
         self.layout["tablas"].update(Align.center(tabla, vertical="middle"))
 
@@ -421,12 +433,21 @@ class VistaRecetas(VistaBase):
 
         return receta_num
 
-    def mostrar_ingresar_cantidad_ing_prompt(self):
+    def mostrar_ingresar_cantidad_ing_insumo_prompt(self):
         cantidad = ""
 
         while len(cantidad) == 0:
             self.refrescar_pantalla()
             cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad para este ingrediente[/bold yellow]")
+
+        return cantidad
+
+    def mostrar_ingresar_cantidad_ing_receta_prompt(self):
+        cantidad = ""
+
+        while len(cantidad) == 0:
+            self.refrescar_pantalla()
+            cantidad = Prompt.ask("[bold yellow]Ingresa el número de porciones para este ingrediente[/bold yellow]")
 
         return cantidad
 
@@ -604,7 +625,7 @@ class VistaRecetas(VistaBase):
         time.sleep(2)
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
-        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
         time.sleep(3)
 
     def mostrar_error_crear_receta_duplicado(self):
@@ -618,6 +639,14 @@ class VistaRecetas(VistaBase):
     def mostrar_error_validacion(self, error:str):
         rich.print(f"[bold red]{error}[/bold red]")
         time.sleep(3)
+
+    def mostrar_mensaje_registrar_como_ingrediente(self):
+        self.refrescar_pantalla()
+        res = Prompt.ask("[bold blue]Atención: Esta receta califica como receta base, por lo que puede ser utilizada como ingrediente en otras. "
+                         "De ser así, esta receta no podrá tener otras recetas como ingredientes."
+                         "\nPara guardar y habilitar como ingrediente, presiona 1. Para guardar sin habilitar, presiona 2. [/bold blue]", choices=["1", "2"], show_choices=False)
+
+        return res
 
     def refrescar_pantalla(self):
         try:

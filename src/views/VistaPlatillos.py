@@ -157,6 +157,7 @@ class VistaPlatillos(VistaBase):
 
     def mostrar_crear_platillo(self, platillo: Platillo | None):
         self.resetear_vista()
+        self.mostrar_conteo_paginas(0, 0)
 
         self.layout["main"].split_column(Layout(name="panel_platillo"), Layout(name="tabla_detalles"))
 
@@ -430,7 +431,7 @@ class VistaPlatillos(VistaBase):
         time.sleep(2)
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
-        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú de búsqueda avanzada...[/bold blue]")
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
         time.sleep(3)
 
     def mostrar_mensaje_editar_nombre_duplicado(self):
