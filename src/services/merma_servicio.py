@@ -60,6 +60,10 @@ class MermaServicio:
         except mysql.connector.Error as err:
             raise Error(f"Servicio: Error al obtener los tipos de merma: {err}")
 
+
+    def registar_merma(self, merma:Merma):
+        pass
+
     @staticmethod
     def _formatear_fecha(fecha: str | date | datetime) -> str:
         if isinstance(fecha, (date, datetime)):

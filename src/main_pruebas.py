@@ -108,7 +108,7 @@ def testeando_crud_compras():
         monto_unitario=10,
         fecha_caducidad='12-12-2026',
         )
-    compra_servicio.registrar_compra(compra_nueva=compra)
+    #compra_servicio.registrar_compra(compra_nueva=compra)
 
     #compra_servicio.registrar_compra(compra_nueva=compra)
     #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Cilantro Fresco'),2.5,0,'kg',0,40,'2-2-2027','19-11-2026')

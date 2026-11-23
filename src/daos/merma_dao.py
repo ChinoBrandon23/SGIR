@@ -14,6 +14,8 @@ class MermaDAO:
     def __init__(self, db_connection):
         self.db = db_connection
 
+    ''' METODOS DE CONSULTA '''
+
     def _consultar_mermas(self, condicion: str = "", parametros: tuple = ()) -> List[Merma]:
         connection = self.db.get_connection()
         try:
@@ -84,9 +86,7 @@ class MermaDAO:
         mermas = self._consultar_mermas("WHERE me.num = %s", (num_merma,))
         return mermas[0] if mermas else None
 
-    def obtener_mermas_por_rango_fecha(
-        self, fecha_inicial: str, fecha_final: str
-    ) -> List[Merma]:
+    def obtener_mermas_por_rango_fecha(self, fecha_inicial: str, fecha_final: str) -> List[Merma]:
         """Obtiene las mermas registradas dentro de un rango de fechas inclusivo."""
         return self._consultar_mermas(
             "WHERE me.fecha BETWEEN %s AND %s",
@@ -121,3 +121,18 @@ class MermaDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
+    ''' METODOS DE CREACION '''
+    def registrar_merma(self, merma:Merma):
+        pass
+
+
+
+
+
+
+
+
+
+
+
