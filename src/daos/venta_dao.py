@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from decimal import Decimal
 from typing import List
 
 import mysql.connector
@@ -39,7 +40,7 @@ class VentaDAO:
                     ventas_lista.append(Venta(num=fila["numVenta"],
                                               numero_comensales=fila["comensales"],
                                               fecha=datetime.strptime(fila["fechaVenta"], "%d-%m-%Y").strftime("%d-%m-%Y"),
-                                              monto_total=fila["montoVenta"]))
+                                              monto_total=(fila["montoVenta"])))
 
                 for venta in ventas_lista:
                     sql_consumo = '''
@@ -366,8 +367,8 @@ class VentaDAO:
                             for fila in filas_ing:
                                 nombre_insumo = fila['InsumoNombre']
 
-                                cantidad_por_porcion_ing = fila['cantidad'] / fila['numPorc']
-                                cantidad_total_por_ing_completo = ing_detalle.cantidad * cantidad_por_porcion_ing
+                                cantidad_por_porcion_ing = float(fila['cantidad'] / fila['numPorc'])
+                                cantidad_total_por_ing_completo = float(ing_detalle.cantidad) * cantidad_por_porcion_ing
                                 cantidad_a_descontar = cantidad_total_por_ing_completo * cant_platillos
                                 unidad_medida = fila['uniMedida']
                                 cant_platillos = consumo.cantidad_platillos
@@ -418,7 +419,7 @@ class VentaDAO:
                         # se dividen la cant de los ingredientes entre la cantidad de porciones que rinde la receta
                         # para ver cuánto se gasta por cada platillo y se multiplica por la cantidad de platillos vendida
                         cant_platillos = consumo.cantidad_platillos
-                        cantidad_a_descontar = (ing_detalle.cantidad / consumo.platillo.receta.num_porciones) * cant_platillos
+                        cantidad_a_descontar = (float(ing_detalle.cantidad) / consumo.platillo.receta.num_porciones) * cant_platillos
                         unidad_medida = ing_detalle.unidad_medida
 
                         while cantidad_a_descontar != 0:
@@ -438,7 +439,7 @@ class VentaDAO:
 
                             if res:
                                 # convierte la cantidad del ingrediente a la cantidad para la unidad de medida del insumo
-                                cantidad_a_descontar = conversor.convertir(cantidad_a_descontar, unidad_medida, res['unidad'])
+                                cantidad_a_descontar = conversor.convertir(cantidad_a_descontar, unidad_medida, (res['unidad']))
                                 cantidad_actual = float(res['cantAct'])
 
                                 if cantidad_actual >= cantidad_a_descontar:
