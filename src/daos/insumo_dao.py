@@ -625,9 +625,9 @@ class InsumoDAO:
             with connection.cursor(dictionary=True) as cursor:
 
                 sql_insumo = '''
-                             INSERT INTO insumo (nombre, umbral, stock, tipo_insumo, marca)
-                             VALUES (%s, %s, %s, %s, %s); \
-                             '''
+                            INSERT INTO insumo (nombre, umbral, stock, tipo_insumo, marca)
+                            VALUES (%s, %s, %s, %s, %s); \
+                            '''
                 cursor.execute(sql_insumo, (insumo.nombre, insumo.umbral, insumo.stock, insumo.tipo_insumo.clave, insumo.marca.num))
 
                 connection.commit()
@@ -780,5 +780,6 @@ class InsumoDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
 
 
