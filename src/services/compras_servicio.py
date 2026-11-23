@@ -65,6 +65,9 @@ class CompraServicio:
             if not ConversorUnidades.es_valida(detalle_compra.unidad_medida):
                 raise ValueError(f'Unidad de medida ingresada invalida para el insumo {detalle_compra.insumo.nombre}.')
 
+            # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+            detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
+            detalle_compra.importe = round(detalle_compra.importe, 2)
             '''Convirtiendo unidad'''
             # determinamos la unidad base para este insumo ('kg', 'l' o 'pza')
             unidad_base = ConversorUnidades.obtener_unidad_base(detalle_compra.unidad_medida)
@@ -78,18 +81,18 @@ class CompraServicio:
                 decimales=2
             )
                 # asignamos los valores 'base' para la BD
-                detalle_compra.cantidad_comprada = cantidad_convertida  # 0.4
+                detalle_compra.cantidad_comprada = cantidad_convertida
                 # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
-                detalle_compra.cantidad_actual = cantidad_convertida    # 0.4
-                detalle_compra.unidad_medida = unidad_base         # "kg"
-                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
-                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,cantidad_convertida)
-                assert False, f'Cantidad Comprada: {detalle_compra.cantidad_comprada} - Unidad medida: {detalle_compra.unidad_medida} - Importe {detalle_compra.importe} Monto Unitario {detalle_compra.monto_unitario}'
+                detalle_compra.cantidad_actual = cantidad_convertida 
+                detalle_compra.unidad_medida = unidad_base 
+
+                # el precio unitario se 'escala' a la unidad base p.e. : $20 / 0.4 kg = $50.00/kg:
+                detalle_compra.monto_unitario = round(detalle_compra.importe / cantidad_convertida, 4)
+
+                #assert False, f'Cantidad Comprada: {detalle_compra.cantidad_comprada} - Unidad medida: {detalle_compra.unidad_medida} - Importe {detalle_compra.importe} Monto Unitario {detalle_compra.monto_unitario}'
 
             else:
                 # si ya venia en kg o l, solo se normaliza el texto
-                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
-                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
                 detalle_compra.unidad_medida = unidad_base
                 detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
             
@@ -98,7 +101,7 @@ class CompraServicio:
 
         # calculando total bruto
         compra_nueva.total_bruto = self._calcular_total_bruto(importes)
-        assert False
+        #assert False
         try:
             return self._compra_dao.registrar_compra(compra_nueva)
         except Error as err:
@@ -177,6 +180,10 @@ class CompraServicio:
                 raise ValueError(f"Servicio: El precio unitario de {detalle_compra.insumo.nombre} debe ser mayor a 0.")
             if not ConversorUnidades.es_valida(detalle_compra.unidad_medida):
                 raise ValueError(f'Unidad de medida ingresada invalida para el insumo {detalle_compra.insumo.nombre}.')
+
+            # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
+            detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
+            detalle_compra.importe = round(detalle_compra.importe,2)
             
             '''Convirtiendo unidad'''
             # determinamos la unidad base para este insumo ('kg', 'l' o 'pza')
@@ -191,19 +198,20 @@ class CompraServicio:
                 decimales=2
             )
                 # asignamos los valores 'base' para la BD
-                detalle_compra.cantidad_comprada = cantidad_convertida  # 0.4
+                detalle_compra.cantidad_comprada = cantidad_convertida
                 # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
-                detalle_compra.cantidad_actual = cantidad_convertida    # 0.4
-                detalle_compra.unidad_medida = unidad_base         # "kg"
-                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
-                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,cantidad_convertida)
+                detalle_compra.cantidad_actual = cantidad_convertida
+                detalle_compra.unidad_medida = unidad_base 
+
+                # el precio unitario se 'escala' a la unidad base p.e. : $20 / 0.4 kg = $50.00/kg:
+                detalle_compra.monto_unitario = round(detalle_compra.importe / cantidad_convertida, 4)
 
             else:
                 # si ya venia en kg o l, solo se normaliza el texto
-                # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
-                detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
                 detalle_compra.unidad_medida = unidad_base
                 detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
+
+            importes.append(detalle_compra.importe)
 
         # actualizando total bruto
         compra_act.total_bruto = self._calcular_total_bruto(importes)
@@ -211,6 +219,57 @@ class CompraServicio:
             return self._compra_dao.actualizar_compra_completa(compra_act)
         except Error as err:
             raise ValueError(f"Servicio: Error en base de datos al actualizar compra: {err}")
+
+    def registrar_nuevo_insumo(self, nombre: str, umbral: float, tipo_insumo: TipoInsumo, marca: Marca) -> Insumo:
+        """
+        Valida y crea un nuevo insumo durante el proceso de compra.
+        Regla del nombre: debe tener al menos 2 palabras 'generico' + 'especifico' o la 'marca')."""
+        # 1 - validacio de nombre limpio
+        nombre_limpio = " ".join(nombre.strip().split())
+        if not nombre_limpio:
+            raise ValueError("El nombre del insumo no debe estar vacio.")
+
+        palabras = nombre_limpio.split()
+        if len(palabras) < 2:
+            raise ValueError(
+                "Formato invalido: El nombre del insumo debe tener una parte generica y una especifica. "
+                "P.e.: 'Leche Deslactosada Lala' o 'Harina Trigo XMarca')."
+            )
+
+        # 2 - validar que no exista un insumo con ese mismo nombre (es sensible a las mayusculas y minusculas)
+        insumo_existente = self._insumo_dao.obtener_insumo_por_nombre(nombre_limpio)
+        if insumo_existente:
+            raise ValueError(f"Ya existe un insumo registrado con el nombre '{nombre_limpio}'.")
+
+        # 3 validacion el umbral
+        try:
+            umbral_float = float(umbral)
+            if umbral_float < 0:
+                raise ValueError("El umbral del insumo no puede ser negativo.")
+        except (ValueError, TypeError):
+            raise ValueError("El umbral debe ser un valor numerco valido.")
+
+        # 4 - validacion de TipoInsumo y Marca
+        if not tipo_insumo or not tipo_insumo.clave:
+            raise ValueError("Debe asignarse un tipo de insumo valido.")
+        if not marca or not marca.num:
+            raise ValueError("Debe asignarse una marca valida.")
+
+        # 5. - crear el objeto con stock inicial en 0 (se abastece con las compras)
+        nuevo_insumo = Insumo(
+            num=0,
+            nombre=nombre_limpio.title(),  # hacemos que todo sea mayuscula en la bd
+            umbral=umbral_float,
+            stock=0.0, # tiene stock 0 por defecto
+            tipo_insumo=tipo_insumo,
+            marca=marca
+        )
+
+        try:
+            insumo_guardado = self._compra_dao.crear_insumo(insumo=nuevo_insumo)
+            return insumo_guardado
+        except Error as err:
+            raise ValueError(f"Servicio: No se pudo registrar el nuevo insumo: {err}")
 
     def eliminar_compra(self):
         pass

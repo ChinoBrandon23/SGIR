@@ -306,7 +306,7 @@ class CompraDAO:
 
                 # si se llego hasta aqui sin lanzar excepcion, todo salio bien
                 connection.commit()
-                return cursor.lastrowid
+                return compra_nueva
             
         except ValueError as err:
                 raise ValueError(f'DAO: Error con las unidades de medida.')
@@ -318,6 +318,89 @@ class CompraDAO:
             if connection.is_connected():
                 connection.close()
 
+
+    def crear_insumo(self, insumo: Insumo) -> Insumo:
+        '''
+        Inserta un nuevo insumo en la BD.
+        Si la Marca o el Tipo de Insumo no existen, se crean en la bd.
+        Tambien crea su respectivo ingrediente.
+        '''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                # verificando la marca y tipo de inusmo existan en la bd
+                marca_id = None
+                if insumo.marca:
+                    # buscamos si ya existe por num o por coincidencia de nombre
+                    sql_marca = '''SELECT num, nombre FROM marca WHERE num = %s OR LOWER(nombre) = LOWER(%s);'''
+                    cursor.execute(sql_marca, (insumo.marca.num, insumo.marca.nombre))
+                    fila_marca = cursor.fetchone()
+
+                    if fila_marca:
+                        marca_id = int(fila_marca['num'])
+                        insumo.marca.num = marca_id
+                        insumo.marca.nombre = fila_marca['nombre']
+                    else:
+                        # Si no existe, la insertamos
+                        cursor.execute('INSERT INTO marca (nombre) VALUES (%s);', (insumo.marca.nombre,))
+                        marca_id = int(cursor.lastrowid)
+                        insumo.marca.num = marca_id
+
+                #  verificar o crear el tipo de insumo en la bd
+                tipo_clave = None
+                if insumo.tipo_insumo:
+                    # Buscamos si ya existe por clave o por nombre
+                    sql_tipo = '''SELECT clave, nombre FROM tipo_insumo WHERE clave = %s OR LOWER(nombre) = LOWER(%s);'''
+                    cursor.execute(sql_tipo, (insumo.tipo_insumo.clave, insumo.tipo_insumo.nombre))
+                    fila_tipo = cursor.fetchone()
+
+                    if fila_tipo:
+                        tipo_clave = fila_tipo['clave']
+                        insumo.tipo_insumo.clave = tipo_clave
+                        insumo.tipo_insumo.nombre = fila_tipo['nombre']
+                    else:
+                        # se indica que es una marca generico por defecto
+                        clave_gen = (insumo.tipo_insumo.clave or insumo.tipo_insumo.nombre[:4]).upper().strip()
+                        cursor.execute('INSERT INTO tipo_insumo (clave, nombre) VALUES (%s, %s);',
+                                       (clave_gen, insumo.tipo_insumo.nombre))
+                        tipo_clave = clave_gen
+                        insumo.tipo_insumo.clave = tipo_clave
+
+                # se inserta el insumo nuevo
+                sql_insumo = '''
+                    INSERT INTO insumo (nombre, umbral, stock, tipo_insumo, marca)
+                    VALUES (%s, %s, %s, %s, %s);
+                '''
+                cursor.execute(sql_insumo, (
+                    insumo.nombre,
+                    insumo.umbral,
+                    insumo.stock,  # el stock inicia en 0, el calculo ya se hizo en sel servicio.
+                    tipo_clave,
+                    marca_id
+                ))
+                insumo.num = int(cursor.lastrowid)
+
+                # SE CREA EL INGREDIENTE CONRRESPONDIENTEE
+                sql_ingrediente = '''
+                    INSERT INTO ingrediente (nombre, insumo, receta)
+                    VALUES (%s, %s, %s);
+                '''
+                cursor.execute(sql_ingrediente, (
+                    insumo.nombre,  # el mismo q nombre que el insumo
+                    insumo.num,      # numero del id recien creado
+                    None            # receta es null porque viene de un insumo comprado
+                ))
+
+                # si todo sale guuuud
+                connection.commit()
+                return insumo
+
+        except mysql.connector.Error as err:
+            connection.rollback()
+            raise Error(f"DAO: Error en la transaccion al crear insumo e ingrediente: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
     '''FUNCIONES DE UPDATE'''
 
     def actualizar_compra_completa(self, compra_act: Compra):
@@ -377,7 +460,7 @@ class CompraDAO:
                                         WHERE nombre = %s;'''
                     cursor.execute(sql_buscar_id, (detalle.insumo.nombre,))
                     fila = cursor.fetchone()
-                    id_bd_ins = int(fila['num'])
+                    id_bd_ins = int(fila['num']) if fila else detalle.insumo.num
 
                     if ins_id in insumos_num_bd:
                         # si ya existia en la BD, actualiza..
