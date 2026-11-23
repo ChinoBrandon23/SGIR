@@ -87,6 +87,9 @@ class ControladorMenus:
         self.vista.mostrar_menu_menus_prompt()
 
     def mostrar_detalles_menu(self, menu_num=None):
+        if menu_num is None and self.menu_actual is None:
+            self.vista.mostrar_abrir_detalles_prompt(self.servicio.obtener_menus())
+
         if self.menu_actual is None and menu_num is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
