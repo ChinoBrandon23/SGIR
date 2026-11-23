@@ -293,8 +293,6 @@ class CompraServicio:
         except Error as err:
             raise ValueError(f"Servicio: No se pudo registrar el nuevo insumo: {err}")
 
-    def eliminar_compra(self):
-        pass
     def registrar_nuevo_insumo(self, nombre: str, umbral: float, tipo_insumo: TipoInsumo, marca: Marca) -> Insumo:
         """
         Valida y crea un nuevo insumo durante el proceso de compra.
