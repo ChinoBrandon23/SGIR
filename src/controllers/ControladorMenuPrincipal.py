@@ -14,6 +14,8 @@ from daos.platillos_dao import PlatillosDAO
 #from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
 #from services.venta_servicio import VentaServicio
+from daos.venta_dao import VentaDAO
+from services.venta_servicio import VentaServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
