@@ -34,6 +34,8 @@ class VistaVentas(VistaBase):
         self.input_menu_editar = InputEmisor()
         self.input_menu_editar_consumo = InputEmisor()
         self.input_menu_filtros = InputEmisor()
+        self.input_seleccion_platillo = InputEmisor()
+        self.input_platillos_conflicto = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -62,17 +64,18 @@ class VistaVentas(VistaBase):
         for columna in columnas:
             self.tabla_ventas.add_column(columna)
 
-    def crear_elemento_tabla_ventas(self, venta: Venta):
-        self.tabla_ventas.add_row(str(venta.num), str(venta.fecha), str(venta.numero_comensales), str(venta.monto_total))
+    def crear_elemento_tabla_ventas(self, venta: Venta, idx_ui:int):
+        self.tabla_ventas.add_row(str(idx_ui), str(venta.fecha), str(venta.numero_comensales), str(venta.monto_total))
 
-    def mostrar_detalles_venta(self, venta: Venta | None, datos_editados, mapa_consumo):
+    def mostrar_detalles_venta(self, venta: Venta | None, pag_detalles, pag_actual, total_pag, datos_editados, mapa_consumo):
         self.resetear_vista()
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
 
         self.layout["main"].split_column(Layout(name="panel_venta"), Layout(name="tabla_consumo"))
 
         self.layout["panel_venta"].size = 6
 
-        panel = Panel(renderable=f"[bold yellow]Venta #{str(venta.num)}\n"
+        panel = Panel(renderable=f"[bold yellow]Venta #{str(venta.num) if venta and venta.num != 0 else "-"}\n"
                                  f"[bold white]Fecha:[/bold white] {str(venta.fecha)}\n"
                                  f"[bold white]Comensales servidos:[/bold white] {str(venta.numero_comensales)}\n"
                                  f"[bold white]Monto total:[/bold white] ${str(venta.monto_total)}"
@@ -80,8 +83,8 @@ class VistaVentas(VistaBase):
 
         panel.height = 6
 
-        if venta and len(venta.detalles):
-            self.llenar_tabla_consumo(venta.detalles, mapa_consumo, datos_editados["consumo"])
+        if venta and len(pag_detalles):
+            self.llenar_tabla_consumo(pag_detalles, mapa_consumo, datos_editados["consumo"])
 
         self.layout["panel_venta"].update(panel)
         self.layout["tabla_consumo"].update(Align.center(self.tabla_consumo, vertical="middle"))
@@ -131,7 +134,8 @@ class VistaVentas(VistaBase):
                                                 f"[bold red]{str(platillo.cantidad_platillos)}[/bold red]",
                                                 f"[bold red]${str(platillo.importe)}[/bold red]")
 
-    def mostrar_platillos_disponibles(self, lista_platillos:list[Platillo]):
+    def mostrar_platillos_disponibles(self, lista_platillos:list[Platillo], pag_actual, total_pag):
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Platillos disponibles")
@@ -139,8 +143,46 @@ class VistaVentas(VistaBase):
         for col in columnas:
             tabla.add_column(col)
 
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 9
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
         for i in range(len(lista_platillos)):
-            tabla.add_row(str(i+1), lista_platillos[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_platillos[i].nombre)
+
+        self.layout["tabla_consumo"].update(Align.center(tabla, vertical="middle"))
+
+    def mostrar_platillos_conflicto(self, lista_platillos:list[Platillo], pag_actual, total_pag):
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        columnas = ["#", "Nombre"]
+
+        tabla = Table(title="Platillos disponibles")
+
+        for col in columnas:
+            tabla.add_column(col)
+
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 9
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
+        for i in range(len(lista_platillos)):
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_platillos[i].nombre)
 
         self.layout["tabla_consumo"].update(Align.center(tabla, vertical="middle"))
 
@@ -151,7 +193,7 @@ class VistaVentas(VistaBase):
 
         self.layout["panel_venta"].size = 6
 
-        panel = Panel(renderable=f"[bold yellow]Venta #{str(venta.num) if venta else "N/A"}\n"
+        panel = Panel(renderable=f"[bold yellow]Venta #{str(venta.num) if venta and venta.num != 0 else "-"}\n"
                                  f"Fecha: {str(venta.fecha) if venta else ""}\n"
                                  f"Comensales servidos: {f"{str(venta.numero_comensales)}" if venta else ""}\n"
                                  f"Monto total: ${str(venta.monto_total) if venta else ""}"
@@ -186,8 +228,6 @@ class VistaVentas(VistaBase):
         opciones_columna = Columns()
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Volver a ventas",
-                    "[2] Editar venta",
-                    "[3] Eliminar venta",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -260,7 +300,7 @@ class VistaVentas(VistaBase):
 
     def mostrar_abrir_detalles_prompt(self, lista_ventas: list[Venta]):
         self.input_abrir_detalles.imprimir("Ingresa el índice de la venta a mostrar",
-                                           choices=[str(venta.num) for venta in lista_ventas],
+                                           choices=[str(idx+1) for idx in range(len(lista_ventas))],
                                            show_choices=False)
 
         if self.input_abrir_detalles.user_input is None:
@@ -269,7 +309,7 @@ class VistaVentas(VistaBase):
 
     def mostrar_opciones_detalles_prompt(self):
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m", ",", "."],
+                                          choices=["1", "m", ",", "."],
                                           show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -357,45 +397,69 @@ class VistaVentas(VistaBase):
         else:
             return None
 
-    def mostrar_agregar_consumo_prompt(self, opciones):
+    def mostrar_agregar_consumo_plat_prompt(self, opciones):
+        opciones.append(",")
+        opciones.append(".")
         self.refrescar_pantalla()
+        num_platillo = ""
 
         if len(opciones) == 0:
             rich.print("[bold green]No hay platillos con precio vigente para agregar a esta venta, volviendo al menú editar...[/bold green]")
-            time.sleep(5)
-            return None, None
+            time.sleep(3)
+            return None
 
-        num_platillo = Prompt.ask("[bold yellow]Selecciona un platillo de la lista para agregar[/bold yellow]",
-                                  choices=opciones,
-                                  show_choices=False)
+        while len(num_platillo) == 0 and num_platillo != "," and num_platillo != ".":
+            num_platillo = self.input_seleccion_platillo.imprimir("[bold yellow]Selecciona un platillo de la lista para agregar[/bold yellow]",
+                                      choices=opciones,
+                                      show_choices=False)
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo platillo[/bold yellow]",
-                        choices=["S", "N"])
+            confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo platillo[/bold yellow]",
+                            choices=["S", "N"])
 
-        if confirmacion == "S":
-            cantidad = ""
+            if confirmacion == "S":
+                return num_platillo
 
-            while len(cantidad) == 0:
-                self.refrescar_pantalla()
-                cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad de platillos consumida[bold yellow]")
+    def mostrar_agregar_consumo_cantidad_prompt(self):
+        cantidad = ""
 
-                if len(cantidad) != 0:
-                    confirmacion2 = Prompt.ask(f"[bold yellow]Confirma la cantidad: [italic white]{cantidad}[italic white][/bold yellow]",
-                                    choices=["S", "N"])
+        while len(cantidad) == 0:
+            self.refrescar_pantalla()
+            cantidad = Prompt.ask("[bold yellow]Ingresa la cantidad de platillos consumida[bold yellow]")
 
-                    if confirmacion2 == "S":
-                        return num_platillo, cantidad
-                    else:
-                        cantidad = ""
-        else:
-            self.mostrar_agregar_consumo_prompt()
+            if len(cantidad) != 0:
+                confirmacion = Prompt.ask(
+                    f"[bold yellow]Confirma la cantidad: [italic white]{cantidad}[italic white][/bold yellow]",
+                    choices=["S", "N"])
+
+                if confirmacion == "S":
+                    return cantidad
+                else:
+                    cantidad = ""
+
+    def mostrar_editar_consumo_seleccion_plat(self, opciones):
+        opciones.append(",")
+        opciones.append(".")
+        self.refrescar_pantalla()
+        num_platillo = ""
+
+        while len(num_platillo) == 0 and num_platillo != "," and num_platillo != ".":
+            num_platillo = self.input_seleccion_platillo.imprimir(
+                "[bold yellow]Ingresa el índice del platillo a editar[/bold yellow]",
+                choices=opciones,
+                show_choices=False)
+
+            confirmacion = Prompt.ask(f"[bold yellow]Confirma selección[/bold yellow]",
+                                      choices=["S", "N"])
+
+            if confirmacion == "S":
+                return num_platillo
 
     def mostrar_editar_cantidad_prompt(self, opciones):
         self.refrescar_pantalla()
 
         if len(opciones) == 0:
             rich.print("[bold green]No hay consumos para editar a esta venta, volviendo al menú editar...[/bold green]")
-            time.sleep(5)
+            time.sleep(3)
             return None, None
 
         num_cons = Prompt.ask("[bold yellow]Ingresa el índice del consumo a editar[/bold yellow]",
@@ -421,8 +485,8 @@ class VistaVentas(VistaBase):
 
         if len(opciones) == 0:
             rich.print("[bold green]No hay consumos para editar a esta venta, volviendo al menú editar...[/bold green]")
-            time.sleep(5)
-            return None, None
+            time.sleep(3)
+            return None
 
         num = Prompt.ask("[bold yellow]Ingresa el índice del consumo a remover[/bold yellow]",
                          choices=opciones,
@@ -444,23 +508,25 @@ class VistaVentas(VistaBase):
 
         return fecha_inicial, fecha_final
 
-    def mostrar_prompt_crear_venta(self):
+    def mostrar_prompt_crear_venta_fecha(self):
         fecha = ""
-        num_comensales = ""
 
         while len(fecha) == 0:
             self.refrescar_pantalla()
             fecha = Prompt.ask("Para comenzar, ingresa la fecha en que se realizó la venta o 0 para cancelar")
             if fecha == "0":
-                return None, None
+                return None
+
+        return fecha
+
+    def mostrar_prompt_crear_venta_comensales(self):
+        num_comensales = ""
 
         while len(num_comensales) == 0:
             self.refrescar_pantalla()
-            num_comensales = Prompt.ask("Ingresa el número de comensales o 0 para cancelar")
-            if fecha == "0":
-                return None, None
+            num_comensales = Prompt.ask("Ingresa el número de comensales")
 
-        return fecha, num_comensales
+        return num_comensales
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
@@ -479,6 +545,38 @@ class VistaVentas(VistaBase):
     def mostrar_mensaje_no_pagina_siguiente(self):
         rich.print("[bold green]Error: no hay página siguiente")
         time.sleep(2)
+
+    def mostrar_mensaje_no_resultados_busqueda_av(self):
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_mensaje_no_platillos_disp(self):
+        rich.print("[bold red]Error: No hay platillos disponibles para la fecha actual de venta, "
+                   "crea un nuevo menú o cambia la fecha de venta")
+        time.sleep(3)
+
+    def mostrar_error_venta_stock_insuficiente(self):
+        rich.print("[bold red]Error: No hay insumos suficientes para efectuar la venta.[/bold red]")
+        time.sleep(3)
+
+    def mostrar_mensaje_error_validacion(self, error:str):
+        rich.print(f"[bold red]{error}[/bold red]")
+        time.sleep(3)
+
+    def mostrar_mensaje_advertencia_guardado(self):
+        res = Prompt.ask("[bold blue]Atención: Una vez guardada la venta, no podrá ser editada. "
+                         "Para confirmar guardado presione 1, para cancelar y continuar haciendo cambio, presione 2[/bold blue]",
+                         choices=["1", "2"], show_choices=False)
+        return res
+
+    def mostrar_mensaje_platillos_conflicto(self, fecha_venta):
+        self.refrescar_pantalla()
+        eleccion = self.input_platillos_conflicto.imprimir(f"[bold yellow]Atención: Cambiar la fecha de venta a {fecha_venta} resultará en la remoción de los siguientes platillos."
+                                                           f" ¿Deseas continuar?[/bold yellow][italic magenta][S, N][/italic magenta]", choices=["S", "N", ",", "."])
+        if eleccion is "," or eleccion is ".":
+            self.mostrar_mensaje_platillos_conflicto(fecha_venta)
+
+        return eleccion
 
     def refrescar_pantalla(self):
         subprocess.run('cls' if os.name == 'nt' else 'clear')

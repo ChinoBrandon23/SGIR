@@ -59,7 +59,7 @@ class VistaInventario(VistaBase):
         self.mostrar_conteo_paginas(pag_actual, total_pag)
 
     def configurar_tabla_insumos(self):
-        columnas = ["#", "Nombre", "Tipo de insumo", "Marca", "Umbral", "Stock", "Alerta"]
+        columnas = ["#", "Nombre", "Tipo de insumo", "Marca", "Umbral", "Stock (kg/lt)", "Alerta"]
 
         for columna in columnas:
             self.tabla_inventario.add_column(columna)

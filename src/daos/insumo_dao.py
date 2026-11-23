@@ -700,6 +700,45 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
+    def actualizar_stock_insumo(self, insumo:Insumo):
+        '''Actualiza el stock en base a los datos de lista_compras'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql_lista_compras = '''
+                                SELECT cantidadActual
+                                FROM lista_compra
+                                WHERE insumo = %s
+                '''
+                cursor.execute(sql_lista_compras, (insumo.num,))
+                resultados = cursor.fetchall()
+                suma_total = 0
+
+                for res in resultados:
+                    suma_total += res['cantidadActual']
+
+                sql_insumo = '''
+                    UPDATE insumo ins
+                    JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                    SET ins.nombre = %s, ins.umbral = %s, ins.tipo_insumo = %s, ins.stock = %s
+                    WHERE ins.num = %s;
+                '''
+                cursor.execute(sql_insumo, (insumo.nombre,
+                                            insumo.umbral,
+                                            insumo.tipo_insumo.clave,
+                                            suma_total,# type: ignore
+                                            insumo.num))
+
+                connection.commit()
+
+        except mysql.connector.Error as err:
+            # si cualquiera de los updates, inserts o select fallo:
+            connection.rollback()
+            raise Error(f"DAO: Error en la transaccion al actualizar menu: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     ''' FUNCIONES DE REGISTROS '''
 
     def crear_tipo_insumo(self, tipo_insumo:TipoInsumo):
@@ -742,24 +781,4 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
-    def crear_insumo(self, insumo:Insumo):
-        connection = self.db.get_connection()
-        try:
-            with connection.cursor(dictionary=True) as cursor:
 
-                sql_insumo = '''
-                             INSERT INTO insumo (nombre, umbral, stock, tipo_insumo, marca)
-                             VALUES (%s, %s, %s, %s, %s); \
-                             '''
-                cursor.execute(sql_insumo, (insumo.nombre, insumo.umbral, insumo.stock, insumo.tipo_insumo.clave, insumo.marca.num))
-
-                connection.commit()
-
-        except mysql.connector.Error as err:
-            connection.rollback()
-            raise Error(f"DAO: Error al crear tipo de insumo: {err}")
-        finally:
-            if connection.is_connected():
-                connection.close()
-
-    
