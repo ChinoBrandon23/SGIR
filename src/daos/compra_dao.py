@@ -584,8 +584,8 @@ class CompraDAO:
                     # asignando a los insumos sus ids de la BD y no los locales
                     sql_buscar_id = '''SELECT num
                                         FROM insumo
-                                        WHERE nombre = %s;'''
-                    cursor.execute(sql_buscar_id, (detalle.insumo.nombre,))
+                                        WHERE nombre = %s and marca = %s;'''
+                    cursor.execute(sql_buscar_id, (detalle.insumo.nombre,detalle.insumo.marca.num))
                     fila = cursor.fetchone()
                     id_bd_ins = int(fila['num'])
 

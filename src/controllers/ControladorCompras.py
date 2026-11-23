@@ -7,6 +7,7 @@ from mysql.connector import Error
 from Validaciones.validadorCompras import validadorCompras
 from models.compra import Compra
 from models.insumo import Insumo
+from models.marca import Marca
 from models.proveedor import Proveedor
 from views.VistaCompras import VistaCompras
 
@@ -182,11 +183,11 @@ class ControladorCompras:
         return False
 
     def agregar_edicion_insumos(self, detalle_comp):
-        lista_ins_editados_nombre = [com.insumo.nombre for com in self.formulario["insumos"]]
+        lista_ins_editados_nombre = [com.insumo.num for com in self.formulario["insumos"]]
 
         if detalle_comp.insumo.nombre in lista_ins_editados_nombre:
             # checa si un ingrediente ya fue editado antes y remueve esa edicion para agregar la nueva
-            obj = [ins for ins in self.formulario["insumos"] if ins.insumo.nombre == detalle_comp.insumo.nombre][0]
+            obj = [ins for ins in self.formulario["insumos"] if ins.insumo.num == detalle_comp.insumo.num][0]
             self.formulario["insumos"].remove(obj)
 
         self.formulario["insumos"].append(detalle_comp)
@@ -386,18 +387,24 @@ class ControladorCompras:
                 self.mostrar_detalles_compra()
             case "2":
                 # agregar insumo
-                lista_insumos_actuales = [det.insumo.nombre for det in self.compra_actual.lista_compras]
-
+                lista_insumos_actuales = {det.insumo.nombre:det.insumo.marca.num for det in self.compra_actual.lista_compras}
                 # 1. Numeramos del 1 al N solo los disponibles
                 todos_insumos = self.servicio_inventario.obtener_insumos()
+                lista_ins_disp = []
 
-                lista_ins_disp = [
-                    ins
-                    for ins in todos_insumos
-                    if ins.nombre not in lista_insumos_actuales
-                ]
+                for ins in todos_insumos:
+                    if ins.nombre in lista_insumos_actuales:
+                        if ins.marca.num != lista_insumos_actuales[ins.nombre]:
+                            lista_ins_disp.append(ins)
+                    elif ins.nombre not in lista_insumos_actuales:
+                        lista_ins_disp.append(ins)
+
+                # lista_ins_disp = [
+                #     ins
+                #     for ins in todos_insumos
+                #     if (ins.nombre in lista_insumos_actuales and ins.marca != lista_insumos_actuales[ins.nombre]) or ins.nombre not in lista_insumos_actuales
+                # ]
                 idx_ins_disp = {i + 1: ins for i, ins in enumerate(lista_ins_disp)}
-
                 opciones = [str(k) for k in idx_ins_disp.keys()]
 
                 pagina, prox_pag = self.paginar_lista_detalles(lista_ins_disp, self.pagina_actual_lista_insumos)
@@ -519,7 +526,7 @@ class ControladorCompras:
                         # obtiene el del insumo en la BD
                         try:
                             self.servicio_inventario.crear_insumo(Insumo(0, nombre, umbral, 0, tipo, marca))
-                            insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre(nombre)
+                            insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre_marca(nombre, marca.nombre)
                         except ValueError:
                             self.vista.mostrar_mensaje_error_validacion("Error: Este insumo ya existe")
                             res = self.vista.mostrar_mensaje_solucionar_insumo_duplicado()
@@ -942,13 +949,16 @@ class ControladorCompras:
                 self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_lista_marcas, total_pag)
 
     def cambiar_pagina_lista_insumos(self, mov):
-        lista_insumos_actuales = [det.insumo.nombre for det in self.compra_actual.lista_compras]
+        lista_insumos_actuales = {det.insumo.nombre: det.insumo.marca.num for det in self.compra_actual.lista_compras}
         todos_insumos = self.servicio_inventario.obtener_insumos()
-        lista_ins_disp = [
-            ins
-            for ins in todos_insumos
-            if ins.nombre not in lista_insumos_actuales
-        ]
+        lista_ins_disp = []
+
+        for ins in todos_insumos:
+            if ins.nombre in lista_insumos_actuales:
+                if ins.marca.num != lista_insumos_actuales[ins.nombre]:
+                    lista_ins_disp.append(ins)
+            elif ins.nombre not in lista_insumos_actuales:
+                lista_ins_disp.append(ins)
 
         if mov == ",":
             if self.pagina_actual_lista_insumos == 1:
