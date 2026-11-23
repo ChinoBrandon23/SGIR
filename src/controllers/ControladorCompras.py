@@ -1,6 +1,7 @@
 import copy
 import datetime
 import math
+import time
 
 from models.compra import Compra
 from models.insumo import Insumo
@@ -505,10 +506,12 @@ class ControladorCompras:
                             self.marcas_testeo = self.servicio_inventario.obtener_marcas()
                             self.tipos_insumo_testeo = self.servicio_inventario.obtener_tipos_insumo()
 
-                            ## obtenemos el id de la bd
+                            # obtenemos el id real del insumo recien creado de la bd
                             num_insumo = str(nuevo_insumo.num)
                         except ValueError as err:
                             self.vista.refrescar_pantalla()
+                            print(f"[bold red]{err}[/bold red]")
+                            time.sleep(3)
                             self.mostrar_detalles_compra()
                             return
                         # se asignan todos los valores escogidos y/o creados por el usuario
