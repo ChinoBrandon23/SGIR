@@ -55,7 +55,10 @@ class ControladorMenus:
 
         #calcula el numero de recetas reales: se eliminara despues
         if self.menus_a_mostrar is None:
-            self.menus_a_mostrar = self.servicio.obtener_menus()
+            try:
+                self.menus_a_mostrar = self.servicio.obtener_menus()
+            except IndexError:
+                self.menus_a_mostrar = []
 
         for menu in self.menus_a_mostrar:
             menu.cantidad_platillos = self.servicio.calcular_num_platillos(menu=menu)
@@ -88,7 +91,11 @@ class ControladorMenus:
 
     def mostrar_detalles_menu(self, menu_num=None):
         if menu_num is None and self.menu_actual is None:
-            self.vista.mostrar_abrir_detalles_prompt(self.servicio.obtener_menus())
+            try:
+                lista_todos_menus = self.servicio.obtener_menus()
+            except IndexError:
+                lista_todos_menus = []
+            self.vista.mostrar_abrir_detalles_prompt(lista_todos_menus)
 
         if self.menu_actual is None and menu_num is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
@@ -141,7 +148,10 @@ class ControladorMenus:
             try:
                 self.servicio.crear_menu(self.menu_actual)
                 menu_actual_num = self.servicio.obtener_menu_por_nombre(self.menu_actual.nombre).num
-                self.menus_a_mostrar = self.servicio.obtener_menus()
+                try:
+                    self.menus_a_mostrar = self.servicio.obtener_menus()
+                except IndexError:
+                    self.menus_a_mostrar = []
             except Error:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_mensaje_editar_nombre_duplicado()
@@ -149,7 +159,10 @@ class ControladorMenus:
 
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-        self.menus_a_mostrar = self.servicio.obtener_menus()
+        try:
+            self.menus_a_mostrar = self.servicio.obtener_menus()
+        except IndexError:
+            self.menus_a_mostrar = []
         self.cancelar_edicion_actual()
         self.menu_actual = self.servicio.obtener_menu_por_id(menu_actual_num)
         self.mostrar_detalles_menu()
@@ -261,7 +274,10 @@ class ControladorMenus:
                     self.servicio.eliminar_menu(self.menu_actual.num)
                 
                     self.cancelar_edicion_actual()
-                    self.menus_a_mostrar = self.servicio.obtener_menus()
+                    try:
+                        self.menus_a_mostrar = self.servicio.obtener_menus()
+                    except IndexError:
+                        self.menus_a_mostrar = []
                     self.mostrar_lista_menus()
 
                 self.mostrar_detalles_menu()
@@ -304,7 +320,10 @@ class ControladorMenus:
 
             case "3":
                 # mostrar todos los menús
-                self.menus_a_mostrar = self.servicio.obtener_menus()
+                try:
+                    self.menus_a_mostrar = self.servicio.obtener_menus()
+                except IndexError:
+                    self.menus_a_mostrar = []
                 self.mostrar_lista_menus()
 
             case "4":
@@ -393,7 +412,7 @@ class ControladorMenus:
                 self.guardar_editar_menu()
             case "5":
                 # cancela la edición actual y vuelve a detalles
-                if self.menu_actual.num in [menu.num for menu in self.servicio.obtener_menus()]:
+                if self.menu_actual and self.menu_actual.num != 0:
                     self.cancelar_edicion_actual()
                     self.menu_actual = self.servicio.obtener_menu_por_id(self.vista.input_abrir_detalles.user_input)
                     self.mostrar_detalles_menu()
