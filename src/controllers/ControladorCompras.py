@@ -3,12 +3,11 @@ import datetime
 import math
 import time
 
-from mysql.connector import Error
-from Validaciones.validadorCompras import validadorCompras
 from models.compra import Compra
 from models.insumo import Insumo
 from models.marca import Marca
 from models.proveedor import Proveedor
+from models.tipo_insumo import TipoInsumo
 from views.VistaCompras import VistaCompras
 
 from services.compras_servicio import CompraServicio
@@ -16,27 +15,22 @@ from services.inventario_servicio import InventarioServicio
 
 
 class ControladorCompras:
-    def __init__(self, vista:VistaCompras, compra_servicio:CompraServicio, inventario_servicio:InventarioServicio, validador:validadorCompras):
+    def __init__(self, vista:VistaCompras, compra_servicio:CompraServicio, inventario_servicio:InventarioServicio):
         self.vista = vista
         self.servicio_compra = compra_servicio
         self.servicio_inventario = inventario_servicio
-        self.validador = validador
         self.compra_actual = None
         self.formulario = {"insumos":[], "item_borrado":False}
         self.insumo_idx = {}
 
         self.pagina_actual_lista_compras = 1
         self.pagina_actual_lista_detalles = 1
-        self.pagina_actual_lista_insumos = 1
-        self.pagina_actual_lista_marcas = 1
-        self.pagina_actual_lista_proveedores = 1
-        self.pagina_actual_lista_tipos_insumo = 1
 
         self.proveedores_testeo = self.servicio_compra.obtener_proovedores()
         self.marcas_testeo = self.servicio_inventario.obtener_marcas()
         self.tipos_insumo_testeo = self.servicio_inventario.obtener_tipos_insumo()
         self.insumos_testeo = self.servicio_inventario.obtener_insumos()
-        self.compras_testeo = None
+        self.compras_testeo = self.servicio_compra.obtener_compras()
 
         self.configurar_listeners()
         self.mostrar_lista_compras()
@@ -51,20 +45,58 @@ class ControladorCompras:
 
         # Para cambiar de página
         self.vista.input_menu_compras.agregar_escuchante(self.cambiar_pagina_lista_compras)
-        self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
-        self.vista.input_menu_editar_compra.agregar_escuchante(self.cambiar_pagina_lista_detalles)
-        self.vista.input_menu_editar_insumo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
-        self.vista.input_seleccionar_tipo_insumo.agregar_escuchante(self.cambiar_pagina_lista_tipos_insumo)
-        self.vista.input_seleccionar_insumo.agregar_escuchante(self.cambiar_pagina_lista_insumos)
-        self.vista.input_seleccionar_marca.agregar_escuchante(self.cambiar_pagina_lista_marcas)
-        self.vista.input_seleccionar_proveedor.agregar_escuchante(self.cambiar_pagina_lista_proveedores)
+        # detalles a partir de aquí, serán añadidos próximamente...
+        # self.vista.input_menu_detalles.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        # self.vista.input_menu_editar_compra.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+        # self.vista.input_menu_editar_insumo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
+    '''
+    def crear_proveedores_testeo(self):
+        proveedor1 = Proveedor(1, "Calimax")
+        proveedor2 = Proveedor(2, "Central de abastos")
+
+        return [proveedor1, proveedor2]
+
+    def crear_marcas_testeo(self):
+        marca1 = Marca(1, "El Rosal")
+        marca2 = Marca(2, "Tradi-Pan")
+
+        return [marca1, marca2]
+
+    def crear_tipos_insumo_testeo(self):
+        tipo1 = TipoInsumo("HARI", "Harinas")
+        tipo2 = TipoInsumo("PANA", "Panadería")
+
+        return [tipo1, tipo2]
+
+    def crear_insumos_testeo(self):
+        insumo1 = Insumo(1, "Harina de Trigo", umbral=5, stock=10, tipo_insumo=self.tipos_insumo_testeo[0], marca=self.marcas_testeo[0])
+        insumo2 = Insumo(2, "Levadura", umbral=5, stock=10, tipo_insumo=self.tipos_insumo_testeo[1], marca=self.marcas_testeo[1])
+
+        return [insumo1, insumo2]
+
+    def crear_compras_testeo(self):
+        fecha1 = datetime.date.strptime("04-11-2027", "%d-%m-%Y")
+        fecha1 = datetime.date.strftime(fecha1, "%d-%m-%Y")
+
+        fecha2 = datetime.date.strptime("31-12-2027", "%d-%m-%Y")
+        fecha2 = datetime.date.strftime(fecha2, "%d-%m-%Y")
+
+        compra1 = Compra(1, fecha1, proveedor=self.proveedores_testeo[0])
+        compra2 = Compra(2, fecha2, proveedor=self.proveedores_testeo[1])
+
+        compra1.agregar_insumo_compra(self.insumos_testeo[0], 10, 10, "kilos", 500, 50, fecha2, fecha1)
+        compra1.agregar_insumo_compra(self.insumos_testeo[1], 20, 20, "kilos", 750, 37.5, fecha2, fecha1)
+
+        compra1.total_bruto = 500 + 750
+
+        return [compra1, compra2]
+        '''
 
     def mostrar_lista_compras(self, lista_compras=None):
         """
         Conecta con la capa de servicios para obtener la lista de compras y crea un elemento de lista para cada una.
         """
-        if self.compras_testeo is None:
-            self.compras_testeo = self.servicio_compra.obtener_compras()
+        self.compras_testeo = self.servicio_compra.obtener_compras()
 
         self.vista.mostrar_todas_compras(self.pagina_actual_lista_compras,
                                         self.obtener_total_paginas_lista_compras(self.compras_testeo))
@@ -73,51 +105,29 @@ class ControladorCompras:
             lista_compras, hay_prox_pag = self.paginar_lista_compras(self.compras_testeo,
                                                                     self.pagina_actual_lista_compras)
 
-        if self.pagina_actual_lista_compras == 1:
-            idx_ui = 0
-        else:
-            consola_size = self.vista.console.size[1]
-            size_sin_prompt = consola_size - 6
-            lineas_disp = size_sin_prompt - 7
-
-            idx_ui = (self.pagina_actual_lista_compras - 1) * lineas_disp
-
         for compra in lista_compras:
-            idx_ui += 1
-            self.vista.crear_elemento_tabla_compras(compra, idx_ui)
+            self.vista.crear_elemento_tabla_compras(compra)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_compras_prompt()
 
     def mostrar_detalles_compra(self, compra_num=None):
-        if compra_num is None and self.compra_actual is None:
-            self.vista.mostrar_abrir_detalles_prompt(self.servicio_compra.obtener_compras())
-
         if self.compra_actual is None:
-            self.compra_actual = self.compras_testeo[int(compra_num)-1]
+            # Si no tenemos un menú actual, busca el menú por el num pasado como arg
+            # idealmente con un servicio pero por ahora uso un loop para testeo
+            for compra in self.compras_testeo:
+                if str(compra.num) == compra_num:
+                    # El menú encontrado se convierte en el nuevo menú actual
+                    self.compra_actual = copy.deepcopy(compra)
+                    break
 
         self.mapear_detalle_insumo()
-
+        self.actualizar_total_bruto()
         # llama la función para crear la vista de tabla de detalles y le pasa los datos del formulario actual
-        lista_compras, prox_pag = self.paginar_lista_detalles(self.compra_actual.lista_compras,
-                                                               self.pagina_actual_lista_detalles)
-        total_paginas_detalles = self.obtener_total_paginas_detalles(self.compra_actual.lista_compras)
-
-        self.vista.mostrar_detalles_compra(self.compra_actual, lista_compras, self.pagina_actual_lista_detalles, total_paginas_detalles, datos_editados=copy.deepcopy(self.formulario),
+        self.vista.mostrar_detalles_compra(self.compra_actual, datos_editados=copy.deepcopy(self.formulario),
                                         mapa_insumos=self.insumo_idx)
 
-        compra_utilizada = False
-
-        for detalle in self.compra_actual.lista_compras:
-            if detalle.cantidad_actual != detalle.cantidad_comprada:
-                compra_utilizada = True
-                break
-
-        if compra_utilizada:
-            self.vista.crear_banda_opciones_detalles_edicion_des()
-            self.vista.refrescar_pantalla()
-            self.vista.mostrar_opciones_detalles_edicion_des_prompt()
-        elif self.usuario_esta_editando():
+        if self.usuario_esta_editando():
             # si actualmente el formulario tiene info, muestra las opciones de edicion y su prompt
             self.vista.crear_banda_opciones_editar()
             self.vista.refrescar_pantalla()
@@ -140,40 +150,37 @@ class ControladorCompras:
         self.vista.refrescar_pantalla()
 
     def guardar_editar_compra(self):
-        if self.compra_actual.num == 0:
-            try:
-                self.servicio_compra.registrar_compra(self.compra_actual)
-                compra_num = self.servicio_compra.obtener_compras()[-1].num
-            except ValueError as err:
-                self.vista.mostrar_mensaje_error_validacion(str(err))
-        else:
-            try:
-                # llama al servicio para que valide, calcule y guarde en BD
-                self.servicio_compra.actualizar_compra(self.compra_actual)
-                compra_num = self.compra_actual.num
-                # se refresca la lista de compras desde la BD
-                self.compras_testeo = self.servicio_compra.obtener_compras()
-            except ValueError as err:
-                # si el servicio lanza un error de validacion
-                self.vista.refrescar_pantalla()
-                print(f'Error: {err}')
-                time.sleep(2)
-                self.mostrar_detalles_compra()
-
-        self.cancelar_edicion_actual()
-        self.compra_actual = self.servicio_compra.obtener_compra_por_numero(compra_num)
-        self.compras_testeo = self.servicio_compra.obtener_compras()
-        self.mostrar_detalles_compra()
+        ## Cambia los datos del formulario en el objeto actual
+        ## para testeo, aquí debería llamar a un servicio
+        #lista_num = [compra.num for compra in self.compras_testeo]
+#
+        #if self.compra_actual.num in lista_num:
+        #    idx = lista_num.index(self.compra_actual.num)
+        #    self.compras_testeo.pop(idx)
+        #    self.compras_testeo.insert(idx, copy.deepcopy(self.compra_actual))
+        #else:
+        #    self.compras_testeo.append(copy.deepcopy(self.compra_actual))
+        ## resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
+        ## esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
+        #menu_actual_num = str(self.compra_actual.num)
+        #self.cancelar_edicion_actual()
+        #self.mostrar_detalles_compra(menu_actual_num)
+        try:
+            # llama al servicio para que valide, calcule y guarde en BD
+            self.compra_actual = self.servicio_compra.actualizar_compra(self.compra_actual)
+            # se refresca la lista de compras desde la BD
+            #menu_actual_num = str(self.compra_actual.num)
+            self.compras_testeo = self.servicio_compra.obtener_compras()
+            self.cancelar_edicion_actual()
+            self.mostrar_lista_compras()
+        except ValueError as err:
+            # si el servicio lanza un error de validacion
+            self.vista.refrescar_pantalla()
+            print(f'Error: {err}')
 
     def cancelar_edicion_actual(self):
         # resetea formulario y receta actual
         self.compra_actual = None
-        self.pagina_actual_lista_compras = 1
-        self.pagina_actual_lista_detalles = 1
-        self.pagina_actual_lista_insumos = 1
-        self.pagina_actual_lista_marcas = 1
-        self.pagina_actual_lista_proveedores = 1
-        self.pagina_actual_lista_tipos_insumo = 1
         self.formulario = {"insumos":[], "item_borrado":False}
 
     def usuario_esta_editando(self):
@@ -183,11 +190,11 @@ class ControladorCompras:
         return False
 
     def agregar_edicion_insumos(self, detalle_comp):
-        lista_ins_editados_nombre = [com.insumo.num for com in self.formulario["insumos"]]
+        lista_ins_editados_nombre = [com.insumo.nombre for com in self.formulario["insumos"]]
 
         if detalle_comp.insumo.nombre in lista_ins_editados_nombre:
             # checa si un ingrediente ya fue editado antes y remueve esa edicion para agregar la nueva
-            obj = [ins for ins in self.formulario["insumos"] if ins.insumo.num == detalle_comp.insumo.num][0]
+            obj = [ins for ins in self.formulario["insumos"] if ins.insumo.nombre == detalle_comp.insumo.nombre][0]
             self.formulario["insumos"].remove(obj)
 
         self.formulario["insumos"].append(detalle_comp)
@@ -219,40 +226,34 @@ class ControladorCompras:
                 self.vista.mostrar_abrir_detalles_prompt(self.servicio_compra.obtener_compras())
             case "2":
                 # Aquí crea el registro de una nueva compra
-                lista_proveedores = self.servicio_compra.obtener_proovedores()
-
-                pagina_prov, prox_pag = self.paginar_lista_detalles(lista_proveedores, self.pagina_actual_lista_proveedores)
-                total_pag_prov = self.obtener_total_paginas_detalles(lista_proveedores)
-
-                self.vista.mostrar_proveedores_disponibles(pagina_prov, self.pagina_actual_lista_proveedores, total_pag_prov)
+                self.proveedores_testeo = self.servicio_compra.obtener_proovedores()
+                self.compras_testeo = self.servicio_compra.obtener_compras()
+                self.vista.mostrar_proveedores_disponibles(self.proveedores_testeo)
                 self.vista.refrescar_pantalla()
 
-                opciones = [str(idx+1) for idx in range(len(lista_proveedores))]
-                proveedor_num = self.vista.mostrar_prompt_registrar_compra(opciones)
+                proveedor_num = self.vista.mostrar_prompt_registrar_compra()
+
+                if proveedor_num == "0":
+                    nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
+
+                    if nuevo_prov_nom:
+                        idx = len(self.proveedores_testeo) + 1
+                        self.proveedores_testeo.append(Proveedor(idx, nuevo_prov_nom))
+                        proveedor_num = idx
 
                 if proveedor_num:
-                    if proveedor_num == "0":
-                        nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
+                    # debería llamar al servicio para crear una compra nueva
+                    num = len(self.compras_testeo) + 1
+                    for prov in self.proveedores_testeo:
+                        if prov.num == int(proveedor_num):
+                            # formateando al formato adecuado de día-mes-año
+                            fecha_actual = datetime.date.strftime(datetime.date.today(), "%d-%m-%Y")
 
-                        if nuevo_prov_nom:
-                            nuevo_prov = Proveedor(0, nuevo_prov_nom)
-                            self.servicio_compra.crear_proveedor(nuevo_prov)
-                            proveedor_obj = self.servicio_compra.obtener_proveedor_por_nombre(nuevo_prov.nombre)
-                    else:
-                        proveedor_obj = lista_proveedores[int(proveedor_num)-1]
-
-                    # formateando al formato adecuado de día-mes-año
-                    fecha_actual = datetime.date.strftime(datetime.date.today(), "%d-%m-%Y")
-
-                    self.compra_actual = copy.deepcopy(Compra(0, fecha_actual, 0, proveedor=copy.deepcopy(proveedor_obj)))
-                    self.mostrar_formulario_registrar_compra()
-
-                    self.pagina_actual_lista_proveedores = 1
-                    self.mostrar_detalles_compra()
-                else:
-                    self.pagina_actual_lista_proveedores = 1
-                    self.mostrar_lista_compras()
-
+                            self.compra_actual = copy.deepcopy(Compra(num, fecha_actual, 0, proveedor=copy.deepcopy(prov)))
+                            self.mostrar_formulario_registrar_compra()
+                            self.servicio_compra.registrar_compra(compra_nueva=self.compra_actual)
+                self.mostrar_lista_compras()
+                #self.mostrar_detalles_compra()
             case "3":
                 self.vista.crear_banda_opciones_busqueda_av()
                 self.vista.refrescar_pantalla()
@@ -274,11 +275,14 @@ class ControladorCompras:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_opciones_editar_prompt()
             case "3":
-                #borrar compra
+                # borrar compra
                 borrar = self.vista.mostrar_prompt_eliminar_compra_prompt()
                 if borrar:
-                    self.servicio_compra.eliminar_compra(self.compra_actual.num)
-                    self.compras_testeo = self.servicio_compra.obtener_compras()
+                    for compra in self.compras_testeo:
+                        if compra.num == self.compra_actual.num:
+                            self.compras_testeo.remove(compra)
+                            break
+
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_compras()
             case "m":
@@ -290,54 +294,29 @@ class ControladorCompras:
             case "1":
                 # buscar por fecha
                 fecha = self.vista.mostrar_buscar_por_fecha_prompt()
-                resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
 
-                while not resultado_val_fecha[0]:
-                    self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha[1])
-                    fecha = self.vista.mostrar_buscar_por_fecha_prompt()
-                    resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
+                # se requiere validar fecha aquí
+                # se busca la fecha validada con un servicio y se asigna esa lista resultante a self.compras_testo
 
-                try:
-                    resultados_busqueda = self.servicio_compra.obtener_compras_por_fecha(fecha)
-                    self.compras_testeo = resultados_busqueda
-                except IndexError, Error:
-                    self.vista.refrescar_pantalla()
-                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
-                finally:
-                    self.mostrar_lista_compras()
+                self.mostrar_lista_compras()
 
             case "2":
                 # buscar por proveedor
-                lista_proveedores = self.servicio_compra.obtener_proovedores()
-
-                pagina, prox_pag = self.paginar_lista_detalles(lista_proveedores, self.pagina_actual_lista_proveedores)
-                total_pag = self.obtener_total_paginas_detalles(lista_proveedores)
-
-                self.vista.mostrar_proveedores_disponibles(pagina, self.pagina_actual_lista_proveedores, total_pag)
+                self.vista.mostrar_proveedores_disponibles(self.proveedores_testeo)
                 self.vista.refrescar_pantalla()
 
-                opciones_prov = [str(idx+1) for idx in range(len(lista_proveedores))]
-                seleccion = self.vista.mostrar_buscar_por_proveedor(opciones_prov)
+                opciones_prov = [str(proveedor.num) for proveedor in self.proveedores_testeo]
+                prov_num = self.vista.mostrar_buscar_por_proveedor(opciones_prov)
 
-                prov_num = lista_proveedores[int(seleccion)-1].num
-                self.pagina_actual_lista_proveedores = 1
                 # usa el prov_num para buscar compras por proveedor, y se asigna a self.compras_testeo como arriba
-                try:
-                    resultados_busqueda = self.servicio_compra.obtener_compras_por_proveedor(prov_num)
-                except IndexError, Error:
-                    resultados_busqueda = []
-
-                if len(resultados_busqueda):
-                    self.compras_testeo = resultados_busqueda
-                else:
-                    self.vista.refrescar_pantalla()
-                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
 
                 self.mostrar_lista_compras()
 
             case "3":
                 # buscar todos (restaurar búsqueda)
-                self.compras_testeo = self.servicio_compra.obtener_compras()
+
+                # con un servicio asigna a self.compras_testo todos los menús como:
+                # self.compras_testo = self.servicio.obtener_compras()
 
                 self.mostrar_lista_compras()
 
@@ -350,283 +329,242 @@ class ControladorCompras:
         match seleccion:
             case "1":
                 # abre opciones para editar proveedor
-                lista_proveedores = self.servicio_compra.obtener_proovedores()
-
-                pagina, prox_pag = self.paginar_lista_detalles(lista_proveedores, self.pagina_actual_lista_proveedores)
-                total_pag = self.obtener_total_paginas_detalles(lista_proveedores)
-
-                self.vista.mostrar_proveedores_disponibles(pagina, self.pagina_actual_lista_proveedores, total_pag)
+                self.vista.mostrar_proveedores_disponibles(self.proveedores_testeo)
                 self.vista.refrescar_pantalla()
 
-                opciones = [str(idx+1) for idx in range(len(lista_proveedores))]
+                opciones = [str(proveedor.num) for proveedor in self.proveedores_testeo]
                 num_prov = self.vista.mostrar_editar_proveedor_prompt(opciones)
 
                 #assert num_prov == 0, f'Hacer proveedor nuevo.'
                 if num_prov == "0":
                     nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
-                    resultado_val_prov = self.validador.validar_nombre_proveedor(nuevo_prov_nom)
-
-                    while not resultado_val_prov[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_prov[1])
-                        nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
-                        resultado_val_prov = self.validador.validar_nombre_proveedor(nuevo_prov_nom)
-
-                    if resultado_val_prov[1]:
-                        proveedor = Proveedor(0, resultado_val_prov[1])
-                        self.servicio_compra.crear_proveedor(proveedor)
-                        proveedor_registrado = self.servicio_compra.obtener_proveedor_por_nombre(proveedor.nombre)
-                        self.compra_actual.proveedor = proveedor_registrado
+                    if nuevo_prov_nom:
+                        idx = len(self.proveedores_testeo) + 1
+                        proveedor = Proveedor(idx,nuevo_prov_nom)
+                        self.proveedores_testeo.append(proveedor)
+                        #if prov.num == int(num_prov):
+                        self.compra_actual.proveedor = copy.deepcopy(proveedor)
                         self.formulario["proveedor"] = proveedor.nombre
+                        num_prov = idx
 
                 elif num_prov:
-                    proveedor_obj = lista_proveedores[int(num_prov)-1]
-                    self.compra_actual.proveedor = copy.deepcopy(proveedor_obj)
-                    self.formulario["proveedor"] = proveedor_obj.nombre
+                    for prov in self.proveedores_testeo:
+                        if prov.num == int(num_prov):
+                            self.compra_actual.proveedor = copy.deepcopy(prov)
+                            self.formulario["proveedor"] = prov.nombre
 
-                self.pagina_actual_lista_proveedores = 1
                 self.mostrar_detalles_compra()
             case "2":
+                
                 # agregar insumo
-                lista_insumos_actuales = {det.insumo.nombre:det.insumo.marca.num for det in self.compra_actual.lista_compras}
+                lista_insumos_actuales = [det.insumo.nombre for det in self.compra_actual.lista_compras]
+                '''idx_ins_disp = {i + 1: self.insumos_testeo[i] for i in range(len(self.insumos_testeo)) if
+                                self.insumos_testeo[i].nombre not in lista_insumos_actuales}
+
+                # hago una lista de solo los índices de los insumos disponibles para pasarla a la vista como
+                # opciones válidas de input para el usuario
+                # hago otra lista con solo los nombres de los insumos para pasarla a la función que va a mostrar al
+                # usuario los insumos disponibles
+                opciones = [str(i) for i in idx_ins_disp]
+                lista_ins_disp = [idx_ins_disp[idx] for idx in idx_ins_disp]
+
+                self.vista.mostrar_insumos_disponibles(lista_ins_disp)
+                self.vista.refrescar_pantalla()
+
+                # pedir resto de detalles
+                num_insumo = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
+                '''
                 # 1. Numeramos del 1 al N solo los disponibles
-                todos_insumos = self.servicio_inventario.obtener_insumos()
-                lista_ins_disp = []
-
-                for ins in todos_insumos:
-                    if ins.nombre in lista_insumos_actuales:
-                        if ins.marca.num != lista_insumos_actuales[ins.nombre]:
-                            lista_ins_disp.append(ins)
-                    elif ins.nombre not in lista_insumos_actuales:
-                        lista_ins_disp.append(ins)
-
-                # lista_ins_disp = [
-                #     ins
-                #     for ins in todos_insumos
-                #     if (ins.nombre in lista_insumos_actuales and ins.marca != lista_insumos_actuales[ins.nombre]) or ins.nombre not in lista_insumos_actuales
-                # ]
+                lista_ins_disp = [
+                    ins
+                    for ins in self.insumos_testeo
+                    if ins.nombre not in lista_insumos_actuales
+                ]
                 idx_ins_disp = {i + 1: ins for i, ins in enumerate(lista_ins_disp)}
+
                 opciones = [str(k) for k in idx_ins_disp.keys()]
 
-                pagina, prox_pag = self.paginar_lista_detalles(lista_ins_disp, self.pagina_actual_lista_insumos)
-                total_pag = self.obtener_total_paginas_detalles(lista_ins_disp)
-
-                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
+                self.vista.mostrar_insumos_disponibles(lista_ins_disp)
                 self.vista.refrescar_pantalla()
 
                 num_insumo = self.vista.mostrar_seleccionar_insumo_prompt(opciones)
-                self.pagina_actual_lista_insumos = 1
-                insumo_obj = None
 
                 # Si el usuario quiere crear un insumo, se desvía el flow de la creación de detalle compra
                 # para crearlo de cero
+                '''
                 if num_insumo == "0":
-                    nombre = self.vista.mostrar_crear_insumo_nombre_prompt()
-                    resultado_val_nombre = self.validador.validar_nombre_insumo(nombre)
-
-                    while not resultado_val_nombre[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
-                        nombre = self.vista.mostrar_crear_insumo_nombre_prompt()
-                        resultado_val_nombre = self.validador.validar_nombre_insumo(nombre)
-
-                    umbral = self.vista.mostrar_crear_insumo_umbral_prompt()
-                    resultado_val_umbral = self.validador.validar_nombre_insumo(umbral)
-
-                    while not resultado_val_umbral[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_umbral[1])
-                        umbral = self.vista.mostrar_crear_insumo_umbral_prompt()
-                        resultado_val_umbral = self.validador.validar_nombre_insumo(umbral)
-
-                    nombre, umbral = resultado_val_nombre[1], resultado_val_umbral[1]
+                    nombre, umbral = self.vista.mostrar_crear_insumo_prompt()
 
                     if nombre and umbral:
-                        lista_marcas = self.servicio_inventario.obtener_marcas()
-                        pagina, prox_pag = self.paginar_lista_detalles(lista_marcas, self.pagina_actual_lista_marcas)
-                        total_pag = self.obtener_total_paginas_detalles(lista_marcas)
-
-                        self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_lista_marcas, total_pag)
+                        self.vista.mostrar_marcas_disponibles(self.marcas_testeo)
                         self.vista.refrescar_pantalla()
 
                         marca = None
 
-                        opciones_marca = [str(idx+1) for idx in range(len(lista_marcas))]
+                        opciones_marca = [str(marca.num) for marca in self.marcas_testeo]
                         marca_num = self.vista.mostrar_seleccionar_marca_prompt(opciones_marca)
 
-                        self.pagina_actual_lista_marcas = 1
                         # Aquí hay otra desviación para crear una marca nueva
                         if marca_num == "0":
-                            marca_validada = False
-                            nueva_marca_nom = ""
-
-                            while not marca_validada:
-                                nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
-                                resultado_val_marca = self.validador.validar_nombre_marca(nueva_marca_nom)
-
-                                while not resultado_val_marca[0]:
-                                    self.vista.mostrar_mensaje_error_validacion(resultado_val_marca[1])
-                                    nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
-                                    resultado_val_marca = self.validador.validar_nombre_marca(nueva_marca_nom)
-
-                                if self.servicio_inventario.marca_existe(resultado_val_marca[1]):
-                                    self.vista.mostrar_mensaje_nombre_duplicado()
-                                else:
-                                    marca_validada = True
-                                    nueva_marca_nom = resultado_val_marca[1]
-
-                            self.servicio_inventario.crear_marca(nueva_marca_nom)
-                            marca = self.servicio_inventario.obtener_marca_por_nombre(nueva_marca_nom)
+                            nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                            idx = len(self.marcas_testeo) + 1
+                            marca = Marca(idx, nueva_marca_nom)
+                            self.marcas_testeo.append(marca)
                         else:
-                            marca = lista_marcas[int(marca_num)-1]
+                            for marca_obj in self.marcas_testeo:
+                                if marca_obj.num == int(marca_num):
+                                    marca = marca_obj
 
-                        lista_tipos_insumo = self.servicio_inventario.obtener_tipos_insumo()
-                        dict_tipo_insumo = {i + 1: lista_tipos_insumo[i] for i in
-                                            range(len(lista_tipos_insumo))}
+                        dict_tipo_insumo = {i + 1: self.tipos_insumo_testeo[i] for i in
+                                            range(len(self.tipos_insumo_testeo))}
                         opciones_tipo = [str(idx) for idx in dict_tipo_insumo]
 
-                        pagina, prox_pag = self.paginar_lista_detalles(lista_tipos_insumo, self.pagina_actual_lista_tipos_insumo)
-                        pag_total = self.obtener_total_paginas_detalles(lista_tipos_insumo)
-
-                        self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_lista_tipos_insumo, pag_total)
+                        self.vista.mostrar_tipos_insumo_disponibles(self.tipos_insumo_testeo)
                         self.vista.refrescar_pantalla()
 
                         tipo_num = self.vista.mostrar_seleccionar_tipo_insumo_prompt(opciones_tipo)
                         tipo = None
 
-                        self.pagina_actual_lista_tipos_insumo = 1
                         # Aquí se desvía para crear un nuevo tipo de insumo
                         if tipo_num == "0":
-                            tipo_validado = False
-                            nuevo_tipo_nom = ""
+                            nuevo_tipo_nom = self.vista.mostrar_crear_tipo_insumo_prompt()
+                            tipo = TipoInsumo(nuevo_tipo_nom[:3], nuevo_tipo_nom)
+                            self.tipos_insumo_testeo.append(tipo)
 
-                            while not tipo_validado:
-                                nuevo_tipo_nom = self.vista.mostrar_crear_tipo_insumo_prompt()
-                                resultado_val_tipo_ins = self.validador.validar_nombre_tipo_ins(nuevo_tipo_nom)
-
-                                while not resultado_val_tipo_ins[0]:
-                                    self.vista.mostrar_mensaje_error_validacion(resultado_val_tipo_ins[1])
-                                    nuevo_tipo_nom = self.vista.mostrar_crear_tipo_insumo_prompt()
-                                    resultado_val_tipo_ins = self.validador.validar_nombre_tipo_ins(nuevo_tipo_nom)
-
-                                if self.servicio_inventario.tipo_insumo_existe(resultado_val_tipo_ins[1]):
-                                    self.vista.mostrar_mensaje_nombre_duplicado()
-                                else:
-                                    nuevo_tipo_nom = resultado_val_tipo_ins[1]
-                                    tipo_validado = True
-
-                            self.servicio_inventario.crear_tipo_insumo(nuevo_tipo_nom)
-                            tipo = self.servicio_inventario.obtener_tipo_insumo_por_nombre(nuevo_tipo_nom)
                         else:
-                            tipo = dict_tipo_insumo[int(tipo_num)]
+                            for idx, tipo_obj in dict_tipo_insumo.items():
+                                if idx == tipo_num:
+                                    tipo = dict_tipo_insumo[idx]
 
+                        idx_insumo = len(self.insumos_testeo) + 1'''
+
+
+                # ruben:
+                if num_insumo == "0":
+                    nombre, umbral = self.vista.mostrar_crear_insumo_prompt()
+                    if nombre and umbral:
+                        self.vista.mostrar_marcas_disponibles(self.marcas_testeo)
+                        self.vista.refrescar_pantalla()
+
+                        marca = None
+
+                        opciones_marca = [str(marca.num) for marca in self.marcas_testeo]
+                        marca_num = self.vista.mostrar_seleccionar_marca_prompt(opciones_marca)
+
+                        # aqui se crea la marca si asi se elige
+                        # si es marca nueva, creamos el objeto marca local (el metodo del dao le va a dar su num real)
+                        if marca_num == "0":
+                            nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                            marca = Marca(0, nueva_marca_nom)
+                            #idx = len(self.marcas_testeo) + 1
+                            #marca = Marca(idx, nueva_marca_nom)
+                            #self.marcas_testeo.append(marca)
+                        else:
+                            #for marca_obj in self.marcas_testeo:
+                            #    if marca_obj.num == int(marca_num):
+                            #        marca = marca_obj
+                            marca = next((m for m in self.marcas_testeo if m.num == int(marca_num)),None)
+
+
+                        self.vista.mostrar_tipos_insumo_disponibles(self.tipos_insumo_testeo)
+                        self.vista.refrescar_pantalla()
+
+                        opciones_tipo = [str(i + 1) for i in range(len(self.tipos_insumo_testeo))]
+                        tipo_num = self.vista.mostrar_seleccionar_tipo_insumo_prompt(opciones_tipo)
+                        #dict_tipo_insumo = {i + 1: self.tipos_insumo_testeo[i] for i in range(len(self.tipos_insumo_testeo))}
+                        #opciones_tipo = [str(idx) for idx in dict_tipo_insumo]
+
+                        #tipo_num = self.vista.mostrar_seleccionar_tipo_insumo_prompt(opciones_tipo)
+                        #tipo = None
+
+                        # aqui se crea el insumo si no existe y hacemos un objeto local (su id lo dara el dao)
+                        if tipo_num == "0":
+                            nuevo_tipo_nom = self.vista.mostrar_crear_tipo_insumo_prompt()
+                            tipo = TipoInsumo("", nuevo_tipo_nom)
+                            #tipo = TipoInsumo(nuevo_tipo_nom[:3], nuevo_tipo_nom)
+                            #self.tipos_insumo_testeo.append(tipo)
+
+                        else:
+                            tipo = self.tipos_insumo_testeo[int(tipo_num) - 1]
+                            #for idx, tipo_obj in dict_tipo_insumo.items():
+                            #    if idx == tipo_num:
+                            #        tipo = dict_tipo_insumo[idx]
+
+                        #idx_insumo = len(self.insumos_testeo) + 1
+                        
+                        try:
+                            # llama al servicio para registrar insumo
+                            nuevo_insumo = self.servicio_compra.registrar_nuevo_insumo(
+                                nombre=nombre,
+                                umbral=float(umbral),
+                                tipo_insumo=tipo,
+                                marca=marca
+                            )
+
+                            # se actualizan las listas locales con lo que existe en la bd
+                            self.insumos_testeo.append(nuevo_insumo)
+                            self.marcas_testeo = self.servicio_inventario.obtener_marcas()
+                            self.tipos_insumo_testeo = self.servicio_inventario.obtener_tipos_insumo()
+
+                            # obtenemos el id real del insumo recien creado de la bd
+                            num_insumo = str(nuevo_insumo.num)
+                        except ValueError as err:
+                            self.vista.refrescar_pantalla()
+                            print(f"[bold red]{err}[/bold red]")
+                            time.sleep(3)
+                            self.mostrar_detalles_compra()
+                            return
                         # se asignan todos los valores escogidos y/o creados por el usuario
                         # dependiendo del caso a un obj insumo nuevo, el cual se agrega a la lista
                         # de testeo, el idx de este insumo nuevo se guarda para que al llegar al
                         # sig. if aquí debajo, se jale el dato y ahora sí lo use para crear
                         # un nuevo detalle de compra
 
-                        # obtiene el del insumo en la BD
-                        try:
-                            self.servicio_inventario.crear_insumo(Insumo(0, nombre, umbral, 0, tipo, marca))
-                            insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre_marca(nombre, marca.nombre)
-                        except ValueError:
-                            self.vista.mostrar_mensaje_error_validacion("Error: Este insumo ya existe")
-                            res = self.vista.mostrar_mensaje_solucionar_insumo_duplicado()
+                        # obtiene el del insumo en la BD                        
+                        #nuevo_insumo = Insumo(idx_insumo, nombre, umbral, 0, tipo, marca)
+                        #self.insumos_testeo.append(copy.deepcopy(nuevo_insumo))
 
-                            if res == "S":
-                                insumo_obj = self.servicio_inventario.obtener_insumo_por_nombre_marca(nombre, marca.nombre)
+                        num_insumo = idx_insumo
 
-                elif num_insumo:
-                    insumo_obj = idx_ins_disp[int(num_insumo)]
+                if num_insumo:
+                    '''
+                    #assert not self.insumos_testeo, [i.nombre for i in lista_ins_disp]
+                    for insumo in self.insumos_testeo:
+                        if insumo.num == int(num_insumo):
+                            monto_unitario, fecha_compra, fecha_caducidad, cantidad, unidad_medida = self.vista.mostrar_agregar_insumo_prompt()
+                            #assert False ,f'{[i.nombre for i in lista_ins_disp]} - {insumo.nombre}'
+                            # digamos que los inputs de fecha están validados, entonces primero toma cada str
+                            # y lo pasa a tipo date, luego el tipo date se pasa al formato adecuado de día-mes-año
+                            fecha_caducidad = datetime.date.strptime(fecha_caducidad, "%d-%m-%Y")
+                            #fecha_caducidad = datetime.date.strftime(fecha_caducidad, "%Y-%m-%d")
+                            fecha_compra = datetime.date.strptime(fecha_compra, "%d-%m-%Y")
+                            #fecha_compra = datetime.date.strftime(fecha_compra, "%Y-%m-%d")
+                            importe = float(monto_unitario) * float(cantidad)
+                            self.compra_actual.agregar_insumo_compra(insumo, float(cantidad), float(cantidad), unidad_medida,
+                                                                    float(importe), float(monto_unitario),
+                                                                    fecha_caducidad, fecha_compra)
+                            self.agregar_edicion_insumos(copy.deepcopy(self.compra_actual.lista_compras[-1]))
 
-                if insumo_obj:
-                    # pide la fecha de compra
-                    fecha_compra = self.vista.mostrar_agregar_insumo_fecha_com_prompt()
-                    resultado_val_fecha_com = self.validador.validar_formato_fecha(fecha_compra)
+                self.mostrar_detalles_compra()
+                '''
+                    insumo = idx_ins_disp[int(num_insumo)]
 
-                    validacion_congruencia = False
-                    while not resultado_val_fecha_com[0] or not validacion_congruencia:
-                        # la congruencia es que la fecha de caducidad no sea antes de hoy
-                        try:
-                            if not datetime.datetime.strptime(str(fecha_compra), "%d-%m-%Y").date() < datetime.date.today():
-                                validacion_congruencia = True
-                                continue
-                            else:
-                                self.vista.mostrar_mensaje_error_validacion("Error: La fecha de compra no puede ser anterior a hoy.")
-                        except ValueError:
-                            self.vista.mostrar_mensaje_error_validacion("Error: La fecha no es válida")
-                            fecha_compra = self.vista.mostrar_agregar_insumo_fecha_com_prompt()
-                            resultado_val_fecha_com = self.validador.validar_formato_fecha(fecha_compra)
-                            continue
+                    (
+                        monto_unitario,
+                        fecha_compra,
+                        fecha_caducidad,
+                        cantidad,
+                        unidad_medida,
+                    ) = self.vista.mostrar_agregar_insumo_prompt()
 
-                        if not resultado_val_fecha_com[0]:
-                            self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha_com[1])
-                        fecha_compra = self.vista.mostrar_agregar_insumo_fecha_com_prompt()
-                        resultado_val_fecha_com = self.validador.validar_formato_fecha(fecha_compra)
-
-                    fecha_compra = resultado_val_fecha_com[1]
-
-                    # pide la cantidad del insumo
-                    cantidad = self.vista.mostrar_agregar_insumo_cantidad_com_prompt()
-                    resultado_val_cant_com = self.validador.validar_cantidad_insumo(cantidad)
-
-                    while not resultado_val_cant_com[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_cant_com[1])
-                        cantidad = self.vista.mostrar_agregar_insumo_cantidad_com_prompt()
-                        resultado_val_cant_com = self.validador.validar_cantidad_insumo(cantidad)
-
-                    cantidad = resultado_val_cant_com[1]
-
-                    # pide la unidad de medida
-                    unidad_medida = self.vista.mostrar_agregar_insumo_unidad_prompt()
-                    resultado_val_unidad = self.validador.validar_unidad_medida(unidad_medida)
-
-                    while not resultado_val_unidad[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_unidad[1])
-                        unidad_medida = self.vista.mostrar_agregar_insumo_unidad_prompt()
-                        resultado_val_unidad = self.validador.validar_unidad_medida(unidad_medida)
-
-                    unidad_medida = resultado_val_unidad[1]
-
-                    # pide el monto
-                    monto_unitario = self.vista.mostrar_agregar_insumo_monto_prompt()
-                    resultado_val_monto = self.validador.validar_monto_insumo(monto_unitario)
-
-                    while not resultado_val_monto[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_monto[1])
-                        monto_unitario = self.vista.mostrar_agregar_insumo_monto_prompt()
-                        resultado_val_monto = self.validador.validar_monto_insumo(monto_unitario)
-
-                    monto_unitario = resultado_val_monto[1]
-
-                    # pide la fecha de caducidad
-                    fecha_caducidad = self.vista.mostrar_agregar_insumo_fecha_cad_prompt()
-                    resultado_val_caducidad = self.validador.validar_formato_fecha(fecha_caducidad)
-
-                    validacion_congruencia = False
-                    while not resultado_val_caducidad[0] or not validacion_congruencia:
-                        try:
-                            if not datetime.datetime.strptime(str(fecha_caducidad),
-                                                              "%d-%m-%Y").date() < datetime.date.today():
-                                validacion_congruencia = True
-                                continue
-                            else:
-                                self.vista.mostrar_mensaje_error_validacion(
-                                    "Error: La fecha de caducidad no puede ser anterior a hoy.")
-                        except ValueError:
-                            self.vista.mostrar_mensaje_error_validacion("Error: La fecha no es válida")
-                            fecha_caducidad = self.vista.mostrar_agregar_insumo_fecha_cad_prompt()
-                            resultado_val_caducidad = self.validador.validar_formato_fecha(fecha_caducidad)
-                            continue
-
-                        if not resultado_val_caducidad[0]:
-                            self.vista.mostrar_mensaje_error_validacion(resultado_val_caducidad[1])
-                        fecha_caducidad = self.vista.mostrar_agregar_insumo_fecha_cad_prompt()
-                        resultado_val_caducidad = self.validador.validar_formato_fecha(fecha_caducidad)
-
-                    fecha_caducidad = resultado_val_caducidad[1]
+                    fecha_caducidad = datetime.datetime.strptime(
+                        fecha_caducidad, "%d-%m-%Y"
+                    ).date()
+                    fecha_compra = datetime.datetime.strptime(fecha_compra, "%d-%m-%Y").date()
 
                     importe = float(monto_unitario) * float(cantidad)
                     self.compra_actual.agregar_insumo_compra(
-                        insumo_obj,
+                        insumo,
                         float(cantidad),
                         float(cantidad),
                         unidad_medida,
@@ -638,8 +576,6 @@ class ControladorCompras:
                     self.agregar_edicion_insumos(
                         copy.deepcopy(self.compra_actual.lista_compras[-1])
                     )
-                    self.actualizar_total_bruto()
-
                 self.mostrar_detalles_compra()
             case "3":
                 # Abre menú de editar insumo
@@ -660,7 +596,7 @@ class ControladorCompras:
                         if detalle.insumo.nombre == nombre:
                             self.compra_actual.lista_compras.remove(detalle)
                             self.formulario["item_borrado"] = True
-                            self.actualizar_total_bruto()
+
                 self.mapear_detalle_insumo()
                 self.mostrar_detalles_compra()
 
@@ -686,24 +622,14 @@ class ControladorCompras:
             case "1":
                 # editar cantidad comprada
                 opciones = [str(idx) for idx in self.insumo_idx]
-                num = self.vista.mostrar_editar_insumo_prompt(opciones)
+                num, cantidad = self.vista.mostrar_editar_cantidad_insumo_prompt(opciones)
 
-                if num is not None:
-                    cantidad = self.vista.mostrar_agregar_insumo_cantidad_com_prompt()
-                    resultado_val_cant = self.validador.validar_cantidad_insumo(cantidad)
-
-                    while not resultado_val_cant[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_cant[1])
-                        cantidad = self.vista.mostrar_agregar_insumo_cantidad_com_prompt()
-                        resultado_val_cant = self.validador.validar_cantidad_insumo(cantidad)
-
-                    cantidad = resultado_val_cant[1]
-
+                if num and cantidad:
                     for detalle in self.compra_actual.lista_compras:
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
                             # asigna la nueva cantidad comprada y recalcula el importe del insumo
-                            detalle.cantidad_comprada = cantidad
-                            detalle.importe = cantidad * float(detalle.monto_unitario)
+                            detalle.cantidad_comprada = float(cantidad)
+                            detalle.importe = float(cantidad) * float(detalle.monto_unitario)
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()
@@ -711,19 +637,9 @@ class ControladorCompras:
             case "2":
                 # editar unidad de medida
                 opciones = [str(idx) for idx in self.insumo_idx]
-                num = self.vista.mostrar_editar_insumo_prompt(opciones)
+                num, unidad = self.vista.mostrar_editar_unidad_medida_prompt(opciones)
 
-                if num is not None:
-                    unidad = self.vista.mostrar_agregar_insumo_unidad_prompt()
-                    resultado_val_unidad = self.validador.validar_unidad_medida(unidad)
-
-                    while not resultado_val_unidad[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_unidad[1])
-                        unidad = self.vista.mostrar_agregar_insumo_unidad_prompt()
-                        resultado_val_unidad = self.validador.validar_unidad_medida(unidad)
-
-                    unidad = resultado_val_unidad[1]
-
+                if num and unidad:
                     for detalle in self.compra_actual.lista_compras:
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
                             detalle.unidad_medida = unidad
@@ -734,24 +650,14 @@ class ControladorCompras:
             case "3":
                 # editar monto unitario
                 opciones = [str(idx) for idx in self.insumo_idx]
-                num= self.vista.mostrar_editar_insumo_prompt(opciones)
+                num, monto_u = self.vista.mostrar_editar_monto_unitario_prompt(opciones)
 
-                if num is not None:
-                    monto_u = self.vista.mostrar_agregar_insumo_monto_prompt()
-                    resultado_val_monto_u = self.validador.validar_monto_insumo(monto_u)
-
-                    while not resultado_val_monto_u[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_monto_u[1])
-                        monto_u = self.vista.mostrar_agregar_insumo_monto_prompt()
-                        resultado_val_monto_u = self.validador.validar_monto_insumo(monto_u)
-
-                    monto_u = resultado_val_monto_u[1]
-
+                if num and monto_u:
                     for detalle in self.compra_actual.lista_compras:
                         # asigna el nuevo monto unitario y actualiza el importe del insumo
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
-                            detalle.monto_unitario = monto_u
-                            detalle.importe = monto_u * float(detalle.cantidad_comprada)
+                            detalle.monto_unitario = float(monto_u)
+                            detalle.importe = float(monto_u) * float(detalle.cantidad_comprada)
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()
@@ -759,39 +665,17 @@ class ControladorCompras:
             case "4":
                 # editar fecha de compra
                 opciones = [str(idx) for idx in self.insumo_idx]
-                num = self.vista.mostrar_editar_insumo_prompt(opciones)
+                num, fecha = self.vista.mostrar_editar_fecha_compra_prompt(opciones)
 
-                if num is not None:
-                    fecha_compra = self.vista.mostrar_agregar_insumo_fecha_com_prompt()
-                    resultado_val_fecha_com = self.validador.validar_formato_fecha(fecha_compra)
+                # digamos que el input fecha está validado, entonces primero toma ese str
+                # y lo pasa a tipo date, luego ese tipo date se pasa al formato adecuado de día-mes-año
+                fecha = datetime.date.strptime(fecha, "%d-%m-%Y")
+                fecha = datetime.date.strftime(fecha, "%d-%m-%Y")
 
-                    validacion_congruencia = False
-                    while not resultado_val_fecha_com[0] or not validacion_congruencia:
-                        # la congruencia es que la fecha de caducidad no sea antes de hoy
-                        try:
-                            if not datetime.datetime.strptime(str(fecha_compra),
-                                                              "%d-%m-%Y").date() < datetime.date.today():
-                                validacion_congruencia = True
-                                continue
-                            else:
-                                self.vista.mostrar_mensaje_error_validacion(
-                                    "Error: La fecha de compra no puede ser anterior a hoy.")
-                        except ValueError:
-                            self.vista.mostrar_mensaje_error_validacion("Error: La fecha no es válida")
-                            fecha_compra = self.vista.mostrar_agregar_insumo_fecha_com_prompt()
-                            resultado_val_fecha_com = self.validador.validar_formato_fecha(fecha_compra)
-                            continue
-
-                        if not resultado_val_fecha_com[0]:
-                            self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha_com[1])
-                        fecha_compra = self.vista.mostrar_agregar_insumo_fecha_com_prompt()
-                        resultado_val_fecha_com = self.validador.validar_formato_fecha(fecha_compra)
-
-                    fecha_compra = resultado_val_fecha_com[1]
-
+                if num and fecha:
                     for detalle in self.compra_actual.lista_compras:
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
-                            detalle.fecha_compra = fecha_compra
+                            detalle.fecha_compra = fecha
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()
@@ -799,42 +683,55 @@ class ControladorCompras:
             case "5":
                 #editar fecha de caducidad
                 opciones = [str(idx) for idx in self.insumo_idx]
-                num = self.vista.mostrar_editar_insumo_prompt(opciones)
+                num, fecha = self.vista.mostrar_editar_fecha_caducidad_prompt(opciones)
 
-                if num is not None:
-                    fecha_caducidad = self.vista.mostrar_agregar_insumo_fecha_cad_prompt()
-                    resultado_val_caducidad = self.validador.validar_formato_fecha(fecha_caducidad)
+                # digamos que el input fecha está validado, entonces primero toma ese str
+                # y lo pasa a tipo date, luego ese tipo date se pasa al formato adecuado de día-mes-año
+                fecha = datetime.date.strptime(fecha, "%d-%m-%Y")
+                fecha = datetime.date.strftime(fecha, "%d-%m-%Y")
 
-                    validacion_congruencia = False
-                    while not resultado_val_caducidad[0] or not validacion_congruencia:
-                        try:
-                            if not datetime.datetime.strptime(str(fecha_caducidad),
-                                                              "%d-%m-%Y").date() < datetime.date.today():
-                                validacion_congruencia = True
-                                continue
-                            else:
-                                self.vista.mostrar_mensaje_error_validacion(
-                                    "Error: La fecha de caducidad no puede ser anterior a hoy.")
-                        except ValueError:
-                            self.vista.mostrar_mensaje_error_validacion("Error: La fecha no es válida")
-                            fecha_caducidad = self.vista.mostrar_agregar_insumo_fecha_cad_prompt()
-                            resultado_val_caducidad = self.validador.validar_formato_fecha(fecha_caducidad)
-                            continue
-
-                        if not resultado_val_caducidad[0]:
-                            self.vista.mostrar_mensaje_error_validacion(resultado_val_caducidad[1])
-                        fecha_caducidad = self.vista.mostrar_agregar_insumo_fecha_cad_prompt()
-                        resultado_val_caducidad = self.validador.validar_formato_fecha(fecha_caducidad)
-
-                    fecha_caducidad = resultado_val_caducidad[1]
-
+                if num and fecha:
                     for detalle in self.compra_actual.lista_compras:
                         if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
-                            detalle.fecha_caducidad = fecha_caducidad
+                            detalle.fecha_caducidad = fecha
                             self.agregar_edicion_insumos(copy.deepcopy(detalle))
 
                 self.mostrar_detalles_compra()
+
             case "6":
+                # editar marca
+                marca = None
+
+                opciones_insumo = [str(idx) for idx in self.insumo_idx]
+                opciones_marca = [str(marca.num) for marca in self.marcas_testeo]
+
+                num = self.vista.mostrar_editar_insumo_prompt(opciones_insumo)
+
+                self.vista.mostrar_marcas_disponibles(self.marcas_testeo)
+                self.vista.refrescar_pantalla()
+
+                marca_num = self.vista.mostrar_editar_marca_prompt(opciones_marca)
+
+                # Desviación para crear una marca nueva
+                if marca_num == "0":
+                    nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                    idx = len(self.marcas_testeo) + 1
+                    marca = Marca(idx, nueva_marca_nom)
+                    self.marcas_testeo.append(marca)
+                else:
+                    for marca_obj in self.marcas_testeo:
+                        if marca_obj.num == int(marca_num):
+                            marca = marca_obj
+
+                # si tenemos marca, ya sea nueva o no, ahora se asigna al detalleCompra correcto
+                if marca:
+                    for detalle in self.compra_actual.lista_compras:
+                        if detalle.insumo.nombre == self.insumo_idx[int(num)].insumo.nombre:
+                            detalle.insumo.marca = marca
+                            self.agregar_edicion_insumos(copy.deepcopy(detalle))
+
+                self.mostrar_detalles_compra()
+            case "7":
                 # volver a menu editar principal
                 self.vista.crear_banda_opciones_editar()
                 self.vista.refrescar_pantalla()
@@ -871,7 +768,7 @@ class ControladorCompras:
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items):
+        if idx_final < len(items) - 1:
             prox_pag = True
         else:
             prox_pag = False
@@ -885,136 +782,28 @@ class ControladorCompras:
                 self.mostrar_detalles_compra()
             else:
                 self.pagina_actual_lista_detalles -= 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.lista_compras,
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.detalles,
                                                             self.pagina_actual_lista_detalles)
                 self.mostrar_detalles_compra(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_detalles(self.compra_actual.lista_compras, self.pagina_actual_lista_detalles)
+            pagina, sig_pag  = self.paginar_lista_detalles(self.compra_actual.detalles, self.pagina_actual_lista_detalles)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_detalles_compra()
             else:
                 self.pagina_actual_lista_detalles += 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.lista_compras,
+                pagina, hay_sig_pag = self.paginar_lista_detalles(self.compra_actual.detalles,
                                                             self.pagina_actual_lista_detalles)
                 self.mostrar_detalles_compra(pagina)
 
-    def cambiar_pagina_lista_proveedores(self, mov):
-        lista_proveedores = self.servicio_compra.obtener_proovedores()
-
-        if mov == ",":
-            if self.pagina_actual_lista_proveedores == 1:
-                self.vista.mostrar_mensaje_no_pagina_anterior()
-            else:
-                self.pagina_actual_lista_proveedores -= 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_proveedores,
-                                                            self.pagina_actual_lista_proveedores)
-                total_pag = self.obtener_total_paginas_detalles(lista_proveedores)
-                self.vista.mostrar_proveedores_disponibles(pagina, self.pagina_actual_lista_proveedores, total_pag)
-
-        elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_detalles(lista_proveedores, self.pagina_actual_lista_proveedores)
-            if sig_pag is False:
-                self.vista.mostrar_mensaje_no_pagina_siguiente()
-            else:
-                self.pagina_actual_lista_proveedores += 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_proveedores,
-                                                            self.pagina_actual_lista_proveedores)
-                total_pag = self.obtener_total_paginas_detalles(lista_proveedores)
-                self.vista.mostrar_proveedores_disponibles(pagina, self.pagina_actual_lista_proveedores, total_pag)
-
-    def cambiar_pagina_lista_marcas(self, mov):
-        lista_marcas = self.servicio_inventario.obtener_marcas()
-
-        if mov == ",":
-            if self.pagina_actual_lista_marcas == 1:
-                self.vista.mostrar_mensaje_no_pagina_anterior()
-            else:
-                self.pagina_actual_lista_marcas -= 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_marcas,
-                                                            self.pagina_actual_lista_marcas)
-                total_pag = self.obtener_total_paginas_detalles(lista_marcas)
-                self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_lista_marcas, total_pag)
-
-        elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_detalles(lista_marcas, self.pagina_actual_lista_marcas)
-            if sig_pag is False:
-                self.vista.mostrar_mensaje_no_pagina_siguiente()
-            else:
-                self.pagina_actual_lista_marcas += 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_marcas,
-                                                            self.pagina_actual_lista_marcas)
-                total_pag = self.obtener_total_paginas_detalles(lista_marcas)
-                self.vista.mostrar_marcas_disponibles(pagina, self.pagina_actual_lista_marcas, total_pag)
-
-    def cambiar_pagina_lista_insumos(self, mov):
-        lista_insumos_actuales = {det.insumo.nombre: det.insumo.marca.num for det in self.compra_actual.lista_compras}
-        todos_insumos = self.servicio_inventario.obtener_insumos()
-        lista_ins_disp = []
-
-        for ins in todos_insumos:
-            if ins.nombre in lista_insumos_actuales:
-                if ins.marca.num != lista_insumos_actuales[ins.nombre]:
-                    lista_ins_disp.append(ins)
-            elif ins.nombre not in lista_insumos_actuales:
-                lista_ins_disp.append(ins)
-
-        if mov == ",":
-            if self.pagina_actual_lista_insumos == 1:
-                self.vista.mostrar_mensaje_no_pagina_anterior()
-            else:
-                self.pagina_actual_lista_insumos -= 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_ins_disp,
-                                                            self.pagina_actual_lista_insumos)
-                total_pag = self.obtener_total_paginas_detalles(lista_ins_disp)
-                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
-
-        elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_detalles(lista_ins_disp, self.pagina_actual_lista_insumos)
-            if sig_pag is False:
-                self.vista.mostrar_mensaje_no_pagina_siguiente()
-            else:
-                self.pagina_actual_lista_insumos += 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_ins_disp,
-                                                            self.pagina_actual_lista_insumos)
-                total_pag = self.obtener_total_paginas_detalles(lista_ins_disp)
-                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
-
-    def cambiar_pagina_lista_tipos_insumo(self, mov):
-        lista_tipos_insumo = self.servicio_inventario.obtener_tipos_insumo()
-
-        if mov == ",":
-            if self.pagina_actual_lista_tipos_insumo == 1:
-                self.vista.mostrar_mensaje_no_pagina_anterior()
-            else:
-                self.pagina_actual_lista_tipos_insumo -= 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_tipos_insumo,
-                                                            self.pagina_actual_lista_tipos_insumo)
-                total_pag = self.obtener_total_paginas_detalles(lista_tipos_insumo)
-                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_lista_tipos_insumo, total_pag)
-
-        elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_detalles(lista_tipos_insumo, self.pagina_actual_lista_tipos_insumo)
-            if sig_pag is False:
-                self.vista.mostrar_mensaje_no_pagina_siguiente()
-            else:
-                self.pagina_actual_lista_tipos_insumo += 1
-                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_tipos_insumo,
-                                                            self.pagina_actual_lista_tipos_insumo)
-                total_pag = self.obtener_total_paginas_detalles(lista_tipos_insumo)
-                self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_lista_tipos_insumo, total_pag)
-
     def paginar_lista_detalles(self, items: list, num_pag: int):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
-
-        lineas_disp = size_sin_prompt - 18
+        lineas_disp = 9
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items):
+        if idx_final < len(items) - 1:
             prox_pag = True
         else:
             prox_pag = False
@@ -1024,23 +813,12 @@ class ControladorCompras:
     def obtener_total_paginas_lista_compras(self, items: list):
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
+
         lineas_disp = size_sin_prompt - 7
 
-        total = math.ceil(len(items) / lineas_disp)
-
-        if len(items) == 0:
-            return 1
-
-        return total
+        return math.ceil(len(items) / lineas_disp)
 
     def obtener_total_paginas_detalles(self, items: list):
-        consola_size = self.vista.console.size[1]
-        size_sin_prompt = consola_size - 6
-        lineas_disp = size_sin_prompt - 18
+        lineas_disp = 9
 
-        total = math.ceil(len(items) / lineas_disp)
-
-        if len(items) == 0:
-            return 1
-
-        return total
+        return math.ceil(len(items) / lineas_disp)

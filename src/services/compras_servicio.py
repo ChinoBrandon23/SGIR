@@ -178,7 +178,7 @@ class CompraServicio:
         # validando que la fecha de creacion sea "hoy"
         if fecha_creacion_formateada < hoy:
             raise ValueError(f'La fecha de creacion de la compra no puede ser anterior a hoy.')
-        
+
         for detalle_compra in compra_act.lista_compras:
             # formanteando fechas
             fecha_compra_ev = datetime.strptime(str(detalle_compra.fecha_compra), "%d-%m-%Y").date()
@@ -242,6 +242,59 @@ class CompraServicio:
         except Error as err:
             raise ValueError(f"Servicio: Error en base de datos al actualizar compra: {err}")
 
+    def registrar_nuevo_insumo(self, nombre: str, umbral: float, tipo_insumo: TipoInsumo, marca: Marca) -> Insumo:
+        """
+        Valida y crea un nuevo insumo durante el proceso de compra.
+        Regla del nombre: debe tener al menos 2 palabras 'generico' + 'especifico' o la 'marca')."""
+        # 1 - validacio de nombre limpio
+        nombre_limpio = " ".join(nombre.strip().split())
+        if not nombre_limpio:
+            raise ValueError("El nombre del insumo no debe estar vacio.")
+
+        palabras = nombre_limpio.split()
+        if len(palabras) < 2:
+            raise ValueError(
+                "Formato invalido: El nombre del insumo debe tener una parte generica y una especifica. "
+                "P.e.: 'Leche Deslactosada Lala' o 'Harina Trigo XMarca')."
+            )
+
+        # 2 - validar que no exista un insumo con ese mismo nombre (es sensible a las mayusculas y minusculas)
+        insumo_existente = self._insumo_dao.obtener_insumo_por_nombre(nombre_limpio)
+        if insumo_existente:
+            raise ValueError(f"Ya existe un insumo registrado con el nombre '{nombre_limpio}'.")
+
+        # 3 validacion el umbral
+        try:
+            umbral_float = float(umbral)
+            if umbral_float < 0:
+                raise ValueError("El umbral del insumo no puede ser negativo.")
+        except (ValueError, TypeError):
+            raise ValueError("El umbral debe ser un valor numerco valido.")
+
+        # 4 - validacion de TipoInsumo y Marca
+        if not tipo_insumo or not tipo_insumo.clave:
+            raise ValueError("Debe asignarse un tipo de insumo valido.")
+        if not marca or not marca.num:
+            raise ValueError("Debe asignarse una marca valida.")
+
+        # 5. - crear el objeto con stock inicial en 0 (se abastece con las compras)
+        nuevo_insumo = Insumo(
+            num=0,
+            nombre=nombre_limpio.title(),  # hacemos que todo sea mayuscula en la bd
+            umbral=umbral_float,
+            stock=0.0, # tiene stock 0 por defecto
+            tipo_insumo=tipo_insumo,
+            marca=marca
+        )
+
+        try:
+            insumo_guardado = self._compra_dao.crear_insumo(insumo=nuevo_insumo)
+            return insumo_guardado
+        except Error as err:
+            raise ValueError(f"Servicio: No se pudo registrar el nuevo insumo: {err}")
+
+    def eliminar_compra(self):
+        pass
     def registrar_nuevo_insumo(self, nombre: str, umbral: float, tipo_insumo: TipoInsumo, marca: Marca) -> Insumo:
         """
         Valida y crea un nuevo insumo durante el proceso de compra.
