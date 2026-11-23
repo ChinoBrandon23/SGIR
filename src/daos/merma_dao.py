@@ -140,7 +140,8 @@ class MermaDAO:
         # 5. validar que el tipo de merma exista, si no, crear uno. (esto va en el dao creo)
         # 6. logica para convertir la cantidad a la unidad base y para que ese sea la nueva cantidad que se descontara del insumo
         # 7. try: registrar merma dao. 
-        # 8. mermar en el dao
+        # 8. buscar el detalle insumo con la fecha mas antigua
+        # 9. mermar en el dao
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
@@ -157,7 +158,7 @@ class MermaDAO:
                     merma.insumo,
                     merma.tipo_merma
                 )) 
-
+                
                 sql_mermar_insumo = '''
                                     UPDATE insumo
                                     SET stock = stock - %s

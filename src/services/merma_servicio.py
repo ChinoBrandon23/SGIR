@@ -103,18 +103,26 @@ class MermaServicio:
         if not merma.tipo_merma or merma.tipo_merma.nombre == '':
             raise ValueError('La merma debe tener un tipo.')
 
+        # obtienen los detalle_compra/lista_compra con el mismo nombre, lo que implica que son del mismo insumo aunque con diferente marca
         try:
             insumos = self._insumo_dao.obtener_insumo_por_nombre(merma.insumo.nombre)
             if not insumos or len(insumos) == 0:
                 raise ValueError('El insumo seleccionado para mermar no existe.')
-            if len(insumos) > 1:
-                raise IndexError('Insumo duplicado con el mismo nombre.')
+            #if len(insumos) > 1:
+            #    raise IndexError('Insumo duplicado con el mismo nombre.')
         except mysql.connector.Error as err:
             raise IndexError(f"Error al consultar el insumo: {err}")
         
-        # obtener insumo con id real desde la bd, como es una lista, obtenemos el primer objeto insumo
-        insumo_bd:Insumo = insumos[0]
-        merma.insumo = insumo_bd
+        # elige el insumo con la fecha de caducidad mas antigua
+        hoy = date.today()
+
+        for insumo in insumos:
+            fecha_ev:date =  datetime.strptime(self._formatear_fecha(insumo.), "%Y-%m-%d").date()
+            if merma.fecha >= hoy
+            proxima_futura = min(futuras, default=None)
+
+        merma.insumo = proxima_futura
+
 
         # logica para convertir la cantidad. p.e. 400g -> 0.4 g | 345ml -> 0.345ml. Redondeado a 3 decimales
         cantidad_convertida = ConversorUnidades.convertir(
