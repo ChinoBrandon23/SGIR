@@ -3,16 +3,16 @@ import mysql.connector
 from mysql.connector import Error
 from daos.insumo_dao import InsumoDAO
 from daos.compra_dao import CompraDAO
-from models.marca import Marca
-from models.tipo_insumo import TipoInsumo
 from models.insumo import Insumo
-from models.compra import Compra, DetalleCompra
+from models.compra import Compra
+from models.marca import Marca
 from models.proveedor import Proveedor
-
-from utils.conversor_unidades import ConversorUnidades
 
 from datetime import date, datetime
 from typing import List
+
+from models.tipo_insumo import TipoInsumo
+from utils.conversor_unidades import ConversorUnidades
 
 
 class CompraServicio:
@@ -83,8 +83,8 @@ class CompraServicio:
                 # asignamos los valores 'base' para la BD
                 detalle_compra.cantidad_comprada = cantidad_convertida
                 # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
-                detalle_compra.cantidad_actual = cantidad_convertida 
-                detalle_compra.unidad_medida = unidad_base 
+                detalle_compra.cantidad_actual = cantidad_convertida
+                detalle_compra.unidad_medida = unidad_base
 
                 # el precio unitario se 'escala' a la unidad base p.e. : $20 / 0.4 kg = $50.00/kg:
                 detalle_compra.monto_unitario = round(detalle_compra.importe / cantidad_convertida, 4)
@@ -95,7 +95,7 @@ class CompraServicio:
                 # si ya venia en kg o l, solo se normaliza el texto
                 detalle_compra.unidad_medida = unidad_base
                 detalle_compra.cantidad_actual = detalle_compra.cantidad_comprada
-            
+
             # agregar a lista de importes para posterior suma
             importes.append(detalle_compra.importe)
 
@@ -119,6 +119,12 @@ class CompraServicio:
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al obtener los proovedores. {err}')
 
+    def obtener_proveedor_por_nombre(self, nombre_prov) -> Proveedor|None:
+        try:
+            return self._compra_dao.obtener_proveedor_por_nombre(nombre_prov)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al obtener el proveedor. {err}')
+
     def obtener_compras(self) -> List[Compra]:
         '''Obtiene la lista de todas las compras y sus detalles, que hay en la BD.'''
         try:
@@ -133,7 +139,23 @@ class CompraServicio:
             raise IndexError(f'Servicio: No existe la compra con numero {num_compra}. {err}')
         except mysql.connector.Error as err:
             raise IndexError(f'Servicio: Error al obtener compra numero {num_compra}. {err}')
-    
+
+    def obtener_compras_por_fecha(self, fecha:str):
+        try:
+            # convirtiendo al formato que usa mysql
+            fecha = datetime.strptime(fecha, '%d-%m-%Y')
+            fecha = datetime.strftime(fecha, '%Y-%m-%d')
+
+            return self._compra_dao.obtener_compras_por_fecha_creacion(fecha)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al obtener las compras. {err}')
+
+    def obtener_compras_por_proveedor(self, prov_num):
+        try:
+            return self._compra_dao.obtener_compras_por_proveedor(prov_num)
+        except mysql.connector.Error as err:
+            raise IndexError(f'Servicio: Error al obtener las compras. {err}')
+
     def obtener_insumo_por_nombre(self, nombre_insumo:str) -> Insumo:
         try:
             return self._insumo_dao.obtener_id_insumo_por_nombre(nombre_insumo)
@@ -150,13 +172,13 @@ class CompraServicio:
         fecha_creacion_formateada = datetime.strptime(str(fecha_creacion_formateada), "%Y-%m-%d").date()
 
         compra_act.fecha_creacion = str(fecha_creacion_formateada)
-        
+
         hoy = date.today()
 
         # validando que la fecha de creacion sea "hoy"
         if fecha_creacion_formateada < hoy:
             raise ValueError(f'La fecha de creacion de la compra no puede ser anterior a hoy.')
-        
+
         for detalle_compra in compra_act.lista_compras:
             # formanteando fechas
             fecha_compra_ev = datetime.strptime(str(detalle_compra.fecha_compra), "%d-%m-%Y").date()
@@ -184,7 +206,7 @@ class CompraServicio:
             # calcular importes de cada detalle compra, que es precio unitario por cantidad comprada
             detalle_compra.importe = self._calcular_importe(detalle_compra.monto_unitario,detalle_compra.cantidad_comprada)
             detalle_compra.importe = round(detalle_compra.importe,2)
-            
+
             '''Convirtiendo unidad'''
             # determinamos la unidad base para este insumo ('kg', 'l' o 'pza')
             unidad_base = ConversorUnidades.obtener_unidad_base(detalle_compra.unidad_medida)
@@ -201,7 +223,7 @@ class CompraServicio:
                 detalle_compra.cantidad_comprada = cantidad_convertida
                 # calculando la cantidad actual inicial, la cual es igual a la cantidad comprada
                 detalle_compra.cantidad_actual = cantidad_convertida
-                detalle_compra.unidad_medida = unidad_base 
+                detalle_compra.unidad_medida = unidad_base
 
                 # el precio unitario se 'escala' a la unidad base p.e. : $20 / 0.4 kg = $50.00/kg:
                 detalle_compra.monto_unitario = round(detalle_compra.importe / cantidad_convertida, 4)
@@ -271,8 +293,68 @@ class CompraServicio:
         except Error as err:
             raise ValueError(f"Servicio: No se pudo registrar el nuevo insumo: {err}")
 
-    def eliminar_compra(self):
-        pass
+    def registrar_nuevo_insumo(self, nombre: str, umbral: float, tipo_insumo: TipoInsumo, marca: Marca) -> Insumo:
+        """
+        Valida y crea un nuevo insumo durante el proceso de compra.
+        Regla del nombre: debe tener al menos 2 palabras 'generico' + 'especifico' o la 'marca')."""
+        # 1 - validacio de nombre limpio
+        nombre_limpio = " ".join(nombre.strip().split())
+        if not nombre_limpio:
+            raise ValueError("El nombre del insumo no debe estar vacio.")
+
+        palabras = nombre_limpio.split()
+        if len(palabras) < 2:
+            raise ValueError(
+                "Formato invalido: El nombre del insumo debe tener una parte generica y una especifica. "
+                "P.e.: 'Leche Deslactosada Lala' o 'Harina Trigo XMarca')."
+            )
+
+        # 2 - validar que no exista un insumo con ese mismo nombre (es sensible a las mayusculas y minusculas)
+        insumo_existente = self._insumo_dao.obtener_insumo_por_nombre(nombre_limpio)
+        if insumo_existente:
+            raise ValueError(f"Ya existe un insumo registrado con el nombre '{nombre_limpio}'.")
+
+        # 3 validacion el umbral
+        try:
+            umbral_float = float(umbral)
+            if umbral_float < 0:
+                raise ValueError("El umbral del insumo no puede ser negativo.")
+        except (ValueError, TypeError):
+            raise ValueError("El umbral debe ser un valor numerco valido.")
+
+        # 4 - validacion de TipoInsumo y Marca
+        if not tipo_insumo or not tipo_insumo.clave:
+            raise ValueError("Debe asignarse un tipo de insumo valido.")
+        if not marca or not marca.num:
+            raise ValueError("Debe asignarse una marca valida.")
+
+        # 5. - crear el objeto con stock inicial en 0 (se abastece con las compras)
+        nuevo_insumo = Insumo(
+            num=0,
+            nombre=nombre_limpio.title(),  # hacemos que todo sea mayuscula en la bd
+            umbral=umbral_float,
+            stock=0.0, # tiene stock 0 por defecto
+            tipo_insumo=tipo_insumo,
+            marca=marca
+        )
+
+        try:
+            insumo_guardado = self._compra_dao.crear_insumo(insumo=nuevo_insumo)
+            return insumo_guardado
+        except Error as err:
+            raise ValueError(f"Servicio: No se pudo registrar el nuevo insumo: {err}")
+
+    def crear_proveedor(self, proveedor:Proveedor):
+        try:
+            self._compra_dao.crear_proveedor(proveedor=proveedor)
+        except mysql.connector.Error as err:
+            raise Error(f'Error al crear proveedor en la BD - {err}')
+
+    def eliminar_compra(self, num_compra:int):
+        try:
+            self._compra_dao.eliminar_compra(num_compra=num_compra)
+        except mysql.connector.Error as err:
+            raise Error(f'Error al eliminar la compra - {err}')
 
     ''' FUNCIONALIDAD '''
     def _formatear_a_iso(self, fecha:date) -> str:

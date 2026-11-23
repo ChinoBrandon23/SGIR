@@ -1,5 +1,6 @@
 import copy
 import math
+
 from mysql.connector import Error
 
 from models.ingrediente import Ingrediente
@@ -79,6 +80,9 @@ class ControladorRecetas:
         self.vista.mostrar_menu_recetas_prompt()
 
     def mostrar_detalles_receta(self, receta_num = None):
+        if receta_num is None and self.receta_actual is None:
+            self.vista.mostrar_abrir_detalles_prompt(self.servicio.obtener_recetas())
+
         if self.receta_actual is None:
             # Si no tenemos una receta actual, busca la receta por el num pasado como arg
             self.receta_actual = self.recetas_a_mostrar[int(receta_num)-1]
@@ -135,12 +139,21 @@ class ControladorRecetas:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_error_crear_receta_duplicado()
                 self.vista.mostrar_opciones_editar_prompt()
-
         # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
         # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
+
         self.recetas_a_mostrar = self.servicio.obtener_recetas()
         self.cancelar_edicion_actual()
         self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+
+        # evalua si la receta califica para ser un ingrediente
+        if not self.servicio.receta_es_ingrediente(self.receta_actual.num) and self.servicio.receta_es_de_ingredientes_simples(self.receta_actual):
+            # pregunta al usuario si quiere guardar la receta como ingrediente
+            res = self.vista.mostrar_mensaje_registrar_como_ingrediente()
+
+            if res == "1":
+                self.servicio.crear_ingrediente((Ingrediente(0, self.receta_actual.nombre, None, self.receta_actual)))
+
         self.mostrar_detalles_receta()
 
     def agregar_edicion_instruccion(self, dic_inst):
@@ -356,7 +369,10 @@ class ControladorRecetas:
         match seleccion:
             case "1":
                 # crear nuevo ingrediente
-                seleccion_ingrediente = self.vista.mostrar_crear_ingrediente_prompt()
+                if self.servicio.receta_es_ingrediente(self.receta_actual.num):
+                    seleccion_ingrediente = "1"
+                else:
+                    seleccion_ingrediente = self.vista.mostrar_crear_ingrediente_prompt()
 
                 if seleccion_ingrediente == "1":
                     # seleccionando ingrediente basado en insumo
@@ -376,12 +392,12 @@ class ControladorRecetas:
                     ins_num = self.vista.mostrar_seleccionar_insumo_ing_prompt(opciones)
                     ing_obj = ing_disponibles[int(ins_num)-1]
 
-                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_insumo_prompt()
                     resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                     while not resultado_val_cantidad[0]:
                         self.vista.mostrar_error_validacion(resultado_val_cantidad[1])
-                        cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                        cantidad = self.vista.mostrar_ingresar_cantidad_ing_insumo_prompt()
                         resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                     unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
@@ -413,24 +429,16 @@ class ControladorRecetas:
                     ins_num = self.vista.mostrar_seleccionar_receta_ing_prompt(opciones)
                     ing_obj = ing_disponibles[int(ins_num)-1]
 
-                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_receta_prompt()
                     resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                     while not resultado_val_cantidad[0]:
                         self.vista.mostrar_error_validacion(resultado_val_cantidad[1])
-                        cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                        cantidad = self.vista.mostrar_ingresar_cantidad_ing_receta_prompt()
                         resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
-                    unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
-                    resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
-
-                    while not resultado_val_unidad_m[0]:
-                        self.vista.mostrar_error_validacion(resultado_val_unidad_m[1])
-                        unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
-                        resultado_val_unidad_m = self.validador.editar_unidad_ingrediente(unidad_medida)
-
                     self.receta_actual.agregarIngrediente(ingrediente=ing_obj, cantidad=resultado_val_cantidad[1],
-                                                          unidad_medida=resultado_val_unidad_m[1])
+                                                          unidad_medida="pz")
 
                     self.pagina_actual_lista_recetas_disponibles = 1
                     self.formulario["ingredientes"].append(ing_obj.nombre)
@@ -443,12 +451,12 @@ class ControladorRecetas:
 
                 num_ing = self.vista.mostrar_seleccionar_ingrediente_prompt(opciones_idx)
 
-                cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                cantidad = self.vista.mostrar_ingresar_cantidad_ing_insumo_prompt()
                 resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                 while not resultado_val_cantidad[0]:
                     self.vista.mostrar_error_validacion(resultado_val_cantidad[1])
-                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_prompt()
+                    cantidad = self.vista.mostrar_ingresar_cantidad_ing_insumo_prompt()
                     resultado_val_cantidad = self.validador.editar_cantidad_ingrediente(cantidad)
 
                 unidad_medida = self.vista.mostrar_ingresar_unidad_medida_ing_prompt()
@@ -642,7 +650,7 @@ class ControladorRecetas:
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 8
+        lineas_disp = size_sin_prompt - 9
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -716,7 +724,7 @@ class ControladorRecetas:
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 8
+        lineas_disp = size_sin_prompt - 9
 
         if len(self.receta_actual.lista_ingredientes) == 0 and len(self.receta_actual.instrucciones) == 0:
             return 1

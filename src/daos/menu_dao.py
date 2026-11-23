@@ -1,3 +1,5 @@
+import time
+
 from models.menu import Menu, DetalleMenu
 from models.platillo import Platillo
 from models.categoria import Categoria
@@ -45,8 +47,8 @@ class MenuDAO:
                     m.num numMenu,
                     m.nombre nombreMenu,
                     m.cantidadPlatillos cantPlatillos,
-                    m.fechaInicial fechaInicial,
-                    m.fechaFinal fechaFinal
+                    DATE_FORMAT(m.fechaInicial, '%d-%m-%Y') fechaInicial,
+                    DATE_FORMAT(m.fechaFinal, '%d-%m-%Y') fechaFinal
                     FROM menu m
                     WHERE m.num = %s;
                 '''
@@ -61,8 +63,8 @@ class MenuDAO:
                         num=fila['numMenu'],
                         nombre=fila['nombreMenu'],
                         cantidad_platillos=fila['cantPlatillos'],
-                        fecha_inicial=fila['fechaInicial'],
-                        fecha_final=fila['fechaFinal']
+                        fecha_inicial=datetime.strptime(fila['fechaInicial'], "%d-%m-%Y"),
+                        fecha_final=datetime.strptime(fila['fechaFinal'], "%d-%m-%Y")
                         )
                 try:
                     # agregando sus respectivos platillos al menu
@@ -87,8 +89,8 @@ class MenuDAO:
                     m.num numMenu,
                     m.nombre nombreMenu,
                     m.cantidadPlatillos cantPlatillos,
-                    m.fechaInicial fechaInicial,
-                    m.fechaFinal fechaFinal
+                    DATE_FORMAT(m.fechaInicial, '%d-%m-%Y') fechaInicial,
+                    DATE_FORMAT(m.fechaFinal, '%d-%m-%Y') fechaFinal
                     FROM menu m
                     WHERE m.nombre = %s;
                 '''
@@ -99,8 +101,8 @@ class MenuDAO:
                         num=fila['numMenu'],
                         nombre=fila['nombreMenu'],
                         cantidad_platillos=fila['cantPlatillos'],
-                        fecha_inicial=fila['fechaInicial'],
-                        fecha_final=fila['fechaFinal']
+                        fecha_inicial=datetime.strptime(fila['fechaInicial'], "%d-%m-%Y"),
+                        fecha_final=datetime.strptime(fila['fechaFinal'], "%d-%m-%Y")
                         )
                 try:
                     for detalleMenu in self.obtener_platillos_de_menu(fila['numMenu']):
@@ -124,8 +126,8 @@ class MenuDAO:
                     m.num numMenu,
                     m.nombre nombreMenu,
                     m.cantidadPlatillos cantPlatillos,
-                    m.fechaInicial fechaInicial,
-                    m.fechaFinal fechaFinal
+                    DATE_FORMAT(m.fechaInicial, '%d-%m-%Y') fechaInicial,
+                    DATE_FORMAT(m.fechaFinal, '%d-%m-%Y') fechaFinal
                     FROM menu m
                     WHERE %s BETWEEN m.fechaInicial AND m.fechaFinal;
                 '''
@@ -138,8 +140,8 @@ class MenuDAO:
                                     num=fila['numMenu'],
                                     nombre=fila['nombreMenu'],
                                     cantidad_platillos=fila['cantPlatillos'],
-                                    fecha_inicial=fila['fechaInicial'],
-                                    fecha_final=fila['fechaFinal']
+                                    fecha_inicial=datetime.strptime(fila['fechaInicial'], "%d-%m-%Y"),
+                                    fecha_final=datetime.strptime(fila['fechaFinal'], "%d-%m-%Y")
                                     ))
                 return lista_menus
         except mysql.connector.Error as err:
@@ -157,8 +159,8 @@ class MenuDAO:
                     m.num numMenu,
                     m.nombre nombreMenu,
                     m.cantidadPlatillos cantPlatillos,
-                    m.fechaInicial fechaInicial,
-                    m.fechaFinal fechaFinal
+                    DATE_FORMAT(m.fechaInicial, '%d-%m-%Y') fechaInicial,
+                    DATE_FORMAT(m.fechaFinal, '%d-%m-%Y') fechaFinal
                     FROM menu m
                     WHERE m.fechaInicial BETWEEN %s and %s AND m.fechaFinal BETWEEN %s and %s;
                 '''
@@ -171,8 +173,8 @@ class MenuDAO:
                                     num=fila['numMenu'],
                                     nombre=fila['nombreMenu'],
                                     cantidad_platillos=fila['cantPlatillos'],
-                                    fecha_inicial=fila['fechaInicial'],
-                                    fecha_final=fila['fechaFinal']
+                                    fecha_inicial=datetime.strptime(fila['fechaInicial'], "%d-%m-%Y"),
+                                    fecha_final=datetime.strptime(fila['fechaFinal'], "%d-%m-%Y")
                                     ))
                 return lista_menus
         except mysql.connector.Error as err:
@@ -190,8 +192,8 @@ class MenuDAO:
                     m.num numMenu,
                     m.nombre nombreMenu,
                     m.cantidadPlatillos cantPlatillos,
-                    m.fechaInicial fechaInicial,
-                    m.fechaFinal fechaFinal
+                    DATE_FORMAT(m.fechaInicial, '%d-%m-%Y') fechaInicial,
+                    DATE_FORMAT(m.fechaFinal, '%d-%m-%Y') fechaFinal
                     FROM menu m
                     WHERE m.nombre LIKE('%{insumo_nombre}%')
                     ORDER BY m.nombre;
@@ -205,8 +207,8 @@ class MenuDAO:
                                     num=fila['numMenu'],
                                     nombre=fila['nombreMenu'],
                                     cantidad_platillos=fila['cantPlatillos'],
-                                    fecha_inicial=fila['fechaInicial'],
-                                    fecha_final=fila['fechaFinal']
+                                    fecha_inicial=datetime.strptime(fila['fechaInicial'], "%d-%m-%Y"),
+                                    fecha_final=datetime.strptime(fila['fechaFinal'], "%d-%m-%Y")
                                     ))
                 return lista_menus
         except mysql.connector.Error as err:
@@ -225,8 +227,8 @@ class MenuDAO:
                     m.num numMenu,
                     m.nombre nombreMenu,
                     m.cantidadPlatillos cantPlatillos,
-                    m.fechaInicial fechaInicial,
-                    m.fechaFinal fechaFinal
+                    DATE_FORMAT(m.fechaInicial, '%d-%m-%Y') fechaInicial,
+                    DATE_FORMAT(m.fechaFinal, '%d-%m-%Y') fechaFinal
                     FROM menu m
                 '''
                 cursor.execute(sql)
@@ -238,8 +240,8 @@ class MenuDAO:
                                     num=fila['numMenu'],
                                     nombre=fila['nombreMenu'],
                                     cantidad_platillos=fila['cantPlatillos'],
-                                    fecha_inicial=fila['fechaInicial'],
-                                    fecha_final=fila['fechaFinal']
+                                    fecha_inicial=datetime.strptime(fila['fechaInicial'], "%d-%m-%Y"),
+                                    fecha_final=datetime.strptime(fila['fechaFinal'], "%d-%m-%Y")
                                     ))
                 return lista_menus
         except mysql.connector.Error as err:
@@ -280,13 +282,13 @@ class MenuDAO:
             if connection.is_connected():
                 connection.close()
 
-    def obtener_platillos_disponibles(self, fecha_inicial, fecha_final) -> List[Platillo]:
+    def obtener_platillos_disponibles(self, fecha_inicial, fecha_final, menu_id=None) -> List[Platillo]:
         '''Retorna todos los platillos disponibles para su uso en un menú dada su vigencia.'''
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
                 # busca los platillos que están en menús con otra vigencia
-                sql_plat_disp_en_menus = '''
+                sql_plat_disp_en_menus = f'''
                     SELECT
                         p.num numPlatillo,
                         p.nombre nombrePlatillo,
@@ -297,7 +299,7 @@ class MenuDAO:
                         INNER JOIN categoria cat ON p.categoria = cat.clave
                         INNER JOIN menu_platillo mp ON mp.platillo = p.num
                         INNER JOIN menu m ON m.num = mp.menu
-                        WHERE %s not BETWEEN m.fechaInicial and m.fechaFinal and %s not BETWEEN m.fechaInicial and m.fechaFinal
+                        WHERE %s not BETWEEN m.fechaInicial and m.fechaFinal and %s not BETWEEN m.fechaInicial and m.fechaFinal;
                 '''
                 cursor.execute(sql_plat_disp_en_menus, (fecha_inicial, fecha_final))
                 filas_primer_filtro = cursor.fetchall()
@@ -312,9 +314,9 @@ class MenuDAO:
                                         FROM platillo p
                                         INNER JOIN categoria cat ON p.categoria = cat.clave
                                         LEFT JOIN menu_platillo mp ON mp.platillo = p.num
-                                        WHERE mp.menu is null
+                                        WHERE mp.menu is null or mp.menu = %s
                                          '''
-                cursor.execute(sql_plat_sin_menu)
+                cursor.execute(sql_plat_sin_menu, (menu_id,))
                 filas_seg_filtro = cursor.fetchall()
 
                 lista_platillos: List[Platillo] = []

@@ -10,7 +10,9 @@ from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from daos.platillos_dao import PlatillosDAO
+from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
+from services.venta_servicio import VentaServicio
 from views.VistaCompras import VistaCompras
 from views.VistaInventario import VistaInventario
 from views.VistaMenuPrincipal import VistaMenuPrincipal
@@ -22,6 +24,7 @@ from views.VistaVentas import VistaVentas
 from Validaciones.validadorReceta import validadorReceta
 from Validaciones.validadorPlatillos import validadorPlatillos
 from Validaciones.validadorMenus import validadorMenu
+from Validaciones.validadorCompras import validadorCompras
 
 
 from daos.connection import DatabaseConnection
@@ -85,9 +88,9 @@ class ControladorMenuPrincipal:
 
         receta_dao = RecetaDAO(DatabaseConnection)
         receta_servicio = RecetaServicio(receta_dao=receta_dao)
-        receta_validador = validadorReceta()
+        validador_receta = validadorReceta()
 
-        ControladorRecetas(vista, servicio_receta=receta_servicio, validador=receta_validador)
+        ControladorRecetas(vista, servicio_receta=receta_servicio, validador=validador_receta)
 
     def abrir_vista_platillos(self):
         vista = VistaPlatillos(self.vista.console)
@@ -126,8 +129,9 @@ class ControladorMenuPrincipal:
 
         compra_servicio = CompraServicio(compra_dao=CompraDAO(DatabaseConnection),insumo_dao=InsumoDAO(DatabaseConnection))
         inventario_servicio = InventarioServicio(insumo_dao=InsumoDAO(DatabaseConnection),compra_dao=CompraDAO(DatabaseConnection))
-        
-        ControladorCompras(vista,compra_servicio=compra_servicio,inventario_servicio=inventario_servicio)
+        validador_compras = validadorCompras()
+
+        ControladorCompras(vista,compra_servicio=compra_servicio,inventario_servicio=inventario_servicio, validador=validador_compras)
 
     def abrir_vista_inventario(self):
         vista = VistaInventario(self.vista.console)

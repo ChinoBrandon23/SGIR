@@ -1,6 +1,5 @@
 import copy
 import math
-import time
 from datetime import datetime
 import datetime
 from mysql.connector import Error
@@ -88,6 +87,9 @@ class ControladorMenus:
         self.vista.mostrar_menu_menus_prompt()
 
     def mostrar_detalles_menu(self, menu_num=None):
+        if menu_num is None and self.menu_actual is None:
+            self.vista.mostrar_abrir_detalles_prompt(self.servicio.obtener_menus())
+
         if self.menu_actual is None and menu_num is not None:
             # Si no tenemos un menú actual, busca el menú por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
@@ -187,7 +189,7 @@ class ControladorMenus:
         self.formulario["platillos"].append(detalle_pl)
 
     def filtrar_platillos_duplicados(self):
-        lista_platillos_actual = self.servicio.obtener_platillos_disponibles(self.menu_actual.fecha_inicial, self.menu_actual.fecha_final)
+        lista_platillos_actual = self.servicio.obtener_platillos_disponibles(self.menu_actual.fecha_inicial, self.menu_actual.fecha_final, self.menu_actual.num)
         lista_platillos_en_menu = [pl.platillo.nombre for pl in self.menu_actual.detalles]
         idx_plat_disp = {i + 1: lista_platillos_actual[i] for i in range(len(lista_platillos_actual)) if
                          lista_platillos_actual[i].nombre not in lista_platillos_en_menu}
@@ -437,7 +439,7 @@ class ControladorMenus:
 
                     nombre = lista_plat_disp[int(num_platillo)-1].nombre
                     lista_platillos_en_menu = self.servicio.obtener_platillos_disponibles(
-                        self.menu_actual.fecha_inicial, self.menu_actual.fecha_final)
+                        self.menu_actual.fecha_inicial, self.menu_actual.fecha_final, self.menu_actual.num)
 
                     for plat in lista_platillos_en_menu:
                         if plat.nombre == nombre:
