@@ -390,6 +390,7 @@ class ControladorCompras:
 
                 # Si el usuario quiere crear un insumo, se desvía el flow de la creación de detalle compra
                 # para crearlo de cero
+                '''
                 if num_insumo == "0":
                     nombre, umbral = self.vista.mostrar_crear_insumo_prompt()
 
@@ -434,7 +435,82 @@ class ControladorCompras:
                                 if idx == tipo_num:
                                     tipo = dict_tipo_insumo[idx]
 
-                        idx_insumo = len(self.insumos_testeo) + 1
+                        idx_insumo = len(self.insumos_testeo) + 1'''
+
+
+                # ruben:
+                if num_insumo == "0":
+                    nombre, umbral = self.vista.mostrar_crear_insumo_prompt()
+                    if nombre and umbral:
+                        self.vista.mostrar_marcas_disponibles(self.marcas_testeo)
+                        self.vista.refrescar_pantalla()
+
+                        marca = None
+
+                        opciones_marca = [str(marca.num) for marca in self.marcas_testeo]
+                        marca_num = self.vista.mostrar_seleccionar_marca_prompt(opciones_marca)
+
+                        # aqui se crea la marca si asi se elige
+                        # si es marca nueva, creamos el objeto marca local (el metodo del dao le va a dar su num real)
+                        if marca_num == "0":
+                            nueva_marca_nom = self.vista.mostrar_crear_marca_prompt()
+                            marca = Marca(0, nueva_marca_nom)
+                            #idx = len(self.marcas_testeo) + 1
+                            #marca = Marca(idx, nueva_marca_nom)
+                            #self.marcas_testeo.append(marca)
+                        else:
+                            #for marca_obj in self.marcas_testeo:
+                            #    if marca_obj.num == int(marca_num):
+                            #        marca = marca_obj
+                            marca = next((m for m in self.marcas_testeo if m.num == int(marca_num)),None)
+
+
+                        self.vista.mostrar_tipos_insumo_disponibles(self.tipos_insumo_testeo)
+                        self.vista.refrescar_pantalla()
+
+                        opciones_tipo = [str(i + 1) for i in range(len(self.tipos_insumo_testeo))]
+                        tipo_num = self.vista.mostrar_seleccionar_tipo_insumo_prompt(opciones_tipo)
+                        #dict_tipo_insumo = {i + 1: self.tipos_insumo_testeo[i] for i in range(len(self.tipos_insumo_testeo))}
+                        #opciones_tipo = [str(idx) for idx in dict_tipo_insumo]
+
+                        #tipo_num = self.vista.mostrar_seleccionar_tipo_insumo_prompt(opciones_tipo)
+                        #tipo = None
+
+                        # aqui se crea el insumo si no existe y hacemos un objeto local (su id lo dara el dao)
+                        if tipo_num == "0":
+                            nuevo_tipo_nom = self.vista.mostrar_crear_tipo_insumo_prompt()
+                            tipo = TipoInsumo("", nuevo_tipo_nom)
+                            #tipo = TipoInsumo(nuevo_tipo_nom[:3], nuevo_tipo_nom)
+                            #self.tipos_insumo_testeo.append(tipo)
+
+                        else:
+                            tipo = self.tipos_insumo_testeo[int(tipo_num) - 1]
+                            #for idx, tipo_obj in dict_tipo_insumo.items():
+                            #    if idx == tipo_num:
+                            #        tipo = dict_tipo_insumo[idx]
+
+                        #idx_insumo = len(self.insumos_testeo) + 1
+                        
+                        try:
+                            # llama al servicio para registrar insumo
+                            nuevo_insumo = self.servicio_compra.registrar_nuevo_insumo(
+                                nombre=nombre,
+                                umbral=float(umbral),
+                                tipo_insumo=tipo,
+                                marca=marca
+                            )
+
+                            # se actualizan las listas locales con lo que existe en la bd
+                            self.insumos_testeo.append(nuevo_insumo)
+                            self.marcas_testeo = self.servicio_inventario.obtener_marcas()
+                            self.tipos_insumo_testeo = self.servicio_inventario.obtener_tipos_insumo()
+
+                            ## obtenemos el id de la bd
+                            num_insumo = str(nuevo_insumo.num)
+                        except ValueError as err:
+                            self.vista.refrescar_pantalla()
+                            self.mostrar_detalles_compra()
+                            return
                         # se asignan todos los valores escogidos y/o creados por el usuario
                         # dependiendo del caso a un obj insumo nuevo, el cual se agrega a la lista
                         # de testeo, el idx de este insumo nuevo se guarda para que al llegar al
@@ -442,8 +518,8 @@ class ControladorCompras:
                         # un nuevo detalle de compra
 
                         # obtiene el del insumo en la BD                        
-                        nuevo_insumo = Insumo(idx_insumo, nombre, umbral, 0, tipo, marca)
-                        self.insumos_testeo.append(copy.deepcopy(nuevo_insumo))
+                        #nuevo_insumo = Insumo(idx_insumo, nombre, umbral, 0, tipo, marca)
+                        #self.insumos_testeo.append(copy.deepcopy(nuevo_insumo))
 
                         num_insumo = idx_insumo
 
