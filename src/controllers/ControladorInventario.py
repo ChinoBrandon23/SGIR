@@ -1,6 +1,5 @@
 import copy
 import math
-import time
 
 from Validaciones.validadorInventario import validadorInventario
 from services.inventario_servicio import  InventarioServicio

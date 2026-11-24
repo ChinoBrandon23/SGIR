@@ -7,7 +7,6 @@ from mysql.connector import Error
 from Validaciones.validadorCompras import validadorCompras
 from models.compra import Compra
 from models.insumo import Insumo
-from models.marca import Marca
 from models.proveedor import Proveedor
 from views.VistaCompras import VistaCompras
 
