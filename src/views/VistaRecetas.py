@@ -210,7 +210,7 @@ class VistaRecetas(VistaBase):
                     "[1] Por nombre",
                     "[2] Por número de porciones",
                     "[3] Mostrar todo",
-                    "[4] Volver a menús"]
+                    "[4] Volver"]
 
         opciones_columna.expand = True
 

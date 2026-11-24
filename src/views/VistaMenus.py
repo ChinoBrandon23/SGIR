@@ -258,7 +258,7 @@ class VistaMenus(VistaBase):
                     "[1] Por nombre",
                     "[2] Por vigencia",
                     "[3] Mostrar todo",
-                    "[4] Volver a menús"]
+                    "[4] Volver"]
 
         opciones_columna.expand = True
 

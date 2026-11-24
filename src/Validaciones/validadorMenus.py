@@ -71,12 +71,12 @@ class validadorMenu:
             return False, "Error: La fecha de inicio no puede ser anterior a la fecha final."
 
         #Verifica que la fecha de inicio y final no sean pasadas
-        hoy = datetime.now().replace(hour=0, minute=0,second=0,microsecond=0)
-        if fecha_inicio < hoy:
-            return False, "Error: La fecha inicio no puede ser  una fecha pasada."
-
-        if fecha_fin < hoy:
-            return False, "Error: La fecha final no puede ser una fecha pasada."
+        # hoy = datetime.now().replace(hour=0, minute=0,second=0,microsecond=0)
+        # if fecha_inicio < hoy:
+        #     return False, "Error: La fecha inicio no puede ser  una fecha pasada."
+        #
+        # if fecha_fin < hoy:
+        #     return False, "Error: La fecha final no puede ser una fecha pasada."
 
         return True, {
             "fecha_inicio": fecha_inicio,

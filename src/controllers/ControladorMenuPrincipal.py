@@ -1,7 +1,9 @@
 import os
 import subprocess
+from datetime import date, datetime
 
 from Validaciones.validadorInventario import validadorInventario
+from Validaciones.validadorMerma import validadorMerma
 from Validaciones.validadorVentas import ValidadorVentas
 from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorInventario import ControladorInventario
@@ -11,6 +13,7 @@ from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from daos.platillos_dao import PlatillosDAO
+from services.merma_servicio import MermaServicio
 #from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
 #from services.venta_servicio import VentaServicio
@@ -29,12 +32,12 @@ from Validaciones.validadorPlatillos import validadorPlatillos
 from Validaciones.validadorMenus import validadorMenu
 from Validaciones.validadorCompras import validadorCompras
 
-
 from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
 from daos.menu_dao import MenuDAO
 from daos.insumo_dao import InsumoDAO
 from daos.compra_dao import CompraDAO
+from daos.merma_dao import MermaDAO
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
@@ -173,7 +176,20 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_merma.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorMerma(vista)
+        dao_merma = MermaDAO(self.db)
+        dao_insumo = InsumoDAO(self.db)
+        compra_dao = CompraDAO(self.db)
+
+        servicio_merma = MermaServicio(dao_merma, dao_insumo)
+        validador = validadorMerma()
+        receta_dao = RecetaDAO(DatabaseConnection)
+        platillo_dao = PlatillosDAO(DatabaseConnection)
+        insumo_dao = InsumoDAO(self.db)
+        servicio_platillos = PlatillosServicio(platillo_dao, receta_dao, insumo_dao)
+
+        servicio_insumo = InventarioServicio(dao_insumo, compra_dao)
+
+        ControladorMerma(vista, servicio_merma, servicio_platillos, servicio_insumo, validador)
 
     def abrir_vista_ventas(self):
         vista = VistaVentas(self.vista.console)
@@ -187,6 +203,7 @@ class ControladorMenuPrincipal:
         receta_dao = RecetaDAO(DatabaseConnection)
         platillo_dao = PlatillosDAO(DatabaseConnection)
         servicio_venta = VentaServicio(dao_venta, insumo_dao, receta_dao, platillo_dao)
+
         validador_ventas = ValidadorVentas()
 
-        ControladorVentas(vista, servicio_venta, validador_ventas)
+        ControladorVentas(vista=vista, servicio=servicio_venta, validador=validador_ventas)

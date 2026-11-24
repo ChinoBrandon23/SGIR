@@ -48,6 +48,9 @@ class MermaDAO:
                 cursor.execute(sql, parametros)
                 filas = cursor.fetchall()
 
+                if filas is None:
+                    return []
+
                 return [
                     Merma(
                         num=fila["numMerma"],
@@ -127,6 +130,44 @@ class MermaDAO:
             if connection.is_connected():
                 connection.close()
 
+    def obtener_tipo_merma_por_nombre(self, nombre_tipo:str) -> TipoMerma:
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT clave, nombre FROM tipo_merma WHERE nombre = %s;", (nombre_tipo,)
+                )
+                fila = cursor.fetchone()
+
+                if not fila:
+                    return fila
+
+                return TipoMerma(fila["clave"], fila["nombre"])
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los tipos de merma: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_tipo_merma_por_clave(self, clave_tipo: str) -> TipoMerma:
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "SELECT clave, nombre FROM tipo_merma WHERE clave = %s;", (clave_tipo,)
+                )
+                fila = cursor.fetchone()
+
+                if not fila:
+                    return fila
+
+                return TipoMerma(fila["clave"], fila["nombre"])
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los tipos de merma: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
     ''' METODOS DE CREACION '''
     
     def registrar_merma(self, merma: Merma, cantidad: float) -> int:
@@ -200,6 +241,27 @@ class MermaDAO:
         except Exception as err:
             connection.rollback()
             raise Error(f"DAO: Error en la transacción al registrar merma: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def registrar_tipo_merma(self, tipo:TipoMerma):
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                      INSERT INTO tipo_merma (clave, nombre)
+                          VALUES (%s, %s);
+                      '''
+                cursor.execute(sql, (
+                    tipo.clave, tipo.nombre
+                ))
+                connection.commit()
+        except mysql.connector.Error as err:
+            connection.rollback()
+            raise Error(f"DAO: Error al crear el tipo de merma: {err}")
+        except Exception as err:
+            raise Error(f"DAO: Error al crear el tipo de merma: {err}")
         finally:
             if connection.is_connected():
                 connection.close()
