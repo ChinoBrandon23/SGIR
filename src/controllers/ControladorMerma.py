@@ -1,14 +1,7 @@
-import copy
 import math
-import random
-import datetime
 
 from Validaciones.validadorMerma import validadorMerma
-from models.insumo import Insumo
-from models.marca import Marca
 from models.merma import Merma
-from models.tipo_insumo import TipoInsumo
-from models.tipo_merma import TipoMerma
 from services.inventario_servicio import InventarioServicio
 from services.merma_servicio import MermaServicio
 from views.VistaMerma import VistaMerma
@@ -124,6 +117,10 @@ class ControladorMerma:
 
     def cancelar_edicion_actual(self):
         # resetea formulario y platillo actual
+        self.pagina_actual_lista_mermas = 1
+        self.pagina_actual_lista_insumos = 1
+        self.pagina_actual_tipos_merma = 1
+
         self.merma_actual = None
         self.mermas_a_mostrar = None
         self.formulario = {}
@@ -239,12 +236,43 @@ class ControladorMerma:
     def evaluar_seleccion_busqueda_av(self, seleccion):
         match seleccion:
             case "1":
-                # por rango de fecha
-                fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_rango_fecha_prompt()
+                rango_validado = False
+                fecha_inicial = None
+                fecha_final = None
 
-                # se debe validar las fechas
-                # con las fechas ahora se buscan las mermas registradas en el rango y la lista que resulta
-                # se asigna a self.mermas_testeo
+                # por rango de fecha
+                while not rango_validado:
+                    fecha_inicial = self.vista.mostrar_buscar_por_rango_fecha_inicial_prompt()
+                    resultado_val_f_inicial = self.validador.validar_formato_fecha(fecha_inicial)
+
+                    while not resultado_val_f_inicial[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_f_inicial[1])
+                        fecha_inicial = self.vista.mostrar_buscar_por_rango_fecha_inicial_prompt()
+                        resultado_val_f_inicial = self.validador.validar_formato_fecha(fecha_inicial)
+
+                    fecha_final = self.vista.mostrar_buscar_por_rango_fecha_final_prompt()
+
+                    resultado_val_f_final = self.validador.validar_formato_fecha(fecha_final)
+
+                    while not resultado_val_f_final[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_f_final[1])
+                        fecha_inicial = self.vista.mostrar_buscar_por_rango_fecha_final_prompt()
+                        resultado_val_f_final = self.validador.validar_formato_fecha(fecha_inicial)
+
+                    resultado_val_rango = self.validador.validar_rango_fecha(fecha_inicial, fecha_final)
+
+                    if resultado_val_rango[0]:
+                        rango_validado = True
+                    else:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_rango[1])
+
+                resultados_busqueda = self.servicio_merma.obtener_mermas_por_rango_fecha(fecha_inicial, fecha_final)
+
+                if resultados_busqueda and len(resultados_busqueda):
+                    self.mermas_a_mostrar = resultados_busqueda
+                else:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
 
                 self.mostrar_lista_mermas()
             case "2":
@@ -261,10 +289,9 @@ class ControladorMerma:
                 opciones_tipo_lista = [key for key in opciones_tipo.keys()]
 
                 tipo_num = self.vista.mostrar_buscar_por_tipo_merma_prompt(opciones_tipo_lista)
-                tipo_nombre = opciones_tipo[tipo_num].nombre
+                tipo_nombre = opciones_tipo[tipo_num].clave
 
-                resultados_busqueda = self.servicio_merma.obtener_tipo_merma_por_nombre(tipo_nombre)
-
+                resultados_busqueda = self.servicio_merma.obtener_mermas_por_tipo(tipo_nombre)
                 if resultados_busqueda:
                     self.mermas_a_mostrar = resultados_busqueda
                 else:
@@ -277,7 +304,10 @@ class ControladorMerma:
                 # por insumo
                 lista_insumos = self.servicio_inventario.obtener_insumos()
 
-                self.vista.mostrar_insumos_disponibles(lista_insumos)
+                pagina, prox_pag = self.paginar_lista_detalles(lista_insumos, self.pagina_actual_lista_insumos)
+                total_pag = self.obtener_total_paginas_detalles(lista_insumos)
+
+                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
                 self.vista.refrescar_pantalla()
 
                 opciones_insumo = [str(idx+1) for idx in range(len(lista_insumos))]
@@ -298,7 +328,7 @@ class ControladorMerma:
             case "4":
                 # buscar todos
                 # asigna el valor a self.mermas_testeo la lista de todas las mermas con un servicio
-
+                self.mermas_a_mostrar = self.servicio_merma.obtener_mermas()
                 self.mostrar_lista_mermas()
             case "5":
                 # volver a menú principal

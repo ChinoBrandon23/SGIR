@@ -226,7 +226,7 @@ class VistaMerma(VistaBase):
                     "[1] Por rango de fecha",
                     "[2] Por tipo de merma",
                     "[3] Por insumo",
-                    "[4] Eliminar merma",
+                    "[4] Mostrar todo",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -462,19 +462,23 @@ class VistaMerma(VistaBase):
         else:
             self.mostrar_crear_tipo_insumo_prompt()
 
-    def mostrar_buscar_por_rango_fecha_prompt(self):
+    def mostrar_buscar_por_rango_fecha_inicial_prompt(self):
         fecha_inicial = ""
-        fecha_final = ""
 
         while fecha_inicial is None or len(fecha_inicial) == 0:
             self.refrescar_pantalla()
             fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
+        return fecha_inicial
+
+    def mostrar_buscar_por_rango_fecha_final_prompt(self):
+        fecha_final = ""
+
         while fecha_final is None or len(fecha_final) == 0:
             self.refrescar_pantalla()
             fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
-        return fecha_inicial, fecha_final
+        return fecha_final
 
     def mostrar_buscar_por_tipo_merma_prompt(self, opciones):
         opciones.append(",")
