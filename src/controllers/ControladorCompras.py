@@ -161,7 +161,10 @@ class ControladorCompras:
                 self.mostrar_detalles_compra()
 
         self.cancelar_edicion_actual()
-        self.compra_actual = self.servicio_compra.obtener_compra_por_numero(compra_num)
+        try:
+            self.compra_actual = self.servicio_compra.obtener_compra_por_numero(compra_num)
+        except IndexError:
+            self.mostrar_lista_compras()
         self.compras_testeo = self.servicio_compra.obtener_compras()
         self.mostrar_detalles_compra()
 
