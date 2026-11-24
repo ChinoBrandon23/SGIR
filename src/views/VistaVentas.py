@@ -579,5 +579,8 @@ class VistaVentas(VistaBase):
         return eleccion
 
     def refrescar_pantalla(self):
-        subprocess.run('cls' if os.name == 'nt' else 'clear')
+        try:
+            subprocess.run('cls' if os.name == 'nt' else 'clear')
+        except FileNotFoundError:
+            print(chr(27) + "[2J")
         self.console.print(self.layout, justify="center")
