@@ -244,7 +244,7 @@ class VistaVentas(VistaBase):
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Por rango de fecha",
                     "[2] Mostrar todo",
-                    "[3] Volver a menús"]
+                    "[3] Volver"]
 
         opciones_columna.expand = True
 

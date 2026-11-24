@@ -144,7 +144,11 @@ class ControladorRecetas:
 
         self.recetas_a_mostrar = self.servicio.obtener_recetas()
         self.cancelar_edicion_actual()
-        self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+
+        try:
+            self.receta_actual = self.servicio.obtener_receta_por_id(receta_num)
+        except IndexError:
+            self.mostrar_detalles_receta()
 
         # evalua si la receta califica para ser un ingrediente
         if not self.servicio.receta_es_ingrediente(self.receta_actual.num) and self.servicio.receta_es_de_ingredientes_simples(self.receta_actual):
@@ -356,8 +360,12 @@ class ControladorRecetas:
                 # cancela la edición actual y vuelve a detalles
                 if self.receta_actual.num in [receta.num for receta in self.recetas_a_mostrar]:
                     self.cancelar_edicion_actual()
-                    self.receta_actual = self.servicio.obtener_receta_por_id(self.vista.input_abrir_detalles.user_input)
-                    self.mostrar_detalles_receta()
+                    try:
+                        self.receta_actual = self.servicio.obtener_receta_por_id(self.vista.input_abrir_detalles.user_input)
+                    except IndexError:
+                        pass
+                    finally:
+                        self.mostrar_detalles_receta()
                 else:
                     self.cancelar_edicion_actual()
                     self.mostrar_lista_recetas()

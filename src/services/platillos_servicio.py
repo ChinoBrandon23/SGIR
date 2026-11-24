@@ -3,14 +3,19 @@ import time
 
 import mysql.connector
 
+from daos.insumo_dao import InsumoDAO
 from daos.platillos_dao import PlatillosDAO
+from daos.receta_dao import RecetaDAO
 from models.categoria import Categoria
+from models.ingrediente import Ingrediente
 from models.platillo import Platillo
 
 
 class PlatillosServicio:
-    def __init__(self, platillos_dao:PlatillosDAO):
+    def __init__(self, platillos_dao:PlatillosDAO, receta_dao:RecetaDAO, insumo_dao:InsumoDAO):
         self._platillos_dao = platillos_dao
+        self._receta_dao = receta_dao
+        self._insumo_dao = insumo_dao
 
     ''' funciones de evaluación '''
 
@@ -27,7 +32,22 @@ class PlatillosServicio:
 
     def obtener_platillos(self) -> list[Platillo]:
         try:
-            return self._platillos_dao.obtener_platillos()
+            lista_platillos =  self._platillos_dao.obtener_platillos()
+
+            if lista_platillos:
+                for platillo in lista_platillos:
+                    filas = self._receta_dao.obtener_ingredientes_receta(platillo.receta.num)
+                    for fila in filas:
+                        platillo.receta.agregarIngrediente(
+                            ingrediente=Ingrediente(fila['NumIngre'], fila['IngreNombre'],
+                                                    insumo=self._insumo_dao.obtener_insumo_por_num(fila['NumInsumo']) if fila[
+                                                        'NumInsumo'] else None,
+                                                    receta=self._receta_dao.obtener_receta_por_id(
+                                                        fila['NumRecetaIngrediente']) if fila[
+                                                        'NumRecetaIngrediente'] else None),
+                            cantidad=fila['Cantidad'],
+                            unidad_medida=fila['uniMedida'])
+                return lista_platillos
         except mysql.connector.Error as err:
             raise ValueError(f'Servicio: Ocurrió un error al obtener los platillos: {err}\n')
 
