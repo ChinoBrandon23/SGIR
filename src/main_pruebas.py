@@ -125,7 +125,7 @@ def testeando_ordenes_compra():
     orden_compra = compra_servicio.obtener_orden_compras()
 
     for orden in orden_compra:
-        print(f'{orden}\n')
+        print(f'Prioridad: {orden['prioridad']} - Insumo {orden['insumo'].nombre}\n')
 
 if __name__ == "__main__":
     main()
