@@ -3,14 +3,13 @@ import mysql.connector
 from mysql.connector import Error
 from daos.insumo_dao import InsumoDAO
 from daos.compra_dao import CompraDAO
-from models import insumo
 from models.insumo import Insumo
 from models.compra import Compra
 from models.marca import Marca
 from models.proveedor import Proveedor
 
 from datetime import date, datetime
-from typing import List
+from typing import List, Any
 
 from models.tipo_insumo import TipoInsumo
 from utils.conversor_unidades import ConversorUnidades
@@ -309,29 +308,32 @@ class CompraServicio:
         except mysql.connector.Error as err:
             raise Error(f'Error al eliminar la compra - {err}')
 
-    def obtener_orden_compras(self) -> list :
+    def obtener_orden_compras(self) -> list[dict[str, Any]]:
         """Obtiene una lista de sugerencias de compra.
-        Prioridad (Agotado o Bajo) | Nombre Insumo | Stock | Umbral | Cantidad Sugerida a Comprar"""
+        Retorna una lista de diccionarios con: prioridad, insumo, cantidad_sugerida."""
         try:
-            orden_compra: list[tuple[str, Insumo, float]] = []
+            ordenes_compra: list[dict] = []
             prioridad:str = ''
             cantidad_sugerida:float = 0.0
             insumos:list[Insumo] = self._compra_dao.obtener_insumos_con_bajo_stock()
             if not insumos:
                 return []
             for insumo in insumos:
-                if insumo.stock < 0:
-                    raise  ValueError('Hay un insumo con stock negativo.') # no deberia de pasar JAJAJA
+                if insumo.stock <= 0:
+                    prioridad = 'Muy agotado' # no deberia de pasar JAJAJA
                 if insumo.stock == 0:
                     prioridad = 'Agotado'
                 if insumo.umbral >= insumo.stock > 0:
                     prioridad = 'Bajo'
                 # calcular cantidad sugerida (para que no se quede en stock bajo tan rapido)
-                cantidad_sugerida = (2 * insumo.umbral) - insumo.stock
-                orden_compra.append([prioridad,insumo,cantidad_sugerida])
-            return orden_compra
+                cantidad_sugerida = round((2 * insumo.umbral) - insumo.stock, 2)
+                ordenes_compra.append({
+                    'prioridad': prioridad,
+                    'insumo': insumo,
+                    'cantidad_sugerida': cantidad_sugerida})
+            return ordenes_compra
         except mysql.connector.Error as err:
-            raise IndexError('Error al obtener datos insumos con bajo stock de la BD')
+            raise Error(f'Error al obtener insumos con bajo stock de la BD: {err}')
 
 
 

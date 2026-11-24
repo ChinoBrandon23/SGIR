@@ -2,7 +2,6 @@ import time
 from datetime import datetime
 from typing import List
 
-from models import tipo_insumo
 from models.insumo import Insumo
 from models.compra import Compra, DetalleCompra
 from models.tipo_insumo import TipoInsumo
@@ -770,7 +769,7 @@ class CompraDAO:
                 connection.close()
 
     def obtener_insumos_con_bajo_stock(self) -> list[Insumo]:
-        """ Obtiene todos los insumos que estan proximos a caducar segun su umbral."""
+        """ Obtiene todos los insumos que con stock menor o igual al umbral."""
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
