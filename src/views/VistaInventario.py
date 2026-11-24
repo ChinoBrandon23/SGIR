@@ -156,7 +156,7 @@ class VistaInventario(VistaBase):
                     "[3] Por marca",
                     "[4] Por stock bajo",
                     "[5] Mostrar todo",
-                    "[6] Volver a menús"]
+                    "[6] Volver"]
 
         opciones_columna.expand = True
 

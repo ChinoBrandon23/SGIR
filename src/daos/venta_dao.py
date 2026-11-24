@@ -417,9 +417,11 @@ class VentaDAO:
                                         raise ValueError(f"Error: No hay insumos disponibles para completar la venta")
 
                         # se dividen la cant de los ingredientes entre la cantidad de porciones que rinde la receta
-                        # para ver cuánto se gasta por cada platillo y se multiplica por la cantidad de platillos vendida
+                        # para ver cuánto se gasta por cada platillo, se divide entre la porción usada
+                        # y se multiplica por la cantidad de platillos vendida
                         cant_platillos = consumo.cantidad_platillos
-                        cantidad_a_descontar = (float(ing_detalle.cantidad) / consumo.platillo.receta.num_porciones) * cant_platillos
+                        cantidad_ing = float(ing_detalle.cantidad) / int(ing_detalle.ingrediente.receta.num_porciones)
+                        cantidad_a_descontar = (cantidad_ing / consumo.platillo.receta.num_porciones) * cant_platillos
                         unidad_medida = ing_detalle.unidad_medida
 
                         while cantidad_a_descontar != 0:

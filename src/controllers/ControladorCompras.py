@@ -7,7 +7,6 @@ from mysql.connector import Error
 from Validaciones.validadorCompras import validadorCompras
 from models.compra import Compra
 from models.insumo import Insumo
-from models.marca import Marca
 from models.proveedor import Proveedor
 from views.VistaCompras import VistaCompras
 
@@ -31,12 +30,9 @@ class ControladorCompras:
         self.pagina_actual_lista_marcas = 1
         self.pagina_actual_lista_proveedores = 1
         self.pagina_actual_lista_tipos_insumo = 1
+        self.pagina_actual_sugerencias = 1
 
-        self.proveedores_testeo = self.servicio_compra.obtener_proovedores()
-        self.marcas_testeo = self.servicio_inventario.obtener_marcas()
-        self.tipos_insumo_testeo = self.servicio_inventario.obtener_tipos_insumo()
-        self.insumos_testeo = self.servicio_inventario.obtener_insumos()
-        self.compras_testeo = None
+        self.compras_a_mostrar = None
 
         self.configurar_listeners()
         self.mostrar_lista_compras()
@@ -58,20 +54,22 @@ class ControladorCompras:
         self.vista.input_seleccionar_insumo.agregar_escuchante(self.cambiar_pagina_lista_insumos)
         self.vista.input_seleccionar_marca.agregar_escuchante(self.cambiar_pagina_lista_marcas)
         self.vista.input_seleccionar_proveedor.agregar_escuchante(self.cambiar_pagina_lista_proveedores)
+        self.vista.input_menu_sugerencias.agregar_escuchante(self.cambiar_pagina_lista_sugerencias)
+        self.vista.input_menu_sugerencias.agregar_escuchante(self.evaluar_seleccion_menu_sugerencias)
 
     def mostrar_lista_compras(self, lista_compras=None):
         """
         Conecta con la capa de servicios para obtener la lista de compras y crea un elemento de lista para cada una.
         """
-        if self.compras_testeo is None:
-            self.compras_testeo = self.servicio_compra.obtener_compras()
+        if self.compras_a_mostrar is None:
+            self.compras_a_mostrar = self.servicio_compra.obtener_compras()
 
         self.vista.mostrar_todas_compras(self.pagina_actual_lista_compras,
-                                        self.obtener_total_paginas_lista_compras(self.compras_testeo))
+                                         self.obtener_total_paginas_lista_compras(self.compras_a_mostrar))
 
         if lista_compras is None:
-            lista_compras, hay_prox_pag = self.paginar_lista_compras(self.compras_testeo,
-                                                                    self.pagina_actual_lista_compras)
+            lista_compras, hay_prox_pag = self.paginar_lista_compras(self.compras_a_mostrar,
+                                                                     self.pagina_actual_lista_compras)
 
         if self.pagina_actual_lista_compras == 1:
             idx_ui = 0
@@ -94,7 +92,7 @@ class ControladorCompras:
             self.vista.mostrar_abrir_detalles_prompt(self.servicio_compra.obtener_compras())
 
         if self.compra_actual is None:
-            self.compra_actual = self.compras_testeo[int(compra_num)-1]
+            self.compra_actual = self.compras_a_mostrar[int(compra_num) - 1]
 
         self.mapear_detalle_insumo()
 
@@ -152,7 +150,7 @@ class ControladorCompras:
                 self.servicio_compra.actualizar_compra(self.compra_actual)
                 compra_num = self.compra_actual.num
                 # se refresca la lista de compras desde la BD
-                self.compras_testeo = self.servicio_compra.obtener_compras()
+                self.compras_a_mostrar = self.servicio_compra.obtener_compras()
             except ValueError as err:
                 # si el servicio lanza un error de validacion
                 self.vista.refrescar_pantalla()
@@ -161,8 +159,11 @@ class ControladorCompras:
                 self.mostrar_detalles_compra()
 
         self.cancelar_edicion_actual()
-        self.compra_actual = self.servicio_compra.obtener_compra_por_numero(compra_num)
-        self.compras_testeo = self.servicio_compra.obtener_compras()
+        try:
+            self.compra_actual = self.servicio_compra.obtener_compra_por_numero(compra_num)
+        except IndexError:
+            self.mostrar_lista_compras()
+        self.compras_a_mostrar = self.servicio_compra.obtener_compras()
         self.mostrar_detalles_compra()
 
     def cancelar_edicion_actual(self):
@@ -258,6 +259,16 @@ class ControladorCompras:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_opciones_busqueda_av_prompt()
 
+            case "4":
+                sugerencias = self.servicio_compra.obtener_orden_compras()
+
+                pagina, prox_pag = self.paginar_lista_detalles(sugerencias, self.pagina_actual_sugerencias)
+                total_pag = self.obtener_total_paginas_detalles(sugerencias)
+
+                self.vista.mostrar_sugerencia_orden_compra(pagina, self.pagina_actual_sugerencias, total_pag)
+                self.vista.crear_banda_opciones_sugerencia_compras()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_prompt_sugerencia_orden_compra()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -278,7 +289,7 @@ class ControladorCompras:
                 borrar = self.vista.mostrar_prompt_eliminar_compra_prompt()
                 if borrar:
                     self.servicio_compra.eliminar_compra(self.compra_actual)
-                    self.compras_testeo = self.servicio_compra.obtener_compras()
+                    self.compras_a_mostrar = self.servicio_compra.obtener_compras()
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_compras()
             case "m":
@@ -299,7 +310,7 @@ class ControladorCompras:
 
                 try:
                     resultados_busqueda = self.servicio_compra.obtener_compras_por_fecha(fecha)
-                    self.compras_testeo = resultados_busqueda
+                    self.compras_a_mostrar = resultados_busqueda
                 except IndexError, Error:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -321,14 +332,14 @@ class ControladorCompras:
 
                 prov_num = lista_proveedores[int(seleccion)-1].num
                 self.pagina_actual_lista_proveedores = 1
-                # usa el prov_num para buscar compras por proveedor, y se asigna a self.compras_testeo como arriba
+                # usa el prov_num para buscar compras por proveedor, y se asigna a self.compras_a_mostrar como arriba
                 try:
                     resultados_busqueda = self.servicio_compra.obtener_compras_por_proveedor(prov_num)
                 except IndexError, Error:
                     resultados_busqueda = []
 
                 if len(resultados_busqueda):
-                    self.compras_testeo = resultados_busqueda
+                    self.compras_a_mostrar = resultados_busqueda
                 else:
                     self.vista.refrescar_pantalla()
                     self.vista.mostrar_mensaje_no_resultados_busqueda_av()
@@ -337,13 +348,18 @@ class ControladorCompras:
 
             case "3":
                 # buscar todos (restaurar búsqueda)
-                self.compras_testeo = self.servicio_compra.obtener_compras()
+                self.compras_a_mostrar = self.servicio_compra.obtener_compras()
 
                 self.mostrar_lista_compras()
 
             case "4":
                 # volver a lista de compras
                 # aquí no se hace nada
+                self.mostrar_lista_compras()
+
+    def evaluar_seleccion_menu_sugerencias(self, seleccion):
+        match seleccion:
+            case "1":
                 self.mostrar_lista_compras()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
@@ -670,7 +686,7 @@ class ControladorCompras:
 
             case "6":
                 # cancela la edición actual y vuelve a detalles
-                if self.compra_actual.num in [menu.num for menu in self.compras_testeo]:
+                if self.compra_actual.num in [menu.num for menu in self.compras_a_mostrar]:
                     self.cancelar_edicion_actual()
                     self.mostrar_detalles_compra(self.vista.input_abrir_detalles.user_input)
                 else:
@@ -847,19 +863,19 @@ class ControladorCompras:
                 self.mostrar_lista_compras()
             else:
                 self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_testeo,
-                                                                self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_a_mostrar,
+                                                                 self.pagina_actual_lista_compras)
                 self.mostrar_lista_compras(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_compras(self.compras_testeo, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_compras(self.compras_a_mostrar, self.pagina_actual_lista_compras)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_compras()
             else:
                 self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_testeo,
-                                                                self.pagina_actual_lista_compras)
+                pagina, hay_sig_pag = self.paginar_lista_compras(self.compras_a_mostrar,
+                                                                 self.pagina_actual_lista_compras)
                 self.mostrar_lista_compras(pagina)
 
     def paginar_lista_compras(self, items: list, num_pag: int):
@@ -1004,6 +1020,32 @@ class ControladorCompras:
                                                             self.pagina_actual_lista_tipos_insumo)
                 total_pag = self.obtener_total_paginas_detalles(lista_tipos_insumo)
                 self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_lista_tipos_insumo, total_pag)
+
+    def cambiar_pagina_lista_sugerencias(self, mov):
+        sugerencias = self.servicio_compra.obtener_orden_compras()
+
+        if mov == ",":
+            if self.pagina_actual_sugerencias == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_sugerencias -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(sugerencias,
+                                                                      self.pagina_actual_sugerencias)
+                total_pag = self.obtener_total_paginas_detalles(sugerencias)
+                self.vista.mostrar_sugerencia_orden_compra(pagina, self.pagina_actual_sugerencias,
+                                                                total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag = self.paginar_lista_detalles(sugerencias, self.pagina_actual_sugerencias)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_sugerencias += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(sugerencias,
+                                                                      self.pagina_actual_sugerencias)
+                total_pag = self.obtener_total_paginas_detalles(sugerencias)
+                self.vista.mostrar_sugerencia_orden_compra(pagina, self.pagina_actual_sugerencias,
+                                                                total_pag)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
         consola_size = self.vista.console.size[1]

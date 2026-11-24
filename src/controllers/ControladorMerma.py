@@ -1,29 +1,31 @@
-import copy
 import math
-import random
-import datetime
+import time
 
+from Validaciones.validadorMerma import validadorMerma
 from models.insumo import Insumo
-from models.marca import Marca
 from models.merma import Merma
-from models.tipo_insumo import TipoInsumo
-from models.tipo_merma import TipoMerma
+from services.inventario_servicio import InventarioServicio
+from services.merma_servicio import MermaServicio
+from services.platillos_servicio import PlatillosServicio
 from views.VistaMerma import VistaMerma
 
 
 class ControladorMerma:
-    def __init__(self, vista:VistaMerma, servicio=None):
+    def __init__(self, vista:VistaMerma, servicio_merma:MermaServicio, servicio_platillo:PlatillosServicio, servicio_insumo:InventarioServicio, validador:validadorMerma):
         self.vista = vista
-        self.servicio = servicio
+        self.servicio_merma = servicio_merma
+        self.servicio_platillo = servicio_platillo
+        self.servicio_inventario = servicio_insumo
+        self.validador = validador
         self.merma_actual = None
         self.formulario = {}
 
-        self.insumos_testeo = self.crear_insumos_testeo()
-        self.tipos_merma_testeo = self.crear_tipos_merma_testeo()
-        self.merma_testeo = self.crear_mermas_testeo()
+        self.mermas_a_mostrar = None
 
-        self.pagina_actual_lista_compras = 1
-        self.pagina_actual_lista_detalles = 1
+        self.pagina_actual_lista_mermas = 1
+        self.pagina_actual_lista_insumos = 1
+        self.pagina_actual_tipos_merma = 1
+        self.pagina_actual_lista_platillos = 1
 
         self.configurar_listeners()
         self.mostrar_lista_mermas()
@@ -37,64 +39,49 @@ class ControladorMerma:
 
         # Para cambiar página
         self.vista.input_menu_merma.agregar_escuchante(self.cambiar_pagina_lista_compras)
+        self.vista.input_seleccion_insumos.agregar_escuchante(self.cambiar_pagina_lista_insumos)
+        self.vista.input_seleccion_tipo_merma.agregar_escuchante(self.cambiar_pagina_lista_tipos_merma)
+        self.vista.input_seleccion_platillo.agregar_escuchante(self.cambiar_pagina_lista_platillos)
 
-    def crear_tipos_merma_testeo(self):
-        tipo1 = TipoMerma("EXPI", "Expirado")
-        tipo2 = TipoMerma("DEVO", "Devolución")
-
-        return [tipo1, tipo2]
-
-    def crear_insumos_testeo(self):
-        marca1 = Marca(1, "El Rosal")
-        marca2 = Marca(2, "Tradi-Pan")
-
-        tipo1 = TipoInsumo("HARI", "Harinas")
-        tipo2 = TipoInsumo("PANA", "Panadería")
-
-        insumo1 = Insumo(1, "Harina de Trigo", umbral=5, stock=10, tipo_insumo=tipo1, marca=marca1)
-        insumo2 = Insumo(2, "Levadura", umbral=5, stock=10, tipo_insumo=tipo2, marca=marca2)
-
-        return [insumo1, insumo2]
-
-    def crear_mermas_testeo(self):
-        descripcion1 = "Error de etiquetado"
-        descripcion2 = "Queja del servicio"
-
-        fecha = datetime.date.today()
-        fecha = datetime.date.strftime(fecha, "%d-%m-%Y")
-
-        merma1 = Merma(1, descripcion1, fecha, "gramos", 50, self.insumos_testeo[0], self.tipos_merma_testeo[0])
-        merma2 = Merma(2, descripcion2, fecha, "gramos", 100, self.insumos_testeo[1], self.tipos_merma_testeo[1])
-
-        return [merma1, merma2]
-
-    def mostrar_lista_mermas(self, lista_compras=None):
+    def mostrar_lista_mermas(self, lista_mermas=None):
         """
         Conecta con la capa de servicios para obtener la lista de platillos y crea un elemento de lista para cada una.
         """
 
-        self.vista.mostrar_toda_merma(self.pagina_actual_lista_compras,
-                                         self.obtener_total_paginas(self.merma_testeo))
+        if self.mermas_a_mostrar is None:
+            self.mermas_a_mostrar = self.servicio_merma.obtener_mermas()
 
-        if lista_compras is None:
-            lista_compras, hay_prox_pag = self.paginar_lista_compras(self.merma_testeo,
-                                                                     self.pagina_actual_lista_compras)
+        self.vista.mostrar_toda_merma(self.pagina_actual_lista_mermas,
+                                      self.obtener_total_paginas(self.mermas_a_mostrar))
 
-        for compra in lista_compras:
-            self.vista.crear_elemento_tabla_merma(compra)
+        if lista_mermas is None:
+            lista_mermas, hay_prox_pag = self.paginar_lista_merma(self.mermas_a_mostrar,
+                                                                  self.pagina_actual_lista_mermas)
+
+        if self.pagina_actual_lista_mermas == 1:
+            idx_ui = 0
+        else:
+            consola_size = self.vista.console.size[1]
+            size_sin_prompt = consola_size - 6
+            lineas_disp = size_sin_prompt - 7
+
+            idx_ui = (self.pagina_actual_lista_mermas - 1) * lineas_disp
+
+        for compra in lista_mermas:
+            idx_ui += 1
+            self.vista.crear_elemento_tabla_merma(compra, idx_ui)
 
         self.vista.refrescar_pantalla()
         self.vista.mostrar_menu_merma_prompt()
 
     def mostrar_detalles_merma(self, merma_num=None):
+        if merma_num is None and self.merma_actual is None:
+            self.vista.mostrar_abrir_detalles_prompt(self.servicio_merma.obtener_mermas())
+
         if self.merma_actual is None:
             # Si no tenemos una merma actual, busca la merma por el num pasado como arg
             # idealmente con un servicio pero por ahora uso un loop para testeo
-            for merma in self.merma_testeo:
-                if str(merma.num) == merma_num:
-                    # La receta encontrada se convierte en la nueva receta actual
-                    self.merma_actual = copy.deepcopy(merma)
-                    break
+            self.merma_actual = self.servicio_merma.obtener_merma_por_numero(int(merma_num))
 
         # llama la función para crear la vista de detalles y le pasa los datos del formulario actual
         self.vista.mostrar_detalles_merma(self.merma_actual, datos_editados=self.formulario)
@@ -121,41 +108,33 @@ class ControladorMerma:
 
         self.vista.refrescar_pantalla()
 
-    def crear_tipo_merma(self, nombre:str):
-        # aquí debería llamar a algún servicio
-        nombre_lista = nombre.split()
-        codigo = ""
-
-        for i in range(4):
-            codigo += random.choice(nombre_lista)
-
-        tipo = TipoMerma(codigo, nombre)
-        self.tipos_merma_testeo.append(tipo)
-
-        return tipo
-
     def guardar_editar_merma(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
-
-        lista_num = [merma.num for merma in self.merma_testeo]
-
-        if self.merma_actual.num in lista_num:
-            idx = lista_num.index(self.merma_actual.num)
-            self.merma_testeo.pop(idx)
-            self.merma_testeo.insert(idx, copy.deepcopy(self.merma_actual))
+        if "platillo_merma" in self.formulario.keys():
+            try:
+                self.servicio_merma.registrar_merma_desde_platillo(self.merma_actual, self.formulario["platillo_merma"])
+            except ValueError as err:
+                self.vista.mostrar_mensaje_error_validacion(str(err))
+                self.mostrar_detalles_merma()
         else:
-            self.merma_testeo.append(copy.deepcopy(self.merma_actual))
-        # resetea el formulario porque la info ya se guardó y vuelve a la vista de detalles
-        # esta debería jalar de nuevo el dato, el cual debería estar actualizado ya
-
-        merma_actual_num = str(self.merma_actual.num)
+            try:
+                self.servicio_merma.registrar_merma(self.merma_actual)
+            except ValueError as err:
+                self.vista.mostrar_mensaje_error_validacion(str(err))
+                self.mostrar_detalles_merma()
+            
         self.cancelar_edicion_actual()
-        self.mostrar_detalles_merma(merma_actual_num)
+        self.mostrar_lista_mermas()
 
     def cancelar_edicion_actual(self):
         # resetea formulario y platillo actual
+        self.pagina_actual_lista_mermas = 1
+        self.pagina_actual_lista_insumos = 1
+        self.pagina_actual_tipos_merma = 1
+
         self.merma_actual = None
+        self.mermas_a_mostrar = None
         self.formulario = {}
 
     def usuario_esta_editando(self):
@@ -168,42 +147,108 @@ class ControladorMerma:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todos los platillos y pasarla
-                self.vista.mostrar_abrir_detalles_prompt(self.merma_testeo)
+                self.vista.mostrar_abrir_detalles_prompt(self.mermas_a_mostrar)
             case "2":
                 # Aquí registra merma
                 self.mostrar_formulario_registrar_merma()
                 self.vista.refrescar_pantalla()
 
-                fecha = self.vista.mostrar_editar_fecha_prompt()
-                cantidad = self.vista.mostrar_editar_cantidad_prompt()
-                unidad_m = self.vista.mostrar_editar_unidad_medida_prompt()
+                fecha = self.vista.mostrar_crear_fecha_prompt()
+                resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
 
-                opciones_ins = [str(insumo.num) for insumo in self.insumos_testeo]
-                self.vista.mostrar_insumos_disponibles(self.insumos_testeo)
-                self.vista.refrescar_pantalla()
+                while not resultado_val_fecha[0]:
+                    self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha[1])
+                    fecha = self.vista.mostrar_crear_fecha_prompt()
+                    resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
 
-                num_ins = self.vista.mostrar_prompt_registrar_insumo_merma(opciones_ins)
-                insumo_merma = None
+                fecha = resultado_val_fecha[1]
 
-                if num_ins != "0":
-                    for insumo in self.insumos_testeo:
-                        if insumo.num == int(num_ins):
-                            insumo_merma = insumo
+                fuente_merma = self.vista.mostrar_prompt_fuente_merma()
 
-                    opciones_tipo_mer = [str(idx+1) for idx in range(len(self.tipos_merma_testeo))]
-                    self.vista.mostrar_tipos_merma_disponibles(self.tipos_merma_testeo)
-                    self.vista.refrescar_pantalla()
+                if fuente_merma == "1":
+                    # merma de platillo
+                    lista_platillos = self.servicio_platillo.obtener_platillos()
+                    opciones_plat = [str(idx+1) for idx in range(len(lista_platillos))]
 
-                    num_tipo_mer = self.vista.mostrar_editar_tipo_merma_prompt(opciones_tipo_mer)
-                    tipo_merma = self.tipos_merma_testeo[int(num_tipo_mer)-1]
+                    pagina, prox_pag = self.paginar_lista_detalles(lista_platillos, self.pagina_actual_lista_platillos)
+                    total_pag = self.obtener_total_paginas_detalles(lista_platillos)
 
-                    if num_ins is not None:
-                        # debería llamar al servicio para registrar una merma nueva
-                        idx = len(self.merma_testeo) + 1
-                        self.merma_actual = Merma(idx, "", fecha, unidad_m, cantidad, insumo_merma, tipo_merma)
-                        self.mostrar_formulario_registrar_merma()
+                    self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos, total_pag)
+                    num_plat = self.vista.mostrar_prompt_registrar_platillo_merma(opciones_plat)
 
-                self.mostrar_lista_mermas()
+                    platillo_merma = lista_platillos[int(num_plat)-1]
+                    # placeholder vacío para poder hacer el obj merma
+                    insumo_merma = Insumo(0, "insumo")
+                    self.formulario["platillo_merma"] = platillo_merma
+
+                elif fuente_merma == "2":
+                    # merma de insumo directamente
+                    lista_insumos = self.servicio_inventario.obtener_insumos()
+                    opciones_ins = [str(idx+1) for idx in range(len(lista_insumos))]
+
+                    pagina, prox_pag = self.paginar_lista_detalles(lista_insumos, self.pagina_actual_lista_insumos)
+                    total_pag = self.obtener_total_paginas_detalles(lista_insumos)
+
+                    self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
+
+                    num_ins = self.vista.mostrar_prompt_registrar_insumo_merma(opciones_ins)
+                    insumo_merma = lista_insumos[int(num_ins) - 1]
+
+                cantidad = self.vista.mostrar_crear_cantidad_prompt()
+                resultado_val_cantidad = self.validador.validar_cantidad_insumo(cantidad)
+
+                while not resultado_val_cantidad[0]:
+                    self.vista.mostrar_mensaje_error_validacion(resultado_val_cantidad[1])
+                    cantidad = self.vista.mostrar_crear_cantidad_prompt()
+                    resultado_val_cantidad = self.validador.validar_cantidad_insumo(cantidad)
+
+                cantidad = resultado_val_cantidad[1]
+
+                if "platillo_merma" not in self.formulario.keys():
+                    unidad_m = self.vista.mostrar_crear_unidad_medida_prompt()
+                    resultado_val_unidad = self.validador.validar_unidad_medida(unidad_m)
+
+                    while not resultado_val_unidad[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_unidad[1])
+                        unidad_m = self.vista.mostrar_crear_unidad_medida_prompt()
+                        resultado_val_unidad = self.validador.validar_unidad_medida(unidad_m)
+
+                    unidad_m = resultado_val_unidad[1]
+
+                else:
+                    unidad_m = "pz"
+
+                lista_tipos_merma = self.servicio_merma.obtener_tipos_merma()
+                opciones_tipo_mer = [str(idx + 1) for idx in range(len(lista_tipos_merma))]
+
+                pagina, prox_pag = self.paginar_lista_detalles(lista_tipos_merma, self.pagina_actual_tipos_merma)
+                total_pag = self.obtener_total_paginas_detalles(lista_tipos_merma)
+
+                self.vista.mostrar_tipos_merma_disponibles(pagina, self.pagina_actual_tipos_merma, total_pag)
+
+                num_tipo_mer = self.vista.mostrar_editar_tipo_merma_prompt(opciones_tipo_mer)
+
+                if num_tipo_mer == "0":
+                    nombre_merma = self.vista.mostrar_crear_tipo_insumo_prompt()
+                    resultado_val_tipo = self.validador.validar_nombre_tipo_merma(nombre_merma)
+
+                    while not resultado_val_tipo[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_tipo[1])
+                        nombre_merma = self.vista.mostrar_crear_tipo_insumo_prompt()
+                        resultado_val_tipo = self.validador.validar_nombre_tipo_merma(nombre_merma)
+
+                    nombre_merma = resultado_val_tipo[1]
+
+                    self.servicio_merma.crear_tipo_merma(nombre_merma)
+                    tipo_merma = self.servicio_merma.obtener_tipo_merma_por_nombre(nombre_merma)
+
+                elif num_tipo_mer != "0":
+                    tipo_merma = lista_tipos_merma[int(num_tipo_mer) - 1]
+
+                self.merma_actual = Merma(0, "", fecha, unidad_m, cantidad, insumo_merma, tipo_merma)
+                self.formulario["merma_creada"] = ""
+
+                self.mostrar_detalles_merma()
 
             case "3":
                 self.vista.crear_banda_opciones_busqueda_av()
@@ -220,21 +265,6 @@ class ControladorMerma:
                 # volver a la vista de todas las mermas
                 self.cancelar_edicion_actual()
                 self.mostrar_lista_mermas()
-            case "2":
-                # abrir opciones de editar merma
-                self.vista.crear_banda_opciones_editar()
-                self.vista.refrescar_pantalla()
-                self.vista.mostrar_opciones_editar_prompt()
-            case "3":
-                borrar = self.vista.mostrar_prompt_eliminar_merma_prompt()
-                if borrar:
-                    for merma in self.merma_testeo:
-                        if merma.num == self.merma_actual.num:
-                            self.merma_testeo.remove(merma)
-                            break
-
-                self.cancelar_edicion_actual()
-                self.mostrar_lista_mermas()
             case "m":
                 # volver al menú principal
                 self.cancelar_edicion_actual()
@@ -242,45 +272,99 @@ class ControladorMerma:
     def evaluar_seleccion_busqueda_av(self, seleccion):
         match seleccion:
             case "1":
-                # por rango de fecha
-                fecha_inicial, fecha_final = self.vista.mostrar_buscar_por_rango_fecha_prompt()
+                rango_validado = False
+                fecha_inicial = None
+                fecha_final = None
 
-                # se debe validar las fechas
-                # con las fechas ahora se buscan las mermas registradas en el rango y la lista que resulta
-                # se asigna a self.mermas_testeo
+                # por rango de fecha
+                while not rango_validado:
+                    fecha_inicial = self.vista.mostrar_buscar_por_rango_fecha_inicial_prompt()
+                    resultado_val_f_inicial = self.validador.validar_formato_fecha(fecha_inicial)
+
+                    while not resultado_val_f_inicial[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_f_inicial[1])
+                        fecha_inicial = self.vista.mostrar_buscar_por_rango_fecha_inicial_prompt()
+                        resultado_val_f_inicial = self.validador.validar_formato_fecha(fecha_inicial)
+
+                    fecha_final = self.vista.mostrar_buscar_por_rango_fecha_final_prompt()
+
+                    resultado_val_f_final = self.validador.validar_formato_fecha(fecha_final)
+
+                    while not resultado_val_f_final[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_f_final[1])
+                        fecha_inicial = self.vista.mostrar_buscar_por_rango_fecha_final_prompt()
+                        resultado_val_f_final = self.validador.validar_formato_fecha(fecha_inicial)
+
+                    resultado_val_rango = self.validador.validar_rango_fecha(fecha_inicial, fecha_final)
+
+                    if resultado_val_rango[0]:
+                        rango_validado = True
+                    else:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_rango[1])
+
+                resultados_busqueda = self.servicio_merma.obtener_mermas_por_rango_fecha(fecha_inicial, fecha_final)
+
+                if resultados_busqueda and len(resultados_busqueda):
+                    self.mermas_a_mostrar = resultados_busqueda
+                else:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
 
                 self.mostrar_lista_mermas()
             case "2":
                 # por tipo de merma
-                self.vista.mostrar_tipos_merma_disponibles(self.tipos_merma_testeo)
+                lista_tipos_merma = self.servicio_merma.obtener_tipos_merma()
+
+                pagina, prox_pag = self.paginar_lista_detalles(lista_tipos_merma, self.pagina_actual_tipos_merma)
+                total_pag = self.obtener_total_paginas_detalles(lista_tipos_merma)
+
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_tipos_merma, total_pag)
                 self.vista.refrescar_pantalla()
 
-                opciones_tipo = {str(idx+1):self.tipos_merma_testeo[idx] for idx in range(len(self.tipos_merma_testeo))}
+                opciones_tipo = {str(idx+1):lista_tipos_merma[idx] for idx in range(len(lista_tipos_merma))}
                 opciones_tipo_lista = [key for key in opciones_tipo.keys()]
 
-                tipo_num = self.vista.mostrar_buscar_por_tipo_insumo_prompt(opciones_tipo_lista)
-                tipo_clave = opciones_tipo[tipo_num]
+                tipo_num = self.vista.mostrar_buscar_por_tipo_merma_prompt(opciones_tipo_lista)
+                tipo_nombre = opciones_tipo[tipo_num].clave
 
-                # con el tipo_clave se puede hacer la búsqueda en un servicio, la lista resultante se guarda en
-                # self.merma_testeo
+                resultados_busqueda = self.servicio_merma.obtener_mermas_por_tipo(tipo_nombre)
+                if resultados_busqueda:
+                    self.mermas_a_mostrar = resultados_busqueda
+                else:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
 
+                self.pagina_actual_tipos_merma = 1
                 self.mostrar_lista_mermas()
             case "3":
                 # por insumo
-                self.vista.mostrar_insumos_disponibles(self.insumos_testeo)
+                lista_insumos = self.servicio_inventario.obtener_insumos()
+
+                pagina, prox_pag = self.paginar_lista_detalles(lista_insumos, self.pagina_actual_lista_insumos)
+                total_pag = self.obtener_total_paginas_detalles(lista_insumos)
+
+                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
                 self.vista.refrescar_pantalla()
 
-                opciones_insumo = [str(insumo.num) for insumo in self.insumos_testeo]
+                opciones_insumo = [str(idx+1) for idx in range(len(lista_insumos))]
 
-                insumo_num = self.vista.mostrar_buscar_por_insumo_prompt(opciones_insumo)
+                res = self.vista.mostrar_buscar_por_insumo_prompt(opciones_insumo)
+                insumo_num = lista_insumos[int(res)-1]
 
-                # busca con el insumo_num en un servicio y asigna la lista resultante en self.merma_testeo
+                resultados_busqueda = self.servicio_merma.obtener_mermas_por_insumo(insumo_num.num)
 
+                if resultados_busqueda:
+                    self.mermas_a_mostrar = resultados_busqueda
+                else:
+                    self.vista.refrescar_pantalla()
+                    self.vista.mostrar_mensaje_no_resultados_busqueda_av()
+
+                self.pagina_actual_lista_insumos = 1
                 self.mostrar_lista_mermas()
             case "4":
                 # buscar todos
                 # asigna el valor a self.mermas_testeo la lista de todas las mermas con un servicio
-
+                self.mermas_a_mostrar = self.servicio_merma.obtener_mermas()
                 self.mostrar_lista_mermas()
             case "5":
                 # volver a menú principal
@@ -292,9 +376,17 @@ class ControladorMerma:
             case "1":
                 # abre prompt para cambiar la descripción
                 descripcion = self.vista.mostrar_editar_descripcion_prompt()
-                descripcion = descripcion.strip()
                 # checa que haya una respuesta del usuario y si es así lo debe validar
                 if descripcion is not None:
+                    resultado_val_desc = self.validador.validar_descripcion_merma(descripcion)
+
+                    while not resultado_val_desc[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_desc[1])
+                        descripcion = self.vista.mostrar_editar_descripcion_prompt()
+                        resultado_val_desc = self.validador.validar_descripcion_merma(descripcion)
+
+                    descripcion = resultado_val_desc[1]
+
                     self.merma_actual.descripcion = descripcion
                     self.formulario["descripcion"] = descripcion
 
@@ -306,8 +398,14 @@ class ControladorMerma:
 
                 # checa que haya un valor y luego valída y asigna
                 if fecha:
-                    fecha = datetime.date.strptime(fecha, "%d-%m-%Y")
-                    fecha = datetime.date.strftime(fecha, "%d-%m-%Y")
+                    resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
+
+                    while not resultado_val_fecha[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha[1])
+                        fecha = self.vista.mostrar_editar_fecha_prompt()
+                        resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
+
+                    fecha = resultado_val_fecha[1]
 
                     self.merma_actual.fecha = fecha
                     self.formulario["fecha"] = fecha
@@ -315,10 +413,19 @@ class ControladorMerma:
                 self.mostrar_detalles_merma()
 
             case "3":
-                # abre opciones para editar unidad de medida
+                # abre opciones para editar cantidad
                 cantidad = self.vista.mostrar_editar_cantidad_prompt()
 
                 if cantidad is not None:
+                    resultado_val_cantidad = self.validador.validar_cantidad_insumo(cantidad)
+
+                    while not resultado_val_cantidad[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_cantidad[1])
+                        cantidad = self.vista.mostrar_editar_cantidad_prompt()
+                        resultado_val_cantidad = self.validador.validar_cantidad_insumo(cantidad)
+
+                    cantidad = resultado_val_cantidad[1]
+
                     self.merma_actual.cantidad = cantidad
                     self.formulario["cantidad"] = cantidad
 
@@ -326,34 +433,57 @@ class ControladorMerma:
 
             case "4":
                 # abre opciones para editar unidad de medida
-                cantidad = self.vista.mostrar_editar_unidad_medida_prompt()
+                unidad_m = self.vista.mostrar_editar_unidad_medida_prompt()
 
-                if cantidad is not None:
-                    self.merma_actual.unidad_medida = cantidad
-                    self.formulario["unidad_medida"] = cantidad
+                if unidad_m is not None:
+                    resultado_val_unidad = self.validador.validar_unidad_medida(unidad_m)
+
+                    while not resultado_val_unidad[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_unidad[1])
+                        unidad_m = self.vista.mostrar_editar_unidad_medida_prompt()
+                        resultado_val_unidad = self.validador.validar_unidad_medida(unidad_m)
+
+                    unidad_m = resultado_val_unidad[1]
+
+                    self.merma_actual.unidad_medida = unidad_m
+                    self.formulario["unidad_medida"] = unidad_m
 
                 self.mostrar_detalles_merma()
 
             case "5":
                 # abre opciones para editar tipo de merma
-                opciones = [str(idx + 1) for idx in range(len(self.tipos_merma_testeo))]
-                self.vista.mostrar_tipos_merma_disponibles(self.tipos_merma_testeo)
-                self.vista.refrescar_pantalla()
+                lista_tipos_merma = self.servicio_merma.obtener_tipos_merma()
+                opciones = [str(idx + 1) for idx in range(len(lista_tipos_merma))]
 
-                cantidad = self.vista.mostrar_editar_tipo_merma_prompt(opciones)
+                pagina, prox_pag = self.paginar_lista_detalles(lista_tipos_merma, self.pagina_actual_tipos_merma)
+                total_pag = self.obtener_total_paginas_detalles(lista_tipos_merma)
 
-                if cantidad == "0":
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_tipos_merma, total_pag)
+
+                tipo_merma = self.vista.mostrar_editar_tipo_merma_prompt(opciones)
+
+                if tipo_merma == "0":
                     # crear tipo
                     nombre_tipo = self.vista.mostrar_crear_tipo_insumo_prompt()
-                    self.crear_tipo_merma(nombre_tipo)
-                    self.merma_actual.tipo_merma = self.merma_testeo[-1]
-                    self.formulario["tipo"] = self.merma_testeo[-1]
+                    resultado_val_nombre = self.validador.validar_nombre_tipo_merma(nombre_tipo)
 
-                if cantidad is not None:
-                    tipo = self.tipos_merma_testeo[int(cantidad) - 1]
+                    while not resultado_val_nombre[0]:
+                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                        nombre_tipo = self.vista.mostrar_crear_tipo_insumo_prompt()
+                        resultado_val_nombre = self.validador.validar_nombre_tipo_merma(nombre_tipo)
+
+                    nombre_tipo = resultado_val_nombre[1]
+
+                    self.servicio_merma.crear_tipo_merma(nombre_tipo)
+                    self.merma_actual.tipo_merma = self.servicio_merma.obtener_tipo_merma_por_nombre(nombre_tipo)
+                    self.formulario["tipo"] = nombre_tipo
+
+                if tipo_merma is not None:
+                    tipo = lista_tipos_merma[int(tipo_merma)-1]
                     self.merma_actual.tipo_merma = tipo
                     self.formulario["tipo"] = tipo
 
+                self.pagina_actual_tipos_merma = 1
                 self.mostrar_detalles_merma()
 
             case "6":
@@ -362,12 +492,8 @@ class ControladorMerma:
 
             case "7":
                 # cancela la edición actual y vuelve a detalles
-                if self.merma_actual.num in [merma.num for merma in self.merma_testeo]:
-                    self.cancelar_edicion_actual()
-                    self.mostrar_detalles_merma(self.vista.input_abrir_detalles.user_input)
-                else:
-                    self.cancelar_edicion_actual()
-                    self.mostrar_lista_mermas()
+                self.cancelar_edicion_actual()
+                self.mostrar_lista_mermas()
 
             case "m":
                 # vuelve al menú
@@ -375,46 +501,142 @@ class ControladorMerma:
 
     def cambiar_pagina_lista_compras(self, mov):
         if mov == ",":
-            if self.pagina_actual_lista_compras == 1:
+            if self.pagina_actual_lista_mermas == 1:
                 self.vista.mostrar_mensaje_no_pagina_anterior()
                 self.mostrar_lista_mermas()
             else:
-                self.pagina_actual_lista_compras -= 1
-                pagina, hay_sig_pag = self.paginar_lista_compras(self.merma_testeo,
-                                                                 self.pagina_actual_lista_compras)
+                self.pagina_actual_lista_mermas -= 1
+                pagina, hay_sig_pag = self.paginar_lista_merma(self.mermas_a_mostrar, self.pagina_actual_lista_mermas)
                 self.mostrar_lista_mermas(pagina)
 
         elif mov == ".":
-            pagina, sig_pag  = self.paginar_lista_compras(self.merma_testeo, self.pagina_actual_lista_compras)
+            pagina, sig_pag  = self.paginar_lista_merma(self.mermas_a_mostrar, self.pagina_actual_lista_mermas)
             if sig_pag is False:
                 self.vista.mostrar_mensaje_no_pagina_siguiente()
                 self.mostrar_lista_mermas()
             else:
-                self.pagina_actual_lista_compras += 1
-                pagina, hay_sig_pag = self.paginar_lista_compras(self.merma_testeo,
-                                                                 self.pagina_actual_lista_compras)
+                self.pagina_actual_lista_mermas += 1
+                pagina, hay_sig_pag = self.paginar_lista_merma(self.mermas_a_mostrar, self.pagina_actual_lista_mermas)
                 self.mostrar_lista_mermas(pagina)
 
-    def paginar_lista_compras(self, items: list, num_pag: int):
+    def cambiar_pagina_lista_insumos(self, mov):
+        lista_insumo = self.servicio_inventario.obtener_insumos()
+
+        if mov == ",":
+            if self.pagina_actual_lista_insumos == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_lista_insumos -= 1
+                pagina, hay_sig_pag = self.paginar_lista_merma(lista_insumo, self.pagina_actual_lista_insumos)
+                total_pag = self.obtener_total_paginas_detalles(lista_insumo)
+                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_merma(lista_insumo, self.pagina_actual_lista_insumos)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_lista_insumos += 1
+                pagina, hay_sig_pag = self.paginar_lista_merma(lista_insumo, self.pagina_actual_lista_insumos)
+                total_pag = self.obtener_total_paginas_detalles(lista_insumo)
+                self.vista.mostrar_insumos_disponibles(pagina, self.pagina_actual_lista_insumos, total_pag)
+
+    def cambiar_pagina_lista_tipos_merma(self, mov):
+        lista_merma = self.servicio_merma.obtener_tipos_merma()
+        if type(lista_merma) is not list:
+            lista_merma = [lista_merma]
+
+        if mov == ",":
+            if self.pagina_actual_tipos_merma == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_tipos_merma -= 1
+                pagina, hay_sig_pag = self.paginar_lista_merma(lista_merma, self.pagina_actual_tipos_merma)
+                total_pag = self.obtener_total_paginas_detalles(lista_merma)
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_tipos_merma, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_merma(lista_merma, self.pagina_actual_tipos_merma)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_tipos_merma += 1
+                pagina, hay_sig_pag = self.paginar_lista_merma(lista_merma, self.pagina_actual_tipos_merma)
+                total_pag = self.obtener_total_paginas_detalles(lista_merma)
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_tipos_merma, total_pag)
+
+    def cambiar_pagina_lista_platillos(self, mov):
+        lista_platillos = self.servicio_platillo.obtener_platillos()
+
+        if mov == ",":
+            if self.pagina_actual_lista_platillos == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_lista_platillos -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_platillos, self.pagina_actual_lista_platillos)
+                total_pag = self.obtener_total_paginas_detalles(lista_platillos)
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos, total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag  = self.paginar_lista_detalles(lista_platillos, self.pagina_actual_lista_platillos)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_lista_platillos += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(lista_platillos, self.pagina_actual_lista_platillos)
+                total_pag = self.obtener_total_paginas_detalles(lista_platillos)
+                self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_lista_platillos, total_pag)
+
+    def paginar_lista_detalles(self, items: list, num_pag: int):
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 7
+        lineas_disp = size_sin_prompt - 10
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
 
-        if idx_final < len(items) - 1:
+        if idx_final < len(items):
             prox_pag = True
         else:
             prox_pag = False
 
         return items[idx_inicio:idx_final], prox_pag
 
+    def paginar_lista_merma(self, items: list, num_pag: int):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 10
+
+        idx_inicio = (num_pag - 1) * lineas_disp
+        idx_final = idx_inicio + lineas_disp
+
+        if idx_final < len(items):
+            prox_pag = True
+        else:
+            prox_pag = False
+
+        return items[idx_inicio:idx_final], prox_pag
+
+    def obtener_total_paginas_detalles(self, items: list):
+        consola_size = self.vista.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 10
+
+        if len(items) == 0:
+            return 1
+
+        return math.ceil(len(items) / lineas_disp)
+
     def obtener_total_paginas(self, items: list):
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
         lineas_disp = size_sin_prompt - 7
+
+        if len(items) == 0:
+            return 1
 
         return math.ceil(len(items) / lineas_disp)
