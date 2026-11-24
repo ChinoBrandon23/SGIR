@@ -9,7 +9,7 @@ from models.marca import Marca
 from models.proveedor import Proveedor
 
 from datetime import date, datetime
-from typing import List
+from typing import List, Any
 
 from models.tipo_insumo import TipoInsumo
 from utils.conversor_unidades import ConversorUnidades
@@ -307,6 +307,35 @@ class CompraServicio:
                 self._insumo_dao.actualizar_stock_insumo(detalle.insumo)
         except mysql.connector.Error as err:
             raise Error(f'Error al eliminar la compra - {err}')
+
+    def obtener_orden_compras(self) -> list[dict[str, Any]]:
+        """Obtiene una lista de sugerencias de compra.
+        Retorna una lista de diccionarios con: prioridad, insumo, cantidad_sugerida."""
+        try:
+            ordenes_compra: list[dict] = []
+            prioridad:str = ''
+            cantidad_sugerida:float = 0.0
+            insumos:list[Insumo] = self._compra_dao.obtener_insumos_con_bajo_stock()
+            if not insumos:
+                return []
+            for insumo in insumos:
+                if insumo.stock <= 0:
+                    prioridad = 'Muy agotado' # no deberia de pasar JAJAJA
+                if insumo.stock == 0:
+                    prioridad = 'Agotado'
+                if insumo.umbral >= insumo.stock > 0:
+                    prioridad = 'Bajo'
+                # calcular cantidad sugerida (para que no se quede en stock bajo tan rapido)
+                cantidad_sugerida = round((2 * insumo.umbral) - insumo.stock, 2)
+                ordenes_compra.append({
+                    'prioridad': prioridad,
+                    'insumo': insumo,
+                    'cantidad_sugerida': cantidad_sugerida})
+            return ordenes_compra
+        except mysql.connector.Error as err:
+            raise Error(f'Error al obtener insumos con bajo stock de la BD: {err}')
+
+
 
     ''' FUNCIONALIDAD '''
     def _formatear_a_iso(self, fecha:date) -> str:

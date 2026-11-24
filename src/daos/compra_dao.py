@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 from typing import List
+
 from models.insumo import Insumo
 from models.compra import Compra, DetalleCompra
 from models.tipo_insumo import TipoInsumo
@@ -766,3 +767,47 @@ class CompraDAO:
         finally:
             if connection.is_connected():
                 connection.close()
+
+    def obtener_insumos_con_bajo_stock(self) -> list[Insumo]:
+        """ Obtiene todos los insumos que con stock menor o igual al umbral."""
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                        SELECT
+                        ins.num num,
+                        ins.nombre nombre,
+                        ins.stock stock,
+                        ins.umbral umbral,
+                        ti.clave claveTipo,
+                        ti.nombre nombreTipo,
+                        mc.num numMarca,
+                        mc.nombre nombreMarca
+                        FROM insumo ins
+                        INNER JOIN tipo_insumo ti ON ins.tipo_insumo = ti.clave
+                        INNER JOIN marca mc ON ins.marca = mc.num
+                        WHERE ins.stock <= ins.umbral
+                        ORDER BY stock ASC;
+                        '''
+                # obtenemos los insumos
+                cursor.execute(sql)
+                filas = cursor.fetchall()
+                insumos: list[Insumo] = []
+
+                for fila in filas:
+                    insumos.append(Insumo(
+                        num=fila['num'],
+                        nombre=fila['nombre'],
+                        umbral=fila['umbral'],
+                        stock=fila['stock'],
+                        tipo_insumo=TipoInsumo(clave=fila['claveTipo'],nombre=fila['nombreTipo']),
+                        marca=Marca(num=fila['numMarca'],nombre=fila['nombreMarca'])
+                    ))
+
+                return insumos
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error al consultar los insumos con stock bajo: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
