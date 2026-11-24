@@ -619,7 +619,7 @@ class InsumoDAO:
             if connection.is_connected():
                 connection.close()
 
-    def crear_insumo2(self, insumo:Insumo):
+    def crear_insumo(self, insumo:Insumo):
         connection = self.db.get_connection()
         try:
             with connection.cursor(dictionary=True) as cursor:
