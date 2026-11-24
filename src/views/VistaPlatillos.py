@@ -221,7 +221,7 @@ class VistaPlatillos(VistaBase):
                     "[1] Por nombre",
                     "[2] Por categoría",
                     "[3] Mostrar todo",
-                    "[4] Volver a platillos"]
+                    "[4] Volver"]
 
         opciones_columna.expand = True
 
