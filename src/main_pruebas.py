@@ -38,7 +38,8 @@ def main():
     '''
     #testeando_crud_menus()
     #testeando_crud_insumos()
-    testeando_crud_compras()
+    #testeando_crud_compras()
+    testeando_ordenes_compra()
 
 def testeando_crud_menus():
     connection:DatabaseConnection = DatabaseConnection()
@@ -115,6 +116,16 @@ def testeando_crud_compras():
     #compra.agregar_insumo_compra(compra_servicio.obtener_insumo_por_nombre('Tortillas de Maíz'),10,0,'kg',0,40,'1-12-2026','19-11-2026')
 
     #compra_servicio.actualizar_compra(compra_act=compra)
+
+def testeando_ordenes_compra():
+    compra_dao = CompraDAO(DatabaseConnection())
+    insumo_dao = InsumoDAO(DatabaseConnection())
+
+    compra_servicio = CompraServicio(compra_dao=compra_dao, insumo_dao=insumo_dao)
+    orden_compra = compra_servicio.obtener_orden_compras()
+
+    for orden in orden_compra:
+        print(f'{orden}\n')
 
 if __name__ == "__main__":
     main()
