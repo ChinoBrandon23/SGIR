@@ -41,6 +41,7 @@ class VistaCompras(VistaBase):
         self.input_seleccionar_insumo = InputEmisor()
         self.input_seleccionar_marca = InputEmisor()
         self.input_seleccionar_tipo_insumo = InputEmisor()
+        self.input_menu_sugerencias = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -157,6 +158,38 @@ class VistaCompras(VistaBase):
                                                     f"[bold red]${str(detalle_compra.importe)}[/bold red]",
                                                     f"[bold red]{str(detalle_compra.fecha_compra)}[/bold red]",
                                                     f"[bold red]{str(detalle_compra.fecha_caducidad)}[/bold red]")
+
+    def mostrar_sugerencia_orden_compra(self, lista_compras, pag_actual, pag_total):
+        self.resetear_vista()
+
+        self.mostrar_conteo_paginas(pag_actual, pag_total)
+
+        self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_compra"))
+        self.layout["panel_menu"].size = 6
+
+        panel = Panel(renderable=f"[bold yellow]Sugerencia de compras[/bold yellow]")
+        panel.height = 3
+
+        tabla = Table(title="Lista de insumos")
+        encabezados = ["Prioridad", "Insumo", "Tipo de insumo", "Cantidad en KG"]
+
+        for col in encabezados:
+            tabla.add_column(col)
+
+        for sugerencia in lista_compras:
+            tabla.add_row(str(sugerencia["prioridad"]), str(sugerencia["insumo"].nombre), str(sugerencia["insumo"].tipo_insumo.nombre), str(sugerencia["cantidad_sugerida"]))
+
+        self.layout["panel_menu"].update(panel)
+        self.layout["tabla_detalles_compra"].update(Align.center(tabla, vertical="middle"))
+
+    def mostrar_prompt_sugerencia_orden_compra(self):
+        self.refrescar_pantalla()
+        self.input_menu_sugerencias.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                         choices=["1", ",", "."],
+                                         show_choices=False)
+
+        if self.input_menu_sugerencias.user_input == "," or self.input_menu_sugerencias.user_input == ".":
+            self.mostrar_prompt_sugerencia_orden_compra()
 
     def mostrar_proveedores_disponibles(self, lista_proveedores:list[Proveedor], pag_actual, total_pag):
         columnas = ["#", "Nombre"]
@@ -299,6 +332,7 @@ class VistaCompras(VistaBase):
                     "[1] Ver detalles de compra",
                     "[2] Registrar compra",
                     "[3] Búsqueda avanzada",
+                    "[4] Sugerencias de compra",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -359,6 +393,20 @@ class VistaCompras(VistaBase):
 
         self.layout["opciones"].update(opciones_columna)
 
+    def crear_banda_opciones_sugerencia_compras(self):
+        opciones_columna = Columns()
+        opciones = ["[bold yellow]Opciones:[/bold yellow]",
+                    "[1] Volver a compras"]
+
+        opciones_columna.expand = True
+
+        self.layout["opciones"].size = 1
+
+        for opcion in opciones:
+            opciones_columna.add_renderable(opcion)
+
+        self.layout["opciones"].update(opciones_columna)
+
     def crear_banda_opciones_editar(self):
         opciones_columna = Columns()
 
@@ -401,7 +449,7 @@ class VistaCompras(VistaBase):
     def mostrar_menu_compras_prompt(self):
         self.refrescar_pantalla()
         self.input_menu_compras.imprimir("Selecciona una opción o cambia de página [',' '.']",
-                                         choices=["1", "2", "3", "m", ",", "."],
+                                         choices=["1", "2", "3", "4", "m", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_compras.user_input == "," or self.input_menu_compras.user_input == ".":

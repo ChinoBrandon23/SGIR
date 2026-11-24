@@ -30,6 +30,7 @@ class ControladorCompras:
         self.pagina_actual_lista_marcas = 1
         self.pagina_actual_lista_proveedores = 1
         self.pagina_actual_lista_tipos_insumo = 1
+        self.pagina_actual_sugerencias = 1
 
         self.compras_a_mostrar = None
 
@@ -53,6 +54,8 @@ class ControladorCompras:
         self.vista.input_seleccionar_insumo.agregar_escuchante(self.cambiar_pagina_lista_insumos)
         self.vista.input_seleccionar_marca.agregar_escuchante(self.cambiar_pagina_lista_marcas)
         self.vista.input_seleccionar_proveedor.agregar_escuchante(self.cambiar_pagina_lista_proveedores)
+        self.vista.input_menu_sugerencias.agregar_escuchante(self.cambiar_pagina_lista_sugerencias)
+        self.vista.input_menu_sugerencias.agregar_escuchante(self.evaluar_seleccion_menu_sugerencias)
 
     def mostrar_lista_compras(self, lista_compras=None):
         """
@@ -256,6 +259,16 @@ class ControladorCompras:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_opciones_busqueda_av_prompt()
 
+            case "4":
+                sugerencias = self.servicio_compra.obtener_orden_compras()
+
+                pagina, prox_pag = self.paginar_lista_detalles(sugerencias, self.pagina_actual_sugerencias)
+                total_pag = self.obtener_total_paginas_detalles(sugerencias)
+
+                self.vista.mostrar_sugerencia_orden_compra(pagina, self.pagina_actual_sugerencias, total_pag)
+                self.vista.crear_banda_opciones_sugerencia_compras()
+                self.vista.refrescar_pantalla()
+                self.vista.mostrar_prompt_sugerencia_orden_compra()
             case "m":
                 # cancela la edicion actual antes de volver al menu principal
                 self.cancelar_edicion_actual()
@@ -342,6 +355,11 @@ class ControladorCompras:
             case "4":
                 # volver a lista de compras
                 # aquí no se hace nada
+                self.mostrar_lista_compras()
+
+    def evaluar_seleccion_menu_sugerencias(self, seleccion):
+        match seleccion:
+            case "1":
                 self.mostrar_lista_compras()
 
     def evaluar_seleccion_menu_editar(self, seleccion):
@@ -1002,6 +1020,32 @@ class ControladorCompras:
                                                             self.pagina_actual_lista_tipos_insumo)
                 total_pag = self.obtener_total_paginas_detalles(lista_tipos_insumo)
                 self.vista.mostrar_tipos_insumo_disponibles(pagina, self.pagina_actual_lista_tipos_insumo, total_pag)
+
+    def cambiar_pagina_lista_sugerencias(self, mov):
+        sugerencias = self.servicio_compra.obtener_orden_compras()
+
+        if mov == ",":
+            if self.pagina_actual_sugerencias == 1:
+                self.vista.mostrar_mensaje_no_pagina_anterior()
+            else:
+                self.pagina_actual_sugerencias -= 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(sugerencias,
+                                                                      self.pagina_actual_sugerencias)
+                total_pag = self.obtener_total_paginas_detalles(sugerencias)
+                self.vista.mostrar_sugerencia_orden_compra(pagina, self.pagina_actual_sugerencias,
+                                                                total_pag)
+
+        elif mov == ".":
+            pagina, sig_pag = self.paginar_lista_detalles(sugerencias, self.pagina_actual_sugerencias)
+            if sig_pag is False:
+                self.vista.mostrar_mensaje_no_pagina_siguiente()
+            else:
+                self.pagina_actual_sugerencias += 1
+                pagina, hay_sig_pag = self.paginar_lista_detalles(sugerencias,
+                                                                      self.pagina_actual_sugerencias)
+                total_pag = self.obtener_total_paginas_detalles(sugerencias)
+                self.vista.mostrar_sugerencia_orden_compra(pagina, self.pagina_actual_sugerencias,
+                                                                total_pag)
 
     def paginar_lista_detalles(self, items: list, num_pag: int):
         consola_size = self.vista.console.size[1]
