@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from utils.conversor_unidades import ConversorUnidades
 
@@ -74,7 +74,7 @@ class validadorMerma:
         formato = "%d-%m-%Y"
 
         try:
-            fecha_limpia = datetime.datetime.strptime(fecha_limpia, formato).strftime("%d-%m-%Y")
+            fecha_limpia = datetime.strptime(fecha_limpia, formato).strftime("%d-%m-%Y")
         except ValueError:
             return False, "Error: La fecha no es valida."
 
@@ -123,3 +123,11 @@ class validadorMerma:
             return False, "Error: El nombre no puede estar vacío"
 
         return True, nombre.capitalize()
+
+    def validar_rango_fecha(self, fecha_inicial, fecha_final):
+        formato = "%d-%m-%Y"
+
+        if datetime.strptime(fecha_inicial, formato) > datetime.strptime(fecha_final, formato):
+            return False, "Error: La fecha inicial no puede ser después de la fecha final."
+
+        return True, (fecha_inicial, fecha_final)
