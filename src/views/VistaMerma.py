@@ -12,6 +12,7 @@ from rich.prompt import Prompt
 
 from models.insumo import Insumo
 from models.merma import Merma
+from models.platillo import Platillo
 from models.tipo_merma import TipoMerma
 from views.VistaBase import VistaBase
 from views.clases_personalizadas.InputEmisor import InputEmisor
@@ -34,7 +35,7 @@ class VistaMerma(VistaBase):
         self.input_menu_editar_merma = InputEmisor()
         self.input_menu_filtros = InputEmisor()
         self.input_seleccion_insumos = InputEmisor()
-        self.input_seleccion_receta = InputEmisor()
+        self.input_seleccion_platillo = InputEmisor()
         self.input_seleccion_tipo_merma = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
@@ -66,7 +67,7 @@ class VistaMerma(VistaBase):
             self.tabla_merma.add_column(columna)
 
     def configurar_tabla_detalles(self):
-        columnas = ["Insumo", "Cantidad", "Unidad de medida", "Descripción"]
+        columnas = ["Fuente", "Cantidad", "Unidad de medida", "Descripción"]
 
         for columna in columnas:
             self.tabla_detalles.add_column(columna)
@@ -97,8 +98,8 @@ class VistaMerma(VistaBase):
         self.layout["tabla_detalles"].update(Align.center(self.tabla_detalles, vertical="middle"))
 
     def llenar_tabla_detalles_merma(self, merma_obj:Merma, datos_editados=None):
-        self.tabla_detalles.add_row( f"{"[bold red]" if datos_editados and "insumo" in datos_editados else "[bold yellow]"}"
-                                     f"{merma_obj.insumo.nombre}{"[/bold red]" if datos_editados and "insumo" in datos_editados else "[/bold yellow]"}",
+        self.tabla_detalles.add_row( f"{"[bold yellow]"}"
+                                     f"{merma_obj.insumo.nombre if merma_obj.insumo.num != 0 else datos_editados["platillo_merma"].nombre}",
                                          f"{"[bold red]" if datos_editados and "cantidad" in datos_editados else "[bold yellow]"}"
                                          f"{str(merma_obj.cantidad)}{"[/bold red]" if datos_editados and "cantidad" in datos_editados else "[/bold yellow]"}",
                                          f"{"[bold red]" if datos_editados and "unidad_medida" in datos_editados else "[bold yellow]"}"
@@ -166,6 +167,36 @@ class VistaMerma(VistaBase):
         except KeyError:
             self.layout["main"].split_column(Layout(name="tabla_detalles"))
             self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
+
+    def mostrar_platillos_disponibles(self, lista_platillos:list[Platillo], pag_actual, total_pag):
+        self.refrescar_pantalla()
+
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 10
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
+        columnas = ["#", "Nombre"]
+
+        tabla = Table(title="Platillos disponibles")
+
+        for col in columnas:
+            tabla.add_column(col)
+
+        for i in range(len(lista_platillos)):
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_platillos[i].nombre)
+
+        try:
+            self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
+        except KeyError:
+            self.layout["main"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_registrar_merma(self, merma: Merma | None):
         self.resetear_vista()
@@ -401,12 +432,27 @@ class VistaMerma(VistaBase):
             cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de merma[/bold yellow]")
 
         self.refrescar_pantalla()
-        confirmacion = Prompt.ask("[bold yellow]Confirmar nueva cantidad[/bold yellow]", choices=["S", "N"])
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar nueva cantidad [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])
 
         if confirmacion == "S":
             return cantidad
         else:
             self.mostrar_editar_cantidad_prompt()
+
+    def mostrar_crear_cantidad_platillo_prompt(self):
+        cantidad = ""
+
+        while not cantidad or len(cantidad) == 0:
+            self.refrescar_pantalla()
+            cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de platillos mermados[/bold yellow]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar nueva cantidad: [italic white]{cantidad}[/italic white][/bold yellow]", choices=["S", "N"])
+
+        if confirmacion == "S":
+            return cantidad
+        else:
+            self.mostrar_crear_cantidad_platillo_prompt()
 
     def mostrar_editar_cantidad_prompt(self):
         cantidad = ""
@@ -523,6 +569,36 @@ class VistaMerma(VistaBase):
             return num
         else:
             self.mostrar_prompt_registrar_insumo_merma(opciones)
+
+    def mostrar_prompt_registrar_platillo_merma(self, opciones):
+        if "," not in opciones:
+            opciones.append(",")
+            opciones.append(".")
+        num = ""
+
+        while not num or len(num) == 0 or num == "," or num == ".":
+            self.refrescar_pantalla()
+
+            num = self.input_seleccion_platillo.imprimir("[bold yellow]Selecciona el platillo que se mermó o cambia de página [',' '.'][/bold yellow]",
+                             choices=opciones,
+                             show_choices=False)
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de platillo[/bold yellow]",
+                                          choices=["S", "N"])
+
+        if confirmacion == "S":
+            return num
+        else:
+            self.mostrar_prompt_registrar_platillo_merma(opciones)
+
+    def mostrar_prompt_fuente_merma(self):
+        self.refrescar_pantalla()
+        res = Prompt.ask("[bold yellow]Para registrar la merma de un platillo presiona 1, "
+                         "para registrar la merma de un insumo individual presiona 2",
+                         choices=["1", "2"], show_choices=False)
+
+        return res
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()

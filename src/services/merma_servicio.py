@@ -3,11 +3,14 @@ from datetime import date, datetime, timedelta
 from typing import List
 
 import mysql.connector
+
+from models.platillo import Platillo
 from utils.conversor_unidades import ConversorUnidades
 from mysql.connector import Error
 
 from daos.merma_dao import MermaDAO
 from daos.insumo_dao import InsumoDAO
+from daos.receta_dao import RecetaDAO
 from models.merma import Merma
 from models.tipo_merma import TipoMerma
 from models.insumo import Insumo
@@ -69,7 +72,7 @@ class MermaServicio:
             raise Error(f"Servicio: Error al obtener los tipos de merma: {err}")
 
 
-    def registar_merma(self, merma:Merma) -> int:
+    def registrar_merma(self, merma:Merma) -> int:
         '''Registra una merma de un insumo'''
         # fecha, cantidad merma, unidad medida, insumo mermado, tipo merma -> (uno existento o 0 para nuevo)
         # 1. Validar que la fecha no pueda ser mayor a hoy
@@ -142,6 +145,57 @@ class MermaServicio:
         except Exception as err:
             raise IndexError('Error al registrar la nueva merma.')
 
+    def registrar_merma_desde_platillo(self, merma_original: Merma, platillo:Platillo):
+        try:
+            for detalle_ing in platillo.receta.lista_ingredientes:
+                if detalle_ing.ingrediente.insumo:
+                    # el ingrediente es de insumo
+                    # tomamos la cantidad y unidad de medida del ingrediente
+                    unidad_medida = detalle_ing.unidad_medida
+                    # la cantidad es la cantidad del insumo que lleva una receta entre el número de porciones o platillos
+                    # para los que rinde la receta y se multiplica por le num de platillos mermados
+                    # ej. si una receta lleva 1 kg de queso para 4 porciones/platillos, y se merma un platillo, eso
+                    # significa que se mermó solo 1/4 de kilo
+                    cantidad_mermada = (float(detalle_ing.cantidad) / float(platillo.receta.num_porciones)) * float(merma_original.cantidad)
+
+                    merma_ingrediente = Merma(0,
+                                              merma_original.descripcion,
+                                              merma_original.fecha,
+                                              unidad_medida,
+                                              cantidad_mermada,
+                                              detalle_ing.ingrediente.insumo,
+                                              merma_original.tipo_merma
+                    )
+                    self.registrar_merma(merma_ingrediente)
+
+                elif detalle_ing.ingrediente.receta:
+                    # lo mismo de arriba pero con un nivel de profundidad más
+                    for receta_ing in detalle_ing.ingrediente.receta.lista_ingredientes:
+                        unidad_medida = receta_ing.unidad_medida
+                        # la cantidad es la cantidad del insumo que lleva una receta entre el número de porciones o platillos
+                        # para los que rinde la receta y se multiplica por el número de porciones que representa el ing en la
+                        # receta del platillo original y ya ahora sí se multiplica por le num de platillos mermados
+                        # ej. si una receta lleva 1 kg de queso para 4 porciones/platillos, y 1/2 receta se usa en una segunda
+                        # receta como ingrediente, la cantidad de la receta original que hay en la segunda es 1/4 kg de queso * 2
+                        # entre el número de prorciones de la seg receta y eso se multiplica por los platillos mermados,
+                        # es una regla de 3 basicamente
+                        cantidad_ing = (float(receta_ing.cantidad) / float(detalle_ing.ingrediente.receta.num_porciones))
+                        cantidad_mermada = (float(cantidad_ing) / float(platillo.receta.num_porciones)) * float(merma_original.cantidad)
+
+                        merma_ingrediente = Merma(0,
+                                                  merma_original.descripcion,
+                                                  merma_original.fecha,
+                                                  unidad_medida,
+                                                  cantidad_mermada,
+                                                  receta_ing.ingrediente.insumo,
+                                                  merma_original.tipo_merma)
+                        self.registrar_merma(merma_ingrediente)
+        except ValueError as err:
+            raise ValueError(err)
+        except Error as err:
+            raise ValueError(f"Servicio: Error al registrar la merma: {err}")
+        except Exception as err:
+            raise IndexError('Error al registrar la nueva merma.')
 
     def editar_merma(self, merma: Merma) -> bool:
         '''Actualiza una merma.'''
