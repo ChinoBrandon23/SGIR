@@ -71,6 +71,7 @@ class VistaPlatillos(VistaBase):
     def mostrar_detalles_platillo(self, platillo: Platillo | None, datos_editados):
         self.resetear_vista()
 
+        self.mostrar_conteo_paginas(1, 1)
         self.layout["main"].split_column(Layout(name="panel_platillo"), Layout(name="tabla_detalles"))
 
         self.layout["panel_platillo"].size = 3
@@ -157,7 +158,7 @@ class VistaPlatillos(VistaBase):
 
     def mostrar_crear_platillo(self, platillo: Platillo | None):
         self.resetear_vista()
-        self.mostrar_conteo_paginas(0, 0)
+        self.mostrar_conteo_paginas(1, 1)
 
         self.layout["main"].split_column(Layout(name="panel_platillo"), Layout(name="tabla_detalles"))
 

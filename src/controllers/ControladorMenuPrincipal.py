@@ -109,7 +109,7 @@ class ControladorMenuPrincipal:
         receta_servicio = RecetaServicio(receta_dao=receta_dao)
 
         menu_dao = PlatillosDAO(DatabaseConnection)
-        platillos_servicio = PlatillosServicio(platillos_dao=menu_dao)
+        platillos_servicio = PlatillosServicio(platillos_dao=menu_dao, receta_dao=receta_dao, insumo_dao=InsumoDAO(DatabaseConnection))
         platillo_validador = validadorPlatillos()
 
         ControladorPlatillos(vista, servicio_recetas=receta_servicio, servicio_platillos=platillos_servicio, validador=platillo_validador)
