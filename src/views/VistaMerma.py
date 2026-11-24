@@ -33,6 +33,9 @@ class VistaMerma(VistaBase):
         self.input_menu_detalles = InputEmisor()
         self.input_menu_editar_merma = InputEmisor()
         self.input_menu_filtros = InputEmisor()
+        self.input_seleccion_insumos = InputEmisor()
+        self.input_seleccion_receta = InputEmisor()
+        self.input_seleccion_tipo_merma = InputEmisor()
 
         self.layout["contenido"].split_column(Layout(name="banda_pagina"), Layout(name="main"), Layout(name="opciones"))
 
@@ -68,8 +71,8 @@ class VistaMerma(VistaBase):
         for columna in columnas:
             self.tabla_detalles.add_column(columna)
 
-    def crear_elemento_tabla_merma(self, merma: Merma):
-        self.tabla_merma.add_row(str(merma.num), str(merma.fecha), str(merma.cantidad), merma.unidad_medida,
+    def crear_elemento_tabla_merma(self, merma: Merma, idx_ui:int):
+        self.tabla_merma.add_row(str(idx_ui), str(merma.fecha), str(merma.cantidad), merma.unidad_medida,
                                  merma.insumo.nombre, merma.tipo_merma.nombre)
 
     def mostrar_detalles_merma(self, merma: Merma | None, datos_editados):
@@ -79,7 +82,7 @@ class VistaMerma(VistaBase):
 
         self.layout["panel_merma"].size = 5
 
-        panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma else ""}\n"
+        panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma and merma.num != 0 else "-"}\n"
                                  f"[bold white]Fecha:[/bold white] {"[bold red]" if "fecha" in datos_editados else ""}"
                                  f"{(str(merma.fecha)) if merma else ""}{"[/bold red]" if "fecha" in datos_editados else ""}\n"
                                  f"[bold white]Tipo de merma:[/bold white] {"[bold red]" if "tipo" in datos_editados else ""}{(str(merma.tipo_merma.nombre)) if merma else ""}"
@@ -103,7 +106,20 @@ class VistaMerma(VistaBase):
                                          f"{"[bold red]" if datos_editados and "descripcion" in datos_editados else "[bold yellow]"}"
                                          f"{merma_obj.descripcion}{"/[bold red]" if datos_editados and "descripcion" in datos_editados else "[/bold yellow]"}")
 
-    def mostrar_tipos_merma_disponibles(self, lista_tipo_merma:list[TipoMerma]):
+    def mostrar_tipos_merma_disponibles(self, lista_tipo_merma:list[TipoMerma], pag_actual, total_pag):
+        self.refrescar_pantalla()
+
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 10
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Tipos de merma disponibles")
@@ -112,14 +128,28 @@ class VistaMerma(VistaBase):
             tabla.add_column(col)
 
         for i in range(len(lista_tipo_merma)):
-            tabla.add_row(str(i+1), lista_tipo_merma[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_tipo_merma[i].nombre)
 
         try:
             self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
         except KeyError:
             self.layout["main"].update(Align.center(tabla, vertical="middle"))
 
-    def mostrar_insumos_disponibles(self, lista_insumos:list[Insumo]):
+    def mostrar_insumos_disponibles(self, lista_insumos:list[Insumo], pag_actual, total_pag):
+        self.refrescar_pantalla()
+
+        self.mostrar_conteo_paginas(pag_actual, total_pag)
+        consola_size = self.console.size[1]
+        size_sin_prompt = consola_size - 6
+
+        lineas_disp = size_sin_prompt - 10
+
+        if pag_actual == 1:
+            idx_ui = 0
+        else:
+            idx_ui = (pag_actual - 1) * lineas_disp
+
         columnas = ["#", "Nombre"]
 
         tabla = Table(title="Insumos disponibles")
@@ -128,7 +158,8 @@ class VistaMerma(VistaBase):
             tabla.add_column(col)
 
         for i in range(len(lista_insumos)):
-            tabla.add_row(str(i+1), lista_insumos[i].nombre)
+            idx_ui += 1
+            tabla.add_row(str(idx_ui), lista_insumos[i].nombre)
 
         try:
             self.layout["tabla_detalles"].update(Align.center(tabla, vertical="middle"))
@@ -143,7 +174,7 @@ class VistaMerma(VistaBase):
 
         self.layout["panel_merma"].size = 5
 
-        panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma else ""}\n"
+        panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma and merma.num != 0 else "-"}\n"
                                  f"Fecha: {(str(merma.fecha)) if merma else ""}\n"
                                  f"Tipo de merma: {(str(merma.tipo_merma.nombre)) if merma else ""}")
 
@@ -178,8 +209,6 @@ class VistaMerma(VistaBase):
         opciones_columna = Columns()
         opciones = ["[bold yellow]Opciones:[/bold yellow]",
                     "[1] Volver a mermas",
-                    "[2] Editar merma",
-                    "[3] Eliminar merma",
                     "[M] Volver al menú"]
 
         opciones_columna.expand = True
@@ -230,39 +259,39 @@ class VistaMerma(VistaBase):
         self.layout["opciones"].update(opciones_columna)
 
     def mostrar_menu_merma_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_merma.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                        choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
 
-        if self.input_menu_merma.user_input is None:
-            self.refrescar_pantalla()
+        if not self.input_menu_merma.user_input or self.input_menu_merma.user_input == "," or self.input_menu_merma.user_input == ".":
             self.mostrar_menu_merma_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_merma: list[Merma]):
+        self.refrescar_pantalla()
         self.input_abrir_detalles.imprimir("Ingresa el índice de la merma a mostrar",
                                            choices=[str(merma.num) for merma in lista_merma],
                                            show_choices=False)
 
-        if self.input_abrir_detalles.user_input is None:
-            self.refrescar_pantalla()
+        if not self.input_abrir_detalles.user_input or self.input_abrir_detalles.user_input == "," or self.input_abrir_detalles.user_input == ".":
             self.mostrar_abrir_detalles_prompt(lista_merma)
 
     def mostrar_opciones_detalles_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_detalles.imprimir("Selecciona una opción",
-                                          choices=["1", "2", "3", "m"],
+                                          choices=["1", "2", "m"],
                                           show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
+        if not self.input_menu_detalles.user_input or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_busqueda_av_prompt(self):
-        self.input_menu_filtros.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "3", "4"],
+        self.refrescar_pantalla()
+        self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
+                                         choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_detalles.user_input is None:
-            self.refrescar_pantalla()
+        if not self.input_menu_detalles.user_input or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_merma_prompt(self):
@@ -275,149 +304,221 @@ class VistaMerma(VistaBase):
         return False
 
     def mostrar_opciones_editar_prompt(self):
+        self.refrescar_pantalla()
         self.input_menu_editar_merma.imprimir("Selecciona una opción",
                                               choices=["1", "2", "3", "4", "5", "6", "7", "m"],
                                               show_choices=False)
 
-        if self.input_menu_editar_merma.user_input is None:
-            self.refrescar_pantalla()
+        if self.input_menu_editar_merma.user_input == "," or self.input_menu_editar_merma.user_input == ".":
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_descripcion_prompt(self):
-        self.refrescar_pantalla()
-        info = Prompt.ask("[bold yellow]Ingresa la nueva descripción de la merma[/bold yellow]")
+        info = ""
 
-        if len(info) > 0:
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar nueva descripción[/bold yellow]", choices=["S", "N"])
-            if confirmacion == "S":
-                return info
-            else:
-                return None
-        else:
+        while len(info) == 0:
             self.refrescar_pantalla()
-            self.mostrar_editar_descripcion_prompt()
+            info = Prompt.ask("[bold yellow]Ingresa la nueva descripción de la merma[/bold yellow]")
 
-    def mostrar_editar_fecha_prompt(self):
         self.refrescar_pantalla()
-        info = Prompt.ask("[bold yellow]Ingresa la nueva fecha en el siguiente formato[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
 
-        if len(info):
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar fecha:[/bold yellow] "
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar nueva descripción[/bold yellow]", choices=["S", "N"])
+        if confirmacion == "S":
+            return info
+        else:
+            return None
+
+    def mostrar_crear_fecha_prompt(self):
+        info = ""
+
+        while not info or len(info) == 0 :
+            self.refrescar_pantalla()
+            info = Prompt.ask(
+                "[bold yellow]Ingresa la nueva fecha en el siguiente formato[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar fecha:[/bold yellow] "
                                       f"[italic white]{info}[/italic white]", choices=["S", "N"])
-            if confirmacion == "S":
-                return info
-            else:
-                return None
+        if confirmacion == "S":
+            return info
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_fecha_prompt()
 
-    def mostrar_editar_unidad_medida_prompt(self):
-        self.refrescar_pantalla()
-        unidad = Prompt.ask("[bold yellow]Ingresa la nueva unidad de medida[/bold yellow]")
+    def mostrar_editar_fecha_prompt(self):
+        info = ""
 
-        if len(unidad) > 0:
-            confirmacion = Prompt.ask("[bold yellow]Confirmar nueva unidad de medida:[/bold yellow] "
+        while not info or len(info) == 0:
+            self.refrescar_pantalla()
+            info = Prompt.ask(
+                "[bold yellow]Ingresa la nueva fecha en el siguiente formato[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar fecha:[/bold yellow] "
+                                  f"[italic white]{info}[/italic white]", choices=["S", "N"])
+        if confirmacion == "S":
+            return info
+        else:
+            return None
+
+    def mostrar_crear_unidad_medida_prompt(self):
+        unidad = ""
+
+        while len(unidad) == 0:
+            self.refrescar_pantalla()
+            unidad = Prompt.ask("[bold yellow]Ingresa la nueva unidad de medida\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml [/bold green]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask("[bold yellow]Confirmar nueva unidad de medida:[/bold yellow] "
                                       f"[italic white]{unidad}[/italic white]",
                                       choices=["S","N"])
 
-            if confirmacion == "S":
-                return unidad
-            else:
-                return None
+        if confirmacion == "S":
+            return unidad
         else:
-            self.refrescar_pantalla()
             self.mostrar_editar_unidad_medida_prompt()
 
-    def mostrar_editar_cantidad_prompt(self):
-        self.refrescar_pantalla()
-        cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de merma[/bold yellow]")
+    def mostrar_editar_unidad_medida_prompt(self):
+        unidad = ""
 
-        if len(cantidad) > 0:
-            confirmacion = Prompt.ask("[bold yellow]Confirmar nueva cantidad[/bold yellow]", choices=["S", "N"])
-
-            if confirmacion == "S":
-                return cantidad
-            else:
-                return None
-        else:
+        while len(unidad) == 0:
             self.refrescar_pantalla()
+            unidad = Prompt.ask("[bold yellow]Ingresa la nueva unidad de medida\nDisponibles ->[/bold yellow] [bold green]kg / g / l / ml [/bold green]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask("[bold yellow]Confirmar nueva unidad de medida:[/bold yellow] "
+                                      f"[italic white]{unidad}[/italic white]",
+                                      choices=["S","N"])
+
+        if confirmacion == "S":
+            return unidad
+        else:
+            return None
+
+    def mostrar_crear_cantidad_prompt(self):
+        cantidad = ""
+
+        while not cantidad or len(cantidad) == 0:
+            self.refrescar_pantalla()
+            cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de merma[/bold yellow]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask("[bold yellow]Confirmar nueva cantidad[/bold yellow]", choices=["S", "N"])
+
+        if confirmacion == "S":
+            return cantidad
+        else:
             self.mostrar_editar_cantidad_prompt()
 
-    def mostrar_editar_tipo_merma_prompt(self, opciones):
-        self.refrescar_pantalla()
-        opciones.append("0")
+    def mostrar_editar_cantidad_prompt(self):
+        cantidad = ""
 
-        tipo_num = Prompt.ask(
-            "[bold yellow]Ingresa el nuevo tipo de merma de entre las opciones o 0 para crear un tipo nuevo[/bold yellow]",
-            choices=opciones,
-            show_choices=False)
-
-        if tipo_num == "0":
-            return tipo_num
-
-        elif len(tipo_num):
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar tipo de merma[/bold yellow] "
-                                      f"[italic white]{tipo_num}[/italic white]", choices=["S", "N"])
-            if confirmacion == "S":
-                return tipo_num
-            else:
-                return None
-
-        else:
+        while not cantidad or len(cantidad) == 0:
             self.refrescar_pantalla()
-            self.mostrar_editar_tipo_merma_prompt()
+            cantidad = Prompt.ask("[bold yellow]Ingresa la nueva cantidad de merma[/bold yellow]")
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask("[bold yellow]Confirmar nueva cantidad[/bold yellow]", choices=["S", "N"])
+
+        if confirmacion == "S":
+            return cantidad
+        else:
+            return None
+
+
+    def mostrar_editar_tipo_merma_prompt(self, opciones):
+        opciones.append("0")
+        if "," not in opciones:
+            opciones.append(",")
+            opciones.append(".")
+
+        tipo_num = ""
+
+        while not tipo_num or len(tipo_num) == 0 or tipo_num == "," or tipo_num == ".":
+            self.refrescar_pantalla()
+            tipo_num = self.input_seleccion_tipo_merma.imprimir(
+                "[bold yellow]Ingresa el nuevo tipo de merma de entre las opciones o cambia de página [',' '.'] o 0 para crear un tipo nuevo[/bold yellow]",
+                choices=opciones,
+                show_choices=False)
+
+        self.refrescar_pantalla()
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar tipo de merma[/bold yellow] "
+                                          f"[italic white]{tipo_num}[/italic white]", choices=["S", "N"])
+        if confirmacion == "S":
+            return tipo_num
+        else:
+            self.mostrar_editar_tipo_merma_prompt(opciones)
 
     def mostrar_crear_tipo_insumo_prompt(self):
+        tipo_nombre = ""
+
+        while tipo_nombre is None or len(tipo_nombre) == 0:
+            self.refrescar_pantalla()
+            tipo_nombre = Prompt.ask("[bold yellow]Ingresa el nombre del nuevo tipo de merma[/bold yellow]")
+
         self.refrescar_pantalla()
-        tipo_nombre = Prompt.ask("[bold yellow]Ingresa el nombre del nuevo tipo de merma[/bold yellow]")
+        confirmacion = Prompt.ask(f"[bold yellow]Confirmar crear y asignar tipo: [italic white]{tipo_nombre}[/italic white][/bold yellow]", choices=["S", "N"])
 
-        if tipo_nombre is not None:
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar crear y asignar tipo: [italic white]{tipo_nombre}[/italic white][/bold yellow]", choices=["S", "N"])
-
-            if confirmacion == "S":
-                return tipo_nombre
-            else:
-                return None
+        if confirmacion == "S":
+            return tipo_nombre
+        else:
+            self.mostrar_crear_tipo_insumo_prompt()
 
     def mostrar_buscar_por_rango_fecha_prompt(self):
         fecha_inicial = ""
         fecha_final = ""
 
-        while len(fecha_inicial) == 0:
+        while fecha_inicial is None or len(fecha_inicial) == 0:
             self.refrescar_pantalla()
             fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
-        while len(fecha_final) == 0:
+        while fecha_final is None or len(fecha_final) == 0:
             self.refrescar_pantalla()
             fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final a buscar en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
         return fecha_inicial, fecha_final
 
-    def mostrar_buscar_por_tipo_insumo_prompt(self, opciones):
-        tipo_num = Prompt.ask("Selecciona el tipo de insumo a buscar", choices=opciones, show_choices=False)
+    def mostrar_buscar_por_tipo_merma_prompt(self, opciones):
+        opciones.append(",")
+        opciones.append(".")
+        tipo_num = ""
+
+        while not tipo_num or len(tipo_num) == 0 or tipo_num == "," or tipo_num == ".":
+            self.refrescar_pantalla()
+            tipo_num = self.input_seleccion_tipo_merma.imprimir("Selecciona el tipo de merma a buscar", choices=opciones, show_choices=False)
 
         return tipo_num
 
     def mostrar_buscar_por_insumo_prompt(self, opciones):
-        insumo_num = Prompt.ask("Selecciona el tipo de insumo a buscar", choices=opciones, show_choices=False)
+        opciones.append(",")
+        opciones.append(".")
+        insumo_num = ""
+
+        while not insumo_num or len(insumo_num) == 0 or insumo_num == "," or insumo_num == ".":
+            self.refrescar_pantalla()
+            insumo_num = self.input_seleccion_insumos.imprimir("Selecciona el tipo de insumo a buscar o cambia de página [',' '.']", choices=opciones, show_choices=False)
 
         return insumo_num
 
     def mostrar_prompt_registrar_insumo_merma(self, opciones):
+        if "," not in opciones:
+            opciones.append(",")
+            opciones.append(".")
+        num = ""
+
+        while not num or len(num) == 0 or num == "," or num == ".":
+            self.refrescar_pantalla()
+
+            num = self.input_seleccion_insumos.imprimir("[bold yellow]Selecciona el insumo del que se produjo la merma o cambia de página [',' '.'][/bold yellow]",
+                             choices=opciones,
+                             show_choices=False)
+
         self.refrescar_pantalla()
-
-        num = Prompt.ask("[bold yellow]Selecciona el insumo del que se produjo la merma[/bold yellow]",
-                         choices=opciones,
-                         show_choices=False)
-
         confirmacion = Prompt.ask(f"[bold yellow]Confirmar selección de insumo[/bold yellow]",
-                                  choices=["S", "N"])
+                                          choices=["S", "N"])
 
         if confirmacion == "S":
             return num
         else:
-            return None
+            self.mostrar_prompt_registrar_insumo_merma(opciones)
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
@@ -436,6 +537,15 @@ class VistaMerma(VistaBase):
     def mostrar_mensaje_no_pagina_siguiente(self):
         rich.print("[bold green]Error: no hay página siguiente")
         time.sleep(2)
+
+    def mostrar_mensaje_no_resultados_busqueda_av(self):
+        rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
+        time.sleep(3)
+
+    def mostrar_mensaje_error_validacion(self, error:str):
+        self.refrescar_pantalla()
+        rich.print(f"[bold red]{error}[/bold red]")
+        time.sleep(3)
 
     def refrescar_pantalla(self):
         try:

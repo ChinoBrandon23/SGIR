@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from Validaciones.validadorInventario import validadorInventario
+from Validaciones.validadorMerma import validadorMerma
 from Validaciones.validadorVentas import ValidadorVentas
 from controllers.ControladorCompras import ControladorCompras
 from controllers.ControladorInventario import ControladorInventario
@@ -11,6 +12,7 @@ from controllers.ControladorPlatillos import ControladorPlatillos
 from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from daos.platillos_dao import PlatillosDAO
+from services.merma_servicio import MermaServicio
 #from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
 #from services.venta_servicio import VentaServicio
@@ -29,12 +31,12 @@ from Validaciones.validadorPlatillos import validadorPlatillos
 from Validaciones.validadorMenus import validadorMenu
 from Validaciones.validadorCompras import validadorCompras
 
-
 from daos.connection import DatabaseConnection
 from daos.receta_dao import RecetaDAO
 from daos.menu_dao import MenuDAO
 from daos.insumo_dao import InsumoDAO
 from daos.compra_dao import CompraDAO
+from daos.merma_dao import MermaDAO
 
 from services.receta_servicio import RecetaServicio
 from services.menu_servicio import MenuServicio
@@ -173,7 +175,15 @@ class ControladorMenuPrincipal:
         vista.input_menu_detalles.agregar_escuchante(self.evaluar_redirigir_menu_principal)
         vista.input_menu_editar_merma.agregar_escuchante(self.evaluar_redirigir_menu_principal)
 
-        ControladorMerma(vista)
+        dao_merma = MermaDAO(self.db)
+        dao_insumo = InsumoDAO(self.db)
+        dao_compra = CompraDAO(self.db)
+
+        servicio_merma = MermaServicio(dao_merma, dao_insumo)
+        servicio_insumo = InventarioServicio(dao_insumo, dao_compra)
+        validador = validadorMerma()
+
+        ControladorMerma(vista, servicio_merma, servicio_insumo, validador)
 
     def abrir_vista_ventas(self):
         vista = VistaVentas(self.vista.console)

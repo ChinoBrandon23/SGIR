@@ -1,3 +1,4 @@
+import random
 from datetime import date, datetime, timedelta
 from typing import List
 
@@ -157,6 +158,33 @@ class MermaServicio:
             return self._merma_dao.actualizar_merma(merma)
         except Error as err:
             raise ValueError(f"Servicio: Error al editar la merma: {err}")
+
+    def crear_tipo_merma(self, nombre_tipo_merma:str):
+        try:
+            # verifica si ya existe el tipo de insumo
+            if self._merma_dao.obtener_tipo_merma_por_nombre(nombre_tipo_merma):
+                raise ValueError(f'Servicio: Error tipo de insumo ya existe')
+
+            # por default se genera clave utilizando los primeros 3 caracteres del nombre
+            clave = nombre_tipo_merma[:3]
+
+            # verifica si la clave del tipo de insumo existe en la bd
+            tipo_merma_por_clave = self._merma_dao.obtener_tipo_merma_por_clave(clave)
+
+            while tipo_merma_por_clave:
+                # genera nueva clave
+                clave = "".join(random.choices(nombre_tipo_merma.split(), k=3))
+                tipo_merma_por_clave = self._merma_dao.obtener_tipo_merma_por_clave(clave)
+
+            self._merma_dao.registrar_tipo_merma(TipoMerma(clave, nombre_tipo_merma))
+        except Error as err:
+            raise ValueError(f"Servicio: Error al crear el tipo de merma: {err}")
+
+    def obtener_tipo_merma_por_nombre(self, nombre_tipo_merma:str):
+        try:
+            return self._merma_dao.obtener_tipo_merma_por_nombre(nombre_tipo_merma)
+        except Error as err:
+            raise ValueError(f"Servicio: Error al obtener el tipo de merma: {err}")
 
     @staticmethod
     def _formatear_fecha(fecha: str | date | datetime) -> str:
