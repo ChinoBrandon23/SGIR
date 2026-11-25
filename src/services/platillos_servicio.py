@@ -8,6 +8,7 @@ from daos.platillos_dao import PlatillosDAO
 from daos.receta_dao import RecetaDAO
 from models.categoria import Categoria
 from models.ingrediente import Ingrediente
+from models.menu import Menu
 from models.platillo import Platillo
 
 
@@ -68,6 +69,12 @@ class PlatillosServicio:
             return self._platillos_dao.obtener_platillo_por_nombre(nombre_platillo)
         except mysql.connector.Error as err:
             raise ValueError(f'Servicio: Ocurrió un error al obtener platillo: {err}\n')
+
+    def obtener_menus_de_platillo(self, num_platillo:int) -> list[Menu]:
+        try:
+            return self._platillos_dao.obtener_menu_de_platillo(num_platillo)
+        except mysql.connector.Error as err:
+            raise ValueError(f'Servicio: Ocurrió un error al obtener menú: {err}\n')
 
     def obtener_categorias(self) -> list[Categoria]:
         try:
