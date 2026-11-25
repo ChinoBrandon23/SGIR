@@ -135,7 +135,7 @@ class ControladorRecetas:
                 self.servicio.crear_receta(self.receta_actual)
                 receta_num = self.servicio.obtener_receta_por_nombre(self.receta_actual.nombre).num
                 self.recetas_a_mostrar = self.servicio.obtener_recetas()
-            except ValueError:
+            except ValueError, Error:
                 self.vista.refrescar_pantalla()
                 self.vista.mostrar_error_crear_receta_duplicado()
                 self.vista.mostrar_opciones_editar_prompt()
@@ -601,7 +601,7 @@ class ControladorRecetas:
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 6
+        lineas_disp = size_sin_prompt - 9
 
         idx_inicio = (num_pag - 1) * lineas_disp
         idx_final = idx_inicio + lineas_disp
@@ -723,7 +723,7 @@ class ControladorRecetas:
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 6
+        lineas_disp = size_sin_prompt - 9
 
         if len(items) == 0:
             return 1
