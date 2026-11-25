@@ -278,15 +278,18 @@ class VentaDAO:
                     return None
 
                 for fila in filas:
-                    lista_platillos.append(Platillo(num=fila['platNum'],
-                                                    nombre=fila['nombrePlat'],
-                                                    categoria=Categoria(clave=fila['cat'],
-                                                                        nombre=fila['nombreCat']),
-                                                    receta=Receta(num=fila['recetaNum'],
-                                                                  nombre=fila['nombreRec'],
-                                                                  num_porciones=fila['numPorciones'],
-                                                                  instrucciones={})
-                                                    ))
+                    lista_nombres_filtro = [platillo.nombre for platillo in lista_platillos]
+
+                    if fila["nombrePlat"] not in lista_nombres_filtro:
+                        lista_platillos.append(Platillo(num=fila['platNum'],
+                                                        nombre=fila['nombrePlat'],
+                                                        categoria=Categoria(clave=fila['cat'],
+                                                                            nombre=fila['nombreCat']),
+                                                        receta=Receta(num=fila['recetaNum'],
+                                                                      nombre=fila['nombreRec'],
+                                                                      num_porciones=fila['numPorciones'],
+                                                                      instrucciones={})
+                                                        ))
                 return lista_platillos
         except mysql.connector.Error as err:
             raise Error(f"DAO: {err}")
