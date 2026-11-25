@@ -13,6 +13,7 @@ class ControladorPlatillos:
         self.servicio_recetas = servicio_recetas
         self.validador = validador
         self.platillo_actual = None
+        self.menus_de_platillo = []
         self.formulario = {}
 
         self.pagina_actual_lista_platillos = 1
@@ -77,8 +78,11 @@ class ControladorPlatillos:
             # idealmente con un servicio pero por ahora uso un loop para testeo
             self.platillo_actual = self.platillos_a_mostrar[int(platillo_num)-1]
 
+        # obten menú de platillo si existe
+        self.menus_de_platillo = self.servicio_platillos.obtener_menus_de_platillo(self.platillo_actual.num)
+
         # llama la función para crear la vista de detalles y le pasa los datos del formulario actual
-        self.vista.mostrar_detalles_platillo(self.platillo_actual, datos_editados=self.formulario)
+        self.vista.mostrar_detalles_platillo(self.platillo_actual, datos_editados=self.formulario, menus_activos=self.menus_de_platillo)
 
         if self.usuario_esta_editando():
             # si actualmente el formulario tiene info, muestra las opciones de edicion y su prompt

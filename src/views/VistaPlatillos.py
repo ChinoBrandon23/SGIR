@@ -11,6 +11,7 @@ from rich.columns import Columns
 from rich.prompt import Prompt
 
 from models.categoria import Categoria
+from models.menu import Menu
 from models.platillo import Platillo
 from models.receta import Receta
 from views.VistaBase import VistaBase
@@ -50,6 +51,8 @@ class VistaPlatillos(VistaBase):
         self.tabla_detalles = Table(title="Detalles")
         self.tabla_detalles.show_header = False
         self.tabla_detalles.show_lines = True
+        self.tabla_detalles.add_column(no_wrap=False)
+        self.tabla_detalles.add_column(no_wrap=False)
 
         self.crear_banda_opciones_principal()
 
@@ -68,7 +71,7 @@ class VistaPlatillos(VistaBase):
     def crear_elemento_tabla_platillos(self, platillo: Platillo, idx:int):
         self.tabla_platillos.add_row(str(idx), platillo.nombre, platillo.categoria.nombre)
 
-    def mostrar_detalles_platillo(self, platillo: Platillo | None, datos_editados):
+    def mostrar_detalles_platillo(self, platillo: Platillo | None, datos_editados, menus_activos:list[Menu]):
         self.resetear_vista()
 
         self.mostrar_conteo_paginas(1, 1)
@@ -99,6 +102,21 @@ class VistaPlatillos(VistaBase):
                 self.tabla_detalles.add_row("Receta base", platillo.receta.nombre)
         else:
             self.tabla_detalles.add_row("Receta base", " " * 10)
+
+        menus_activos_nombres = ""
+
+        idx = 0
+        for menu in menus_activos:
+            if idx == len(menus_activos)-1:
+                menus_activos_nombres += f"{menu.nombre}."
+            else:
+                menus_activos_nombres += f"{menu.nombre}, "
+            idx += 1
+
+        if menus_activos and len(menus_activos):
+            self.tabla_detalles.add_row("Perteneciente a menús", menus_activos_nombres)
+        else:
+            self.tabla_detalles.add_row("Menú activo actual", " " * 10)
 
         self.layout["panel_platillo"].update(panel)
         self.layout["tabla_detalles"].update(Align.center(self.tabla_detalles, vertical="middle"))

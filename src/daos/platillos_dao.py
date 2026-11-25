@@ -1,5 +1,6 @@
 import time
 
+from models.menu import Menu
 from models.platillo import Platillo
 from models.categoria import Categoria
 from models.receta import Receta
@@ -52,6 +53,46 @@ class PlatillosDAO:
                                     )
 
                 return platillo
+
+        except mysql.connector.Error as err:
+            raise Error(f"DAO: Error generico de mysql platillos: {err}")
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+    def obtener_menu_de_platillo(self, num_platillo: int) -> list[Menu]:
+        '''Obtiene el menú en que se encuentra un platillo por su numero, regresa None si no está activo'''
+        connection = self.db.get_connection()
+        try:
+            with connection.cursor(dictionary=True) as cursor:
+                sql = '''
+                      SELECT 
+                          m.num num,
+                          m.nombre nombre,
+                          m.cantidadPlatillos cantPlat,
+                          m.fechaInicial fecha_inicial,
+                          m.fechaFinal fecha_final
+                      FROM menu_platillo mp
+                        INNER JOIN menu m on mp.menu = m.num
+                          WHERE mp.platillo = %s;
+                          
+                      '''
+                cursor.execute(sql, (num_platillo,))
+
+                filas = cursor.fetchall()
+                lista_menus: List[Menu] = []
+
+                if filas is None or not len(filas):
+                    return lista_menus
+
+                for fila in filas:
+                    lista_menus.append(Menu(num=fila["num"],
+                                nombre=fila["nombre"],
+                                cantidad_platillos=fila["cantPlat"],
+                                fecha_inicial=fila["fecha_inicial"],
+                                fecha_final=fila["fecha_final"]))
+
+                return lista_menus
 
         except mysql.connector.Error as err:
             raise Error(f"DAO: Error generico de mysql platillos: {err}")
