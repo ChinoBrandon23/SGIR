@@ -31,8 +31,8 @@ class ConversorUnidades:
         # conteos Base = Pieza
         "pza": 1.0,
         "docena": 12.0,
-        "paq": 1.0,
-        "porc":1.0
+        "paq": 1.0
+        #"porc":1.0
     }
 
     # categorias a las que pertenence cada unidad estandar
@@ -40,7 +40,7 @@ class ConversorUnidades:
         "kg": "MASA", "g": "MASA", "mg": "MASA", "lb": "MASA", "oz": "MASA",
         "l": "VOLUMEN", "ml": "VOLUMEN", "taza": "VOLUMEN", "cda": "VOLUMEN",
         "cdita": "VOLUMEN", "fl_oz": "VOLUMEN", "gal": "VOLUMEN",
-        "pza": "CONTEO", "docena": "CONTEO", "paq": "CONTEO", "porc":"CONTEO"
+        "pza": "CONTEO", "docena": "CONTEO", "paq": "CONTEO" #"porc":"CONTEO"
     }
 
     # Alias o sinonimos para lo que es posible que el usuario ingrese
@@ -67,7 +67,7 @@ class ConversorUnidades:
         "docenas": "docena",
         "paquete": "paq", "paquetes": "paq",
         "paquete": "paq", "paquetes": "paq",
-        "porcion": "porc","porciones":"porc", "p":"porc", "pc":'porc',
+        #"porcion": "porc","porciones":"porc", "p":"porc", "pc":'porc',
     }
 
     @classmethod
