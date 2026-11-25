@@ -236,9 +236,22 @@ class ControladorCompras:
                         nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
 
                         if nuevo_prov_nom:
+                            resultado_val_prov = self.validador.validar_nombre_proveedor(nuevo_prov_nom)
+
+                            while not resultado_val_prov[0]:
+                                self.vista.mostrar_mensaje_error_validacion(resultado_val_prov[1])
+                                nuevo_prov_nom = self.vista.mostrar_crear_proveedor_prompt()
+                                if not nuevo_prov_nom:
+                                    self.mostrar_lista_compras()
+                                resultado_val_prov = self.validador.validar_nombre_proveedor(nuevo_prov_nom)
+
+                            nuevo_prov_nom = resultado_val_prov[1]
+
                             nuevo_prov = Proveedor(0, nuevo_prov_nom)
                             self.servicio_compra.crear_proveedor(nuevo_prov)
                             proveedor_obj = self.servicio_compra.obtener_proveedor_por_nombre(nuevo_prov.nombre)
+                        else:
+                            self.mostrar_lista_compras()
                     else:
                         proveedor_obj = lista_proveedores[int(proveedor_num)-1]
 
