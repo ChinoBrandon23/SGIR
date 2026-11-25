@@ -14,7 +14,7 @@ class validadorReceta:
             return False, "Error: La instrucción no puede contener caractéres especiales."
 
         if len(instruccion) > 50:
-            return False, "Error: La instrucción tiene un largo inválido (más de 50 caractéres)."
+            return False, "Error: La instrucción tiene un largo inválido (hasta 50 caractéres)."
 
         return True, instruccion.capitalize()
 
@@ -27,11 +27,11 @@ class validadorReceta:
         unidad_limpia = unidad.strip()
 
         if not nombre_limpio or not cantidad_limpia or not unidad_limpia:
-            return False, "Error: ninguno de los elementos pueden estar vacios."
+            return False, "Error: ninguno de los elementos pueden estar vacíos."
 
         #Verificar el largo del nombre
-        if not (5 <= len(nombre_limpio) <= 20):
-            return False, "Error: El nombre del ingrediete debe tener entre 5 a 20 caracteres."
+        if len(nombre_limpio) > 20:
+            return False, "Error: El nombre del ingrediente tiene un largo inválido (hasta a 20 caracteres)."
 
         #Validar el nombre ignorando mayusculas y minusculas
         ingredientes_lower = [ing.lower() for ing in ingredientes]
@@ -48,8 +48,8 @@ class validadorReceta:
         
         #Verificar que la unidad de medida tenga un largo adecuado y sea válida
         unidad_lower = unidad_limpia.lower()
-        if not (2 <= len(unidad_lower) <= 15):
-            return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 2 y 15 caracteres)."
+        if len(unidad_lower) <= 15:
+            return False, "Error: La unidad de medida tiene un largo inválido (hasta 15 caracteres)."
             
         if unidad_lower not in self.UNIDADES_VALIDAS:
             return False, f"Error: '{unidad_limpia}' no es una unidad de medida reconocida."
@@ -102,8 +102,8 @@ class validadorReceta:
         if ConversorUnidades.es_valida(unidad):
             unidad_limpia = ConversorUnidades.normalizar(unidad)
 
-            if not (2 <= len(unidad_limpia) <= 15):
-                return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 1 y 15 caracteres)."
+            if len(unidad_limpia) > 15:
+                return False, "Error: La unidad de medida tiene un largo inválido (hasta 15 caracteres)."
         else:
             return False, f"Error: {unidad} no es una unidad reconocida en el sistema."
 
@@ -123,8 +123,8 @@ class validadorReceta:
             return False, "Error: El nombre de la receta no puede estar vacío."
                 
         # Verificar que el largo del nombre sea adecuado
-        if not (5 <= len(nombre_limpio) <= 25):
-            return False, f"Error: El largo del nombre es inválido ({len(nombre_limpio)} caracteres).Debe tener entre 5 y 25."
+        if len(nombre_limpio) > 25:
+            return False, f"Error: El largo del nombre es inválido (hasta 25 caractéres).."
                 
         return True, nombre_limpio.capitalize()
 

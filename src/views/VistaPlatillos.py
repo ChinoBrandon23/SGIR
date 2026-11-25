@@ -257,7 +257,7 @@ class VistaPlatillos(VistaBase):
                                            choices=["1", "2", "3", "m", ".", ","],
                                            show_choices=False)
 
-        if self.input_menu_platillos.user_input is None:
+        if self.input_menu_platillos.user_input is None or self.input_menu_platillos.user_input == "," or self.input_menu_platillos.user_input == ".":
             self.mostrar_menu_platillos_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_platillos: list[Platillo]):
@@ -284,7 +284,7 @@ class VistaPlatillos(VistaBase):
                                           choices=["1", "2", "3", "4", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+        if self.input_menu_filtros.user_input is None or self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
             self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_prompt_eliminar_platillo_prompt(self):
@@ -433,7 +433,7 @@ class VistaPlatillos(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_editar_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita el platillo existente.[/bold red]")
@@ -441,7 +441,7 @@ class VistaPlatillos(VistaBase):
 
     def mostrar_mensaje_error_validacion(self, error:str):
         rich.print(f"[bold red]{error}[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:

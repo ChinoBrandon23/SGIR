@@ -626,19 +626,19 @@ class VistaRecetas(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_error_crear_receta_duplicado(self):
         rich.print("[bold red]Error: La receta que intentas crear ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_error_receta_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe, cambia el nombre actual o edita la receta existente[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_error_validacion(self, error:str):
         rich.print(f"[bold red]{error}[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_registrar_como_ingrediente(self):
         self.refrescar_pantalla()

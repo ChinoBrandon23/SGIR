@@ -48,8 +48,8 @@ class validadorMenu:
             return False, "Error: El nombre no puede contener caractéres especiales."
 
         #El nombre sea de un largo correcto
-        if not (5 <= len(nombre_limpio) <= 25):
-            return False, "Error: El nombre del menu tiene un largo invalido. Debe tener entre 5 a 25 caracteres."
+        if len(nombre_limpio) > 25:
+            return False, "Error: El nombre del menu tiene un largo invalido (hasta 25 caracteres)."
 
         return True, nombre_limpio.capitalize()
 

@@ -102,8 +102,8 @@ class validadorCompras:
             if ConversorUnidades.es_valida(unidad):
                 unidad_limpia = ConversorUnidades.normalizar(unidad)
 
-                if not (1 <= len(unidad_limpia) <= 15):
-                    return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 1 y 15 caracteres)."
+                if len(unidad_limpia) > 15:
+                    return False, "Error: La unidad de medida tiene un largo inválido (hasta 15 caracteres)."
             else:
                 return False, f"Error: {unidad} no es una unidad reconocida en el sistema."
 
@@ -132,11 +132,11 @@ class validadorCompras:
             monto_limpio = monto.strip()
 
             if not all([insumo_limpio, cantidad_limpia,unidad_limpia,fecha_limpia,monto_limpio]):
-                return False, "Error: Ningun campo del insumo puede quedar vacio."
+                return False, "Error: Ningún campo del insumo puede quedar vacío."
 
             #Verificar espacios en blancos
             if " " in insumo_limpio:
-                return False, "Error: El insimo no acepta espacios en blanco."
+                return False, "Error: El insumo no acepta espacios en blanco."
 
             if " " in unidad_limpia:
                 return False, "Error: La unidad de medida no acepta espacios en blancos."

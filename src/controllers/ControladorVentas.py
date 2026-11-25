@@ -51,6 +51,7 @@ class ControladorVentas:
         self.vista.input_menu_editar_consumo.agregar_escuchante(self.cambiar_pagina_lista_detalles)
         self.vista.input_seleccion_platillo.agregar_escuchante(self.cambiar_pagina_lista_platillos_disp)
         self.vista.input_platillos_conflicto.agregar_escuchante(self.cambiar_pagina_lista_platillos_conflicto)
+        self.vista.input_menu_filtros.agregar_escuchante(self.cambiar_pagina_lista_ventas)
 
     def mostrar_lista_ventas(self,  lista_ventas=None):
         """
@@ -188,12 +189,14 @@ class ControladorVentas:
                 self.mostrar_formulario_crear_venta()
                 fecha = self.vista.mostrar_prompt_crear_venta_fecha()
 
-                if fecha:
+                if fecha and fecha != "0":
                     resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
 
                     while not resultado_val_fecha[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha[1])
                         fecha = self.vista.mostrar_prompt_crear_venta_fecha()
+                        if not fecha or fecha != "0":
+                            self.mostrar_lista_ventas()
                         resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
 
                     fecha = resultado_val_fecha[1]

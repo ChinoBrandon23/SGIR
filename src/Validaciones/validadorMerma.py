@@ -22,7 +22,7 @@ class validadorMerma:
         unidad_limpia = unidad.strip()
 
         if not tipo_limpio or not descripcion_limpia or not fecha_limpia or not cantidad_limpia or not unidad_limpia:
-                return False, "Error: Ningun campo puede quedar vacio."
+                return False, "Error: Ningún campo puede quedar vacío."
 
         #Evita espacios en blanco
         if " " in tipo_limpio:
@@ -85,8 +85,8 @@ class validadorMerma:
         if ConversorUnidades.es_valida(unidad):
             unidad_limpia = ConversorUnidades.normalizar(unidad)
 
-            if not (1 <= len(unidad_limpia) <= 15):
-                return False, "Error: La unidad de medida tiene un largo inválido (debe tener entre 1 y 15 caracteres)."
+            if len(unidad_limpia) > 15:
+                return False, "Error: La unidad de medida tiene un largo inválido (hasta 15 caracteres)."
         else:
             return False, f"Error: {unidad} no es una unidad reconocida en el sistema."
 

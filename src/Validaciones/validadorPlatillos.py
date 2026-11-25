@@ -12,8 +12,8 @@ class validadorPlatillos:
         if not nombre_limpio or not categoria_limpia or not receta_limpia:
             return False, "Error: El platillo debe tener obligatoriamente nombre, categoria y receta."
 
-        if not (3 <= len(nombre_limpio) <= 25):
-            return False, "Error:El nombre tiene un largo invalido. Debe tener un rango de 3 a 25 caracteres."
+        if not len(nombre_limpio) > 25:
+            return False, "Error:El nombre tiene un largo invalido (hasta 25 caracteres)."
 
         #Verficar que el nombre del platillo sea unico en toda la BD
         nombres_existentes = [platillo.lower() for platillo in platillos_bd]
@@ -32,11 +32,11 @@ class validadorPlatillos:
         categoria_limpia = nombre_categoria.strip()
 
         if categoria_limpia:
-            return False, "Error: El nombre de la categoria no puede estar vacio."
+            return False, "Error: El nombre de la categoria no puede estar vacío."
 
         #Verificar el largo del nombre
-        if not (3 <= len(categoria_limpia) <= 15):
-            return False,"Error: El largo de la categoria es invalido. Debe tener entre 3 y 15 caracteres."
+        if len(categoria_limpia) > 15:
+            return False,"Error: El largo de la categoria es invalido (hasta 15 caracteres)."
 
         return True, categoria_limpia.capitalize()
     
@@ -50,8 +50,8 @@ class validadorPlatillos:
             return False, "Error: El nombre del platillo no puede estar vacío."
 
         #Verifica el largo del nombre    
-        if not (5 <= len(nombre_limpio) <= 25):
-            return False, "Error: El nombre tiene un largo inválido. Debe tener entre 3 y 25."
+        if not len(nombre_limpio) > 25:
+            return False, "Error: El nombre tiene un largo inválido."
 
         if not nombre_limpio.replace(" ", "").isalnum():
             return False, "Error: El nombre del platillo no puede contener caractéres especiales."
