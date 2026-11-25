@@ -258,12 +258,14 @@ class ControladorRecetas:
             case "3":
                 borrar = self.vista.mostrar_prompt_eliminar_receta_prompt()
                 if borrar:
-                    self.servicio.borrar_receta(self.receta_actual.num)
-
-                    self.cancelar_edicion_actual()
-                    self.recetas_a_mostrar = self.servicio.obtener_recetas()
-                    self.mostrar_lista_recetas()
-
+                    try:
+                        self.servicio.borrar_receta(self.receta_actual.num)
+                        self.cancelar_edicion_actual()
+                        self.recetas_a_mostrar = self.servicio.obtener_recetas()
+                        self.mostrar_lista_recetas()
+                    except ValueError as err:
+                        self.vista.mostrar_error_validacion(str(err))
+                        self.mostrar_detalles_receta()
                 self.mostrar_detalles_receta()
             case "m":
                 # volver al menú principal
