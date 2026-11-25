@@ -73,8 +73,22 @@ class VistaMerma(VistaBase):
             self.tabla_detalles.add_column(columna)
 
     def crear_elemento_tabla_merma(self, merma: Merma, idx_ui:int):
-        self.tabla_merma.add_row(str(idx_ui), str(merma.fecha), str(merma.cantidad), merma.unidad_medida,
-                                 merma.insumo.nombre, merma.tipo_merma.nombre)
+        self.tabla_merma.add_row(str(merma.num), self._formatear_fecha(merma.fecha), str(merma.cantidad),
+                                 merma.unidad_medida, merma.insumo.nombre, merma.tipo_merma.nombre)
+
+    @staticmethod
+    def _formatear_fecha(fecha) -> str:
+        """Convierte cualquier fecha a formato DD-MM-YYYY para mostrar en UI."""
+        from datetime import date, datetime
+        if isinstance(fecha, (date, datetime)):
+            return fecha.strftime("%d-%m-%Y")
+        if isinstance(fecha, str) and len(fecha) == 10:
+            # acepta YYYY-MM-DD o DD-MM-YYYY
+            try:
+                return datetime.strptime(fecha, "%Y-%m-%d").strftime("%d-%m-%Y")
+            except ValueError:
+                pass
+        return str(fecha)
 
     def mostrar_detalles_merma(self, merma: Merma | None, datos_editados):
         self.resetear_vista()
@@ -85,7 +99,7 @@ class VistaMerma(VistaBase):
 
         panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma and merma.num != 0 else "-"}\n"
                                  f"[bold white]Fecha:[/bold white] {"[bold red]" if "fecha" in datos_editados else ""}"
-                                 f"{(str(merma.fecha)) if merma else ""}{"[/bold red]" if "fecha" in datos_editados else ""}\n"
+                                 f"{(self._formatear_fecha(merma.fecha)) if merma else ""}{"[/bold red]" if "fecha" in datos_editados else ""}\n"
                                  f"[bold white]Tipo de merma:[/bold white] {"[bold red]" if "tipo" in datos_editados else ""}{(str(merma.tipo_merma.nombre)) if merma else ""}"
                                  f"{"[/bold red]" if "tipo" in datos_editados else ""}")
 
@@ -105,7 +119,7 @@ class VistaMerma(VistaBase):
                                          f"{"[bold red]" if datos_editados and "unidad_medida" in datos_editados else "[bold yellow]"}"
                                          f"{merma_obj.unidad_medida}{"[/bold red]" if datos_editados and "unidad_medida" in datos_editados else "[/bold yellow]"}",
                                          f"{"[bold red]" if datos_editados and "descripcion" in datos_editados else "[bold yellow]"}"
-                                         f"{merma_obj.descripcion}{"/[bold red]" if datos_editados and "descripcion" in datos_editados else "[/bold yellow]"}")
+                                         f"{merma_obj.descripcion}{"[/bold red]" if datos_editados and "descripcion" in datos_editados else "[/bold yellow]"}")
 
     def mostrar_tipos_merma_disponibles(self, lista_tipo_merma:list[TipoMerma], pag_actual, total_pag):
         self.refrescar_pantalla()
@@ -206,7 +220,7 @@ class VistaMerma(VistaBase):
         self.layout["panel_merma"].size = 5
 
         panel = Panel(renderable=f"[bold yellow]Merma #{str(merma.num) if merma and merma.num != 0 else "-"}\n"
-                                 f"Fecha: {(str(merma.fecha)) if merma else ""}\n"
+                                 f"Fecha: {(self._formatear_fecha(merma.fecha)) if merma else ""}\n"
                                  f"Tipo de merma: {(str(merma.tipo_merma.nombre)) if merma else ""}")
 
         panel.height = 5

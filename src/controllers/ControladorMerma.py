@@ -63,7 +63,7 @@ class ControladorMerma:
         else:
             consola_size = self.vista.console.size[1]
             size_sin_prompt = consola_size - 6
-            lineas_disp = size_sin_prompt - 7
+            lineas_disp = size_sin_prompt - 10  # mismo valor que paginar_lista_merma()
 
             idx_ui = (self.pagina_actual_lista_mermas - 1) * lineas_disp
 
@@ -76,7 +76,7 @@ class ControladorMerma:
 
     def mostrar_detalles_merma(self, merma_num=None):
         if merma_num is None and self.merma_actual is None:
-            self.vista.mostrar_abrir_detalles_prompt(self.servicio_merma.obtener_mermas())
+            self.vista.mostrar_abrir_detalles_prompt(self.mermas_a_mostrar)
 
         if self.merma_actual is None:
             # Si no tenemos una merma actual, busca la merma por el num pasado como arg
@@ -649,7 +649,7 @@ class ControladorMerma:
         consola_size = self.vista.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 7
+        lineas_disp = size_sin_prompt - 10  # mismo valor que paginar_lista_merma()
 
         if len(items) == 0:
             return 1
