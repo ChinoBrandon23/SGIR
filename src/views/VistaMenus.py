@@ -536,6 +536,7 @@ class VistaMenus(VistaBase):
         time.sleep(2)
 
     def mostrar_mensaje_no_menus_mostrar(self):
+        self.refrescar_pantalla()
         rich.print("[bold blue]Aviso: No hay menús que mostrar, volviendo a al menú anterior...[/bold blue]")
         time.sleep(2)
 

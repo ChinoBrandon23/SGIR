@@ -364,7 +364,10 @@ class VistaMerma(VistaBase):
         while not info or len(info) == 0 :
             self.refrescar_pantalla()
             info = Prompt.ask(
-                "[bold yellow]Ingresa la nueva fecha en el siguiente formato[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
+                "[bold yellow]Para comenzar, ingresa la nueva fecha en el siguiente formato[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]] [bold yellow]o presiona 0 para cancelar[/bold yellow]")
+
+            if info == "0":
+                return info
 
         self.refrescar_pantalla()
         confirmacion = Prompt.ask(f"[bold yellow]Confirmar fecha:[/bold yellow] "
@@ -620,12 +623,12 @@ class VistaMerma(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_error_validacion(self, error:str):
         self.refrescar_pantalla()
         rich.print(f"[bold red]{error}[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:

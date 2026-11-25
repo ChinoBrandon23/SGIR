@@ -469,15 +469,15 @@ class VistaInventario(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita el insumo existente.[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_error_validacion(self, error:str):
         rich.print(f"[bold red]{error}[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def refrescar_pantalla(self):
         try:

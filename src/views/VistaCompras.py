@@ -976,12 +976,12 @@ class VistaCompras(VistaBase):
         opciones.append("0")
         proveedor = ""
 
-        while len(proveedor) == 0 or proveedor == "," or proveedor == ".":
+        while not proveedor or len(proveedor) == 0 or proveedor == "," or proveedor == ".":
             self.refrescar_pantalla()
             proveedor = self.input_seleccionar_proveedor.imprimir("Para comenzar, ingresa el índice del proveedor de la compra o 0 para registrar uno nuevo", choices=opciones)
 
-        if len(proveedor) == 0:
-            return proveedor
+            if len(proveedor) == 0:
+                return proveedor
 
         return proveedor
 

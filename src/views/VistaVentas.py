@@ -318,7 +318,7 @@ class VistaVentas(VistaBase):
 
     def mostrar_opciones_busqueda_av_prompt(self):
         self.input_menu_filtros.imprimir("Selecciona una opción",
-                                         choices=["1", "2", "3"],
+                                         choices=["1", "2", "3", ",", "."],
                                          show_choices=False)
 
         if self.input_menu_detalles.user_input is None:
@@ -353,54 +353,54 @@ class VistaVentas(VistaBase):
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_fecha_prompt(self):
-        self.refrescar_pantalla()
+        fecha = ""
 
-        fecha = Prompt.ask("[bold yellow]Ingresa la nueva fecha de venta en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
-
-        if len(fecha) > 0:
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar nueva fecha: [italic white]{fecha}[/italic white][/bold yellow]",
-                                      choices=["S", "N"])
-            if confirmacion == "S":
-                return fecha
-            else:
-                return None
-        else:
+        while len(fecha) == 0:
             self.refrescar_pantalla()
-            self.mostrar_editar_fecha_prompt()
+            fecha = Prompt.ask("[bold yellow]Ingresa la nueva fecha de venta en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
+
+            if len(fecha) > 0:
+                confirmacion = Prompt.ask(f"[bold yellow]Confirmar nueva fecha: [italic white]{fecha}[/italic white][/bold yellow]",
+                                          choices=["S", "N"])
+                if confirmacion == "S":
+                    return fecha
+                else:
+                    return None
 
     def mostrar_editar_comensales_prompt(self):
-        self.refrescar_pantalla()
+        comensales = ""
 
-        comensales = Prompt.ask("[bold yellow]Ingresa el nuevo número de comensales para esta venta[/bold yellow]")
-
-        if len(comensales):
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar número de comensales: [italic white]{comensales}[/italic white][/bold yellow]",
-                                      choices=["S", "N"])
-            if confirmacion == "S":
-                return comensales
-            else:
-                return None
-        else:
+        while len(comensales) == 0:
             self.refrescar_pantalla()
-            self.mostrar_editar_comensales_prompt()
+            comensales = Prompt.ask("[bold yellow]Ingresa el nuevo número de comensales para esta venta[/bold yellow]")
+
+            if len(comensales):
+                confirmacion = Prompt.ask(f"[bold yellow]Confirmar número de comensales: [italic white]{comensales}[/italic white][/bold yellow]",
+                                          choices=["S", "N"])
+                if confirmacion == "S":
+                    return comensales
+                else:
+                    return None
 
     def mostrar_editar_monto_total_prompt(self):
-        self.refrescar_pantalla()
+        monto_total = ""
 
-        monto_total = Prompt.ask("[bold yellow]Ingresa el nuevo monto total[/bold yellow]")
+        while len(monto_total) == 0:
+            self.refrescar_pantalla()
+            monto_total = Prompt.ask("[bold yellow]Ingresa el nuevo monto total[/bold yellow]")
 
-        confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo monto total: [italic white]{monto_total}[/italic white][/bold yellow]",
-                                  choices=["S","N"])
+            if len(monto_total) != 0:
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo monto total: [italic white]{monto_total}[/italic white][/bold yellow]",
+                                          choices=["S","N"])
 
-        if confirmacion == "S":
-            return monto_total
-        else:
-            return None
+                if confirmacion == "S":
+                    return monto_total
+                else:
+                    return None
 
     def mostrar_agregar_consumo_plat_prompt(self, opciones):
         opciones.append(",")
         opciones.append(".")
-        self.refrescar_pantalla()
         num_platillo = ""
 
         if len(opciones) == 0:
@@ -409,15 +409,17 @@ class VistaVentas(VistaBase):
             return None
 
         while len(num_platillo) == 0 and num_platillo != "," and num_platillo != ".":
+            self.refrescar_pantalla()
             num_platillo = self.input_seleccion_platillo.imprimir("[bold yellow]Selecciona un platillo de la lista para agregar[/bold yellow]",
                                       choices=opciones,
                                       show_choices=False)
 
-            confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo platillo[/bold yellow]",
-                            choices=["S", "N"])
+            if num_platillo != "," or num_platillo != ".":
+                confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo platillo[/bold yellow]",
+                                choices=["S", "N"])
 
-            if confirmacion == "S":
-                return num_platillo
+                if confirmacion == "S":
+                    return num_platillo
 
     def mostrar_agregar_consumo_cantidad_prompt(self):
         cantidad = ""
@@ -439,17 +441,17 @@ class VistaVentas(VistaBase):
     def mostrar_editar_consumo_seleccion_plat(self, opciones):
         opciones.append(",")
         opciones.append(".")
-        self.refrescar_pantalla()
         num_platillo = ""
 
         while len(num_platillo) == 0 and num_platillo != "," and num_platillo != ".":
+            self.refrescar_pantalla()
             num_platillo = self.input_seleccion_platillo.imprimir(
                 "[bold yellow]Ingresa el índice del platillo a editar[/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
             confirmacion = Prompt.ask(f"[bold yellow]Confirma selección[/bold yellow]",
-                                      choices=["S", "N"])
+                                          choices=["S", "N"])
 
             if confirmacion == "S":
                 return num_platillo
