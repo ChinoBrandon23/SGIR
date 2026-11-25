@@ -99,8 +99,8 @@ class validadorMerma:
             cantidad = float(cantidad)
         except ValueError:
             return False, "Error: La cantidad debe ser un valor numérico."
-
-        if cantidad < 1:
+        
+        if float(cantidad) < 1:
             return False, "Error: La cantidad no puede ser menor a 1."
 
         return True, cantidad
