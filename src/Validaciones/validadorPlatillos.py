@@ -50,7 +50,7 @@ class validadorPlatillos:
             return False, "Error: El nombre del platillo no puede estar vacío."
 
         #Verifica el largo del nombre    
-        if not len(nombre_limpio) > 25:
+        if not len(nombre_limpio) > 4:
             return False, "Error: El nombre tiene un largo inválido."
 
         if not nombre_limpio.replace(" ", "").isalnum():
