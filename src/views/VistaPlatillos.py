@@ -116,7 +116,7 @@ class VistaPlatillos(VistaBase):
         if menus_activos and len(menus_activos):
             self.tabla_detalles.add_row("Perteneciente a menús", menus_activos_nombres)
         else:
-            self.tabla_detalles.add_row("Menú activo actual", " " * 10)
+            self.tabla_detalles.add_row("Perteneciente a menús", "N/A")
 
         self.layout["panel_platillo"].update(panel)
         self.layout["tabla_detalles"].update(Align.center(self.tabla_detalles, vertical="middle"))
