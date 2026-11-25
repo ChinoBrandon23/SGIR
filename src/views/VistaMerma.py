@@ -322,7 +322,7 @@ class VistaMerma(VistaBase):
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if not self.input_menu_detalles.user_input or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
+        if not self.input_menu_filtros.user_input or self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_merma_prompt(self):
@@ -494,7 +494,7 @@ class VistaMerma(VistaBase):
         if confirmacion == "S":
             return tipo_num
         else:
-            self.mostrar_editar_tipo_merma_prompt(opciones)
+            return None
 
     def mostrar_crear_tipo_insumo_prompt(self):
         tipo_nombre = ""

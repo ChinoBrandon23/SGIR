@@ -219,7 +219,7 @@ class VistaInventario(VistaBase):
                                          choices=["1", "2", "3", "4", "5", "6", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+        if self.input_menu_filtros.user_input is None or self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
             self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_prompt_eliminar_insumo_prompt(self):
@@ -238,7 +238,7 @@ class VistaInventario(VistaBase):
                                                    choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                    show_choices=False)
 
-        if self.input_menu_editar_inventario.user_input is None:
+        if self.input_menu_editar_inventario.user_input is None or self.input_menu_editar_inventario.user_input == "," or self.input_menu_editar_inventario.user_input == ".":
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):

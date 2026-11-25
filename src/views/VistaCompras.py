@@ -452,7 +452,7 @@ class VistaCompras(VistaBase):
                                          choices=["1", "2", "3", "4", "m", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_editar_insumo.user_input is None or self.input_menu_compras.user_input == "," or self.input_menu_compras.user_input == ".":
+        if self.input_menu_compras.user_input is None or self.input_menu_compras.user_input == "," or self.input_menu_compras.user_input == ".":
             self.mostrar_menu_compras_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_compras: list[Compra]):
@@ -470,7 +470,7 @@ class VistaCompras(VistaBase):
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_editar_insumo.user_input is None or self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+        if self.input_menu_filtros.user_input is None or self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
             self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_opciones_detalles_prompt(self):
@@ -479,7 +479,7 @@ class VistaCompras(VistaBase):
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_editar_insumo.user_input is None or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
+        if self.input_menu_detalles.user_input is None or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_opciones_detalles_edicion_des_prompt(self):
@@ -488,7 +488,7 @@ class VistaCompras(VistaBase):
                                           choices=["1", "m", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_editar_insumo.user_input is None or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
+        if self.input_menu_detalles.user_input is None or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_compra_prompt(self):
@@ -507,7 +507,7 @@ class VistaCompras(VistaBase):
                                                choices=["1", "2", "3", "4", "5", "6", "m", ",", "."],
                                                show_choices=False)
 
-        if self.input_menu_editar_insumo.user_input is None or self.input_menu_editar_compra.user_input == "," or self.input_menu_editar_compra.user_input == ".":
+        if self.input_menu_editar_compra.user_input is None or self.input_menu_editar_compra.user_input == "," or self.input_menu_editar_compra.user_input == ".":
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_fecha_creacion_prompt(self):
@@ -581,7 +581,7 @@ class VistaCompras(VistaBase):
         self.input_menu_editar_insumo.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                choices=["1","2","3","4","5","6", ",", "."], show_choices=False)
         if self.input_menu_editar_insumo.user_input is None or self.input_menu_editar_insumo.user_input == "," or self.input_menu_editar_insumo.user_input == ".":
-            mostrar_editar_insumos_menu_prompt
+            self.mostrar_editar_insumos_menu_prompt()
 
     def mostrar_seleccionar_insumo_prompt(self, opciones):
         opciones.append("0")

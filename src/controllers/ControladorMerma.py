@@ -232,25 +232,27 @@ class ControladorMerma:
 
                     num_tipo_mer = self.vista.mostrar_editar_tipo_merma_prompt(opciones_tipo_mer)
 
-                    if num_tipo_mer == "0":
-                        nombre_merma = self.vista.mostrar_crear_tipo_insumo_prompt()
-                        resultado_val_tipo = self.validador.validar_nombre_tipo_merma(nombre_merma)
-
-                        while not resultado_val_tipo[0]:
-                            self.vista.mostrar_mensaje_error_validacion(resultado_val_tipo[1])
+                    if num_tipo_mer:
+                        if num_tipo_mer == "0":
                             nombre_merma = self.vista.mostrar_crear_tipo_insumo_prompt()
                             resultado_val_tipo = self.validador.validar_nombre_tipo_merma(nombre_merma)
 
-                        nombre_merma = resultado_val_tipo[1]
+                            while not resultado_val_tipo[0]:
+                                self.vista.mostrar_mensaje_error_validacion(resultado_val_tipo[1])
+                                nombre_merma = self.vista.mostrar_crear_tipo_insumo_prompt()
+                                resultado_val_tipo = self.validador.validar_nombre_tipo_merma(nombre_merma)
 
-                        self.servicio_merma.crear_tipo_merma(nombre_merma)
-                        tipo_merma = self.servicio_merma.obtener_tipo_merma_por_nombre(nombre_merma)
+                            nombre_merma = resultado_val_tipo[1]
 
-                    elif num_tipo_mer != "0":
-                        tipo_merma = lista_tipos_merma[int(num_tipo_mer) - 1]
+                            self.servicio_merma.crear_tipo_merma(nombre_merma)
+                            tipo_merma = self.servicio_merma.obtener_tipo_merma_por_nombre(nombre_merma)
 
-                    self.merma_actual = Merma(0, "", fecha, unidad_m, cantidad, insumo_merma, tipo_merma)
-                    self.formulario["merma_creada"] = ""
+                        elif num_tipo_mer != "0":
+                            tipo_merma = lista_tipos_merma[int(num_tipo_mer) - 1]
+
+                        self.merma_actual = Merma(0, "", fecha, unidad_m, cantidad, insumo_merma, tipo_merma)
+                        self.formulario["merma_creada"] = ""
+
                     self.mostrar_detalles_merma()
 
                 else:
@@ -388,6 +390,8 @@ class ControladorMerma:
                     while not resultado_val_desc[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_desc[1])
                         descripcion = self.vista.mostrar_editar_descripcion_prompt()
+                        if not descripcion:
+                            self.mostrar_detalles_merma()
                         resultado_val_desc = self.validador.validar_descripcion_merma(descripcion)
 
                     descripcion = resultado_val_desc[1]
@@ -408,6 +412,8 @@ class ControladorMerma:
                     while not resultado_val_fecha[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_fecha[1])
                         fecha = self.vista.mostrar_editar_fecha_prompt()
+                        if not fecha:
+                            self.mostrar_detalles_merma()
                         resultado_val_fecha = self.validador.validar_formato_fecha(fecha)
 
                     fecha = resultado_val_fecha[1]
@@ -427,6 +433,8 @@ class ControladorMerma:
                     while not resultado_val_cantidad[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_cantidad[1])
                         cantidad = self.vista.mostrar_editar_cantidad_prompt()
+                        if not cantidad:
+                            self.mostrar_detalles_merma()
                         resultado_val_cantidad = self.validador.validar_cantidad_insumo(cantidad)
 
                     cantidad = resultado_val_cantidad[1]
@@ -446,6 +454,8 @@ class ControladorMerma:
                     while not resultado_val_unidad[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_unidad[1])
                         unidad_m = self.vista.mostrar_editar_unidad_medida_prompt()
+                        if not unidad_m:
+                            self.mostrar_detalles_merma()
                         resultado_val_unidad = self.validador.validar_unidad_medida(unidad_m)
 
                     unidad_m = resultado_val_unidad[1]
@@ -466,27 +476,27 @@ class ControladorMerma:
                 self.vista.mostrar_platillos_disponibles(pagina, self.pagina_actual_tipos_merma, total_pag)
 
                 tipo_merma = self.vista.mostrar_editar_tipo_merma_prompt(opciones)
-
-                if tipo_merma == "0":
-                    # crear tipo
-                    nombre_tipo = self.vista.mostrar_crear_tipo_insumo_prompt()
-                    resultado_val_nombre = self.validador.validar_nombre_tipo_merma(nombre_tipo)
-
-                    while not resultado_val_nombre[0]:
-                        self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                if tipo_merma:
+                    if tipo_merma == "0":
+                        # crear tipo
                         nombre_tipo = self.vista.mostrar_crear_tipo_insumo_prompt()
                         resultado_val_nombre = self.validador.validar_nombre_tipo_merma(nombre_tipo)
 
-                    nombre_tipo = resultado_val_nombre[1]
+                        while not resultado_val_nombre[0]:
+                            self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
+                            nombre_tipo = self.vista.mostrar_crear_tipo_insumo_prompt()
+                            resultado_val_nombre = self.validador.validar_nombre_tipo_merma(nombre_tipo)
 
-                    self.servicio_merma.crear_tipo_merma(nombre_tipo)
-                    self.merma_actual.tipo_merma = self.servicio_merma.obtener_tipo_merma_por_nombre(nombre_tipo)
-                    self.formulario["tipo"] = nombre_tipo
+                        nombre_tipo = resultado_val_nombre[1]
 
-                if tipo_merma is not None:
-                    tipo = lista_tipos_merma[int(tipo_merma)-1]
-                    self.merma_actual.tipo_merma = tipo
-                    self.formulario["tipo"] = tipo
+                        self.servicio_merma.crear_tipo_merma(nombre_tipo)
+                        self.merma_actual.tipo_merma = self.servicio_merma.obtener_tipo_merma_por_nombre(nombre_tipo)
+                        self.formulario["tipo"] = nombre_tipo
+
+                    if tipo_merma is not None:
+                        tipo = lista_tipos_merma[int(tipo_merma)-1]
+                        self.merma_actual.tipo_merma = tipo
+                        self.formulario["tipo"] = tipo
 
                 self.pagina_actual_tipos_merma = 1
                 self.mostrar_detalles_merma()

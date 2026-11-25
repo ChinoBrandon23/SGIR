@@ -399,7 +399,7 @@ class VistaMenus(VistaBase):
         self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                  choices=["1","2","3","4", ",", "."], show_choices=False)
 
-        if self.input_menu_menus.user_input is None or self.input_menu_editar_platillo.user_input == "," or self.input_menu_editar_platillo.user_input == ".":
+        if self.input_menu_editar_platillo.user_input is None or self.input_menu_editar_platillo.user_input == "," or self.input_menu_editar_platillo.user_input == ".":
             self.refrescar_pantalla()
             self.mostrar_editar_platillos_menu_prompt()
 
