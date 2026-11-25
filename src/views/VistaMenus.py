@@ -81,7 +81,8 @@ class VistaMenus(VistaBase):
         else:
             vigencia_menu = "N/A"
 
-        panel = Panel(renderable=f"{"[bold red]" if "nombre" in datos_editados else "[bold yellow]"}"
+        panel = Panel(renderable=f"{f"[bold yellow]{f"ID #{menu.num}: " if menu and menu.num != 0 else ""}[/bold yellow]"
+                                    f"[bold red]" if "nombre" in datos_editados else "[bold yellow]"}"
                                  f"{nombre_menu}\n"
                                  f"{"[/bold red]" if "nombre" in datos_editados else "[/bold yellow]"}"
                                  f"{"[bold red]" if "vigencia" in datos_editados else "[yellow]"}"
@@ -198,7 +199,7 @@ class VistaMenus(VistaBase):
         self.layout["tabla_detalles_menus"].update(Align.center(tabla, vertical="middle"))
 
     def mostrar_crear_menu(self, menu: Menu | None):
-        self.mostrar_conteo_paginas(0, 0)
+        self.mostrar_conteo_paginas(1, 1)
         self.resetear_vista()
 
         self.layout["main"].split_column(Layout(name="panel_menu"), Layout(name="tabla_detalles_menus"))
@@ -309,7 +310,7 @@ class VistaMenus(VistaBase):
                                        choices=["1", "2", "3", "m", ",", "."],
                                        show_choices=False)
 
-        if self.input_menu_menus.user_input == "," or self.input_menu_menus.user_input == ".":
+        if self.input_menu_menus.user_input is None or self.input_menu_menus.user_input == "," or self.input_menu_menus.user_input == ".":
             self.mostrar_menu_menus_prompt()
 
     def mostrar_abrir_detalles_prompt(self, lista_menus: list[Menu]):
@@ -318,13 +319,16 @@ class VistaMenus(VistaBase):
                                            choices=[str(i+1) for i in range(len(lista_menus))],
                                            show_choices=False)
 
+        if self.input_abrir_detalles.user_input is None:
+            self.mostrar_abrir_detalles_prompt(lista_menus)
+
     def mostrar_opciones_busqueda_av_prompt(self):
         self.refrescar_pantalla()
         self.input_menu_filtros.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                          choices=["1", "2", "3", "4", ",", "."],
                                          show_choices=False)
 
-        if self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
+        if self.input_menu_filtros.user_input is None or self.input_menu_filtros.user_input == "," or self.input_menu_filtros.user_input == ".":
             self.mostrar_opciones_busqueda_av_prompt()
 
     def mostrar_opciones_detalles_prompt(self):
@@ -333,7 +337,7 @@ class VistaMenus(VistaBase):
                                           choices=["1", "2", "3", "m", ",", "."],
                                           show_choices=False)
 
-        if self.input_menu_detalles == "." or self.input_menu_detalles == ".":
+        if self.input_menu_detalles.user_input is None or self.input_menu_detalles.user_input == "," or self.input_menu_detalles.user_input == ".":
             self.mostrar_opciones_detalles_prompt()
 
     def mostrar_prompt_eliminar_menu_prompt(self):
@@ -352,47 +356,50 @@ class VistaMenus(VistaBase):
                                                choices=["1", "2", "3", "4", "5", "m", ",", "."],
                                                show_choices=False)
 
-        if self.input_menu_editar_menu == "," or self.input_menu_editar_menu == ".":
+        if self.input_menu_editar_menu.user_input is None or self.input_menu_editar_menu.user_input == "," or self.input_menu_editar_menu.user_input == ".":
             self.mostrar_opciones_editar_prompt()
 
     def mostrar_editar_nombre_prompt(self):
-        self.refrescar_pantalla()
-        info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre del menú[/bold yellow]")
+        info = ""
 
-        if len(info) > 0:
-            confirmacion = Prompt.ask(f"[bold yellow]Confirmar nuevo nombre[/bold yellow] "
-                                      f"[italic white]{info}[/italic white]", choices=["S", "N"])
-            if confirmacion == "S":
-                return info
-            else:
-                return None
-        else:
-            self.mostrar_editar_nombre_prompt()
+        while not info or len(info) == 0 :
+            self.refrescar_pantalla()
+            info = Prompt.ask("[bold yellow]Ingresa el nuevo nombre del menú[/bold yellow]")
+
+            if info and len(info) > 0:
+                confirmacion = Prompt.ask(f"[bold yellow]Confirmar nuevo nombre[/bold yellow] "
+                                          f"[italic white]{info}[/italic white]", choices=["S", "N"])
+                if confirmacion == "S":
+                    return info
+                else:
+                    return None
 
     def mostrar_editar_vigencia_prompt(self):
-        self.refrescar_pantalla()
-        fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial en el siguiente formato o 0 para salir[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
+        fecha_inicial = ""
+        fecha_final = ""
 
-        if fecha_inicial == "0":
-            return None, None
+        while not fecha_inicial or len(fecha_inicial) == 0:
+            self.refrescar_pantalla()
+            fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial en el siguiente formato o 0 para salir[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
 
-        if len(fecha_inicial):
+            if fecha_inicial == "0":
+                return None, None
+
+        while not fecha_final or len(fecha_final) == 0:
+            self.refrescar_pantalla()
             fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final en el siguiente formato o 0 para salir[/bold yellow]: [[bold green]dd-mm-yyyy[/bold green]]")
 
             if fecha_final == "0":
                 return None, None
 
-            if len(fecha_final):
-                return fecha_inicial, fecha_final
-
-        return None, None
+        return fecha_inicial, fecha_final
 
     def mostrar_editar_platillos_menu_prompt(self):
         self.refrescar_pantalla()
         self.input_menu_editar_platillo.imprimir("Selecciona una opción o cambia de página [',' '.']",
                                                  choices=["1","2","3","4", ",", "."], show_choices=False)
 
-        if self.input_menu_editar_platillo == "," or self.input_menu_editar_platillo == ".":
+        if self.input_menu_menus.user_input is None or self.input_menu_editar_platillo.user_input == "," or self.input_menu_editar_platillo.user_input == ".":
             self.refrescar_pantalla()
             self.mostrar_editar_platillos_menu_prompt()
 
@@ -407,7 +414,7 @@ class VistaMenus(VistaBase):
         opciones.append(",")
         opciones.append(".")
 
-        while len(num_receta) == 0 or num_receta == "," or num_receta == ".":
+        while not num_receta or len(num_receta) == 0 or num_receta == "," or num_receta == ".":
             self.refrescar_pantalla()
             num_receta = self.input_seleccion_platillos_disp.imprimir("[bold yellow]Selecciona uno de los platillos disponibles[/bold yellow]",
                                 choices=opciones,
@@ -423,10 +430,10 @@ class VistaMenus(VistaBase):
             return None
 
     def mostrar_ingresar_precio_prompt(self):
-        self.refrescar_pantalla()
         precio = ""
 
-        while len(precio) == 0:
+        while not precio or len(precio) == 0:
+            self.refrescar_pantalla()
             precio = Prompt.ask("[bold yellow]Ingresa el precio del platillo para este menú[bold yellow]")
 
         return precio
@@ -462,7 +469,7 @@ class VistaMenus(VistaBase):
     def mostrar_buscar_por_nombre_prompt(self):
         nombre = ""
 
-        while len(nombre) == 0:
+        while not nombre or len(nombre) == 0:
             self.refrescar_pantalla()
             nombre = Prompt.ask("[bold yellow]Ingresa el nombre a buscar[/bold yellow]")
 
@@ -472,27 +479,27 @@ class VistaMenus(VistaBase):
         fecha_inicial = ""
         fecha_final = ""
 
-        while len(fecha_inicial) == 0:
+        while not fecha_inicial or len(fecha_inicial) == 0:
             self.refrescar_pantalla()
             fecha_inicial = Prompt.ask("[bold yellow]Ingresa la fecha inicial de búsqueda en el siguiente formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
-        while len(fecha_final) == 0:
+        while not fecha_final or len(fecha_final) == 0:
             self.refrescar_pantalla()
             fecha_final = Prompt.ask("[bold yellow]Ingresa la fecha final de búsqueda en el sigueinte formato: [[bold green]dd-mm-yyyy[/bold green]][/bold yellow]")
 
         return fecha_inicial, fecha_final
 
     def mostrar_prompt_crear_menu(self):
-        nombre = Prompt.ask("Para comenzar, ingresa el nombre del nuevo menú o 0 para cancelar")
+        nombre = ""
 
-        if len(nombre) == 0:
+        while not nombre or len(nombre) == 0:
             self.refrescar_pantalla()
-            self.mostrar_prompt_crear_menu()
+            nombre = Prompt.ask("Para comenzar, ingresa el nombre del nuevo menú o 0 para cancelar")
 
-        if nombre is not "0":
-            return nombre
+            if nombre is "0":
+                return None
 
-        return None
+        return nombre
 
     def mostrar_conteo_paginas(self, pag_actual, pag_total):
         paginas_columna = Columns()
@@ -514,19 +521,23 @@ class VistaMenus(VistaBase):
 
     def mostrar_mensaje_no_resultados_busqueda_av(self):
         rich.print("[bold blue]Aviso: No se encontraron resultados para la búsqueda realizada, volviendo a al menú anterior...[/bold blue]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_crear_menu_duplicado(self):
         rich.print("[bold red]Error: El menú que intenta guardar ya existe. Cambia el nombre actual o edita la receta existente.[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_editar_nombre_duplicado(self):
         rich.print("[bold red]Error: El nombre ingresado ya existe. Cambia el nombre actual o edita la receta existente.[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
 
     def mostrar_mensaje_error_validacion(self, error:str):
         rich.print(f"[bold red]{error}[/bold red]")
-        time.sleep(3)
+        time.sleep(2)
+
+    def mostrar_mensaje_no_menus_mostrar(self):
+        rich.print("[bold blue]Aviso: No hay menús que mostrar, volviendo a al menú anterior...[/bold blue]")
+        time.sleep(2)
 
     def mostrar_mensaje_platillos_conflicto(self, fecha_inicial, fecha_final):
         self.refrescar_pantalla()

@@ -131,8 +131,6 @@ class ControladorMenus:
             self.vista.refrescar_pantalla()
             self.vista.mostrar_opciones_editar_prompt()
 
-        self.vista.refrescar_pantalla()
-
     def guardar_editar_menu(self):
         # Cambia los datos del formulario en el objeto actual
         # para testeo, aquí debería llamar a un servicio
@@ -223,7 +221,11 @@ class ControladorMenus:
         match seleccion:
             case "1":
                 # Aquí debería obtener la lista de todos los menús y pasarlos
-                self.vista.mostrar_abrir_detalles_prompt(self.menus_a_mostrar)
+                if len(self.menus_a_mostrar):
+                    self.vista.mostrar_abrir_detalles_prompt(self.menus_a_mostrar)
+                else:
+                    self.vista.mostrar_mensaje_no_menus_mostrar()
+                    self.mostrar_lista_menus()
             case "2":
                 # Aquí crea menú
                 self.mostrar_formulario_crear_menu()
@@ -343,10 +345,14 @@ class ControladorMenus:
                     while not resultado_val_nombre[0]:
                         self.vista.mostrar_mensaje_error_validacion(resultado_val_nombre[1])
                         nombre = self.vista.mostrar_prompt_crear_menu()
-                        resultado_val_nombre = self.validador.validar_nombre(nombre)
+                        if nombre:
+                            resultado_val_nombre = self.validador.validar_nombre(nombre)
+                        else:
+                            break
 
-                    self.formulario["nombre"] = resultado_val_nombre[1]
-                    self.menu_actual.nombre = resultado_val_nombre[1]
+                    if resultado_val_nombre[0]:
+                        self.formulario["nombre"] = resultado_val_nombre[1]
+                        self.menu_actual.nombre = resultado_val_nombre[1]
                 self.mostrar_detalles_menu()
 
             case "2":
