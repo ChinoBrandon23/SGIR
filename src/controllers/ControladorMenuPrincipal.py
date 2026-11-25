@@ -14,9 +14,7 @@ from controllers.ControladorRecetas import ControladorRecetas
 from controllers.ControladorVentas import ControladorVentas
 from daos.platillos_dao import PlatillosDAO
 from services.merma_servicio import MermaServicio
-#from daos.venta_dao import VentaDAO
 from services.platillos_servicio import PlatillosServicio
-#from services.venta_servicio import VentaServicio
 from daos.venta_dao import VentaDAO
 from services.venta_servicio import VentaServicio
 from views.VistaCompras import VistaCompras
@@ -83,6 +81,12 @@ class ControladorMenuPrincipal:
 
     def abrir_menu_principal(self):
         self.vista.mostrar_layout()
+
+        if date.today() == datetime.strptime("31-10-2026", "%d-%m-%Y").date():
+            self.vista.imprimir_banner_halloween()
+        else:
+            self.vista.imprimir_banner()
+
         self.vista.mostrar_prompt_menu()
 
     def abrir_vista_receta(self):

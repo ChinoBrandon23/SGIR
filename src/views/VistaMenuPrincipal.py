@@ -1,6 +1,8 @@
 import os
 import subprocess
 
+import rich
+from rich.layout import Layout
 from rich.table import Table
 from rich.align import Align
 
@@ -11,8 +13,10 @@ class VistaMenuPrincipal(VistaBase):
     def __init__(self, console):
         super().__init__()
         self.console = console
-        self.tabla_menu = Table(title="Menú")
+        self.tabla_menu = Table()
         self.input_menu = InputEmisor()
+
+        self.layout["contenido"].split_column(Layout(name="banner"), Layout(name="menu"))
 
         self.configurar_menu()
         self.mostrar_layout()
@@ -28,7 +32,37 @@ class VistaMenuPrincipal(VistaBase):
             self.tabla_menu.add_row(str(contador_opciones), opcion)
             contador_opciones += 1
 
-        self.layout["contenido"].update(Align.center(self.tabla_menu, vertical="middle"))
+        self.layout["menu"].update(Align.center(self.tabla_menu, vertical="middle"))
+
+    def imprimir_banner(self):
+        banner = '''[magenta]███████╗ ██████╗  ██████╗ ██╗██████╗
+██╔════╝██╔═══██╗██╔════╝ ██║██╔══██╗
+███████╗██║   ██║██║  ███╗██║██████╔╝
+╚════██║██║   ██║██║   ██║██║██╔══██╗
+███████║╚██████╔╝╚██████╔╝██║██║  ██║
+╚══════╝ ╚═════╝  ╚═════╝ ╚═╝╚═╝  ╚═╝[/magenta]'''
+
+        banner_2 = '''[magenta]███████╗ ██████╗ ██╗██████╗ 
+██╔════╝██╔════╝ ██║██╔══██╗
+███████╗██║  ███╗██║██████╔╝
+╚════██║██║   ██║██║██╔══██╗
+███████║╚██████╔╝██║██║  ██║
+╚══════╝ ╚═════╝ ╚═╝╚═╝  ╚═╝[/magenta]'''
+
+        self.layout["banner"].update(Align.center(banner, vertical="middle"))
+
+    def imprimir_banner_halloween(self):
+        banner = '''[red]██████  ▒█████    ▄████  ██▓ ██▀███  
+▒██    ▒ ▒██▒  ██▒ ██▒ ▀█▒▓██▒▓██ ▒ ██▒
+░ ▓██▄   ▒██░  ██▒▒██░▄▄▄░▒██▒▓██ ░▄█ ▒
+  ▒   ██▒▒██   ██░░▓█  ██▓░██░▒██▀▀█▄  
+▒██████▒▒░ ████▓▒░░▒▓███▀▒░██░░██▓ ▒██▒
+▒ ▒▓▒ ▒ ░░ ▒░▒░▒░  ░▒   ▒ ░▓  ░ ▒▓ ░▒▓░
+░ ░▒  ░ ░  ░ ▒ ▒░   ░   ░  ▒ ░  ░▒ ░ ▒░
+░  ░  ░  ░ ░ ░ ▒  ░ ░   ░  ▒ ░  ░░   ░ 
+      ░      ░ ░        ░  ░     ░ [/red]'''
+
+        self.layout["banner"].update(Align.center(banner, vertical="middle"))
 
     def mostrar_prompt_menu(self) :
         self.refrescar_pantalla()
