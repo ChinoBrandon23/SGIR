@@ -147,7 +147,7 @@ class VistaVentas(VistaBase):
         consola_size = self.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 9
+        lineas_disp = size_sin_prompt - 12
 
         if pag_actual == 1:
             idx_ui = 0
@@ -173,7 +173,7 @@ class VistaVentas(VistaBase):
         consola_size = self.console.size[1]
         size_sin_prompt = consola_size - 6
 
-        lineas_disp = size_sin_prompt - 9
+        lineas_disp = size_sin_prompt - 12
 
         if pag_actual == 1:
             idx_ui = 0
@@ -408,18 +408,20 @@ class VistaVentas(VistaBase):
             time.sleep(3)
             return None
 
-        while len(num_platillo) == 0 and num_platillo != "," and num_platillo != ".":
+        while len(num_platillo) == 0 or num_platillo == "," or num_platillo == ".":
             self.refrescar_pantalla()
             num_platillo = self.input_seleccion_platillo.imprimir("[bold yellow]Selecciona un platillo de la lista para agregar[/bold yellow]",
                                       choices=opciones,
                                       show_choices=False)
 
-            if num_platillo != "," or num_platillo != ".":
-                confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo platillo[/bold yellow]",
-                                choices=["S", "N"])
+        confirmacion = Prompt.ask(f"[bold yellow]Confirma el nuevo platillo[/bold yellow]",
+                                      choices=["S", "N"])
 
-                if confirmacion == "S":
-                    return num_platillo
+        if confirmacion == "S":
+            return num_platillo
+        else:
+            return None
+
 
     def mostrar_agregar_consumo_cantidad_prompt(self):
         cantidad = ""
@@ -443,18 +445,20 @@ class VistaVentas(VistaBase):
         opciones.append(".")
         num_platillo = ""
 
-        while len(num_platillo) == 0 and num_platillo != "," and num_platillo != ".":
+        while len(num_platillo) == 0 or num_platillo != "," or num_platillo != ".":
             self.refrescar_pantalla()
             num_platillo = self.input_seleccion_platillo.imprimir(
                 "[bold yellow]Ingresa el índice del platillo a editar[/bold yellow]",
                 choices=opciones,
                 show_choices=False)
 
-            confirmacion = Prompt.ask(f"[bold yellow]Confirma selección[/bold yellow]",
+        confirmacion = Prompt.ask(f"[bold yellow]Confirma selección[/bold yellow]",
                                           choices=["S", "N"])
 
-            if confirmacion == "S":
-                return num_platillo
+        if confirmacion == "S":
+            return num_platillo
+        else:
+            return None
 
     def mostrar_editar_cantidad_prompt(self, opciones):
         self.refrescar_pantalla()
