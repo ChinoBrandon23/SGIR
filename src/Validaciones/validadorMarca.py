@@ -10,6 +10,6 @@ class validadorMarca:
 
         #Verifica que el largo del nombre sea el correcto
         if len(marca_limpia) > 20:
-            return False, "Error: El nombre de la marca excede el largo permitido (20 caracteres0.)"
+            return False, "Error: El nombre de la marca excede el largo permitido (hasta 20 caracteres)."
 
         return True, marca_limpia.capitalize()

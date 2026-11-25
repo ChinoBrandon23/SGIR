@@ -37,7 +37,7 @@ class ValidadorVentas:
         fecha_limpia = fecha.strip()
 
         if not fecha_limpia:
-            return False, "Error: La fecha del ticket no puede estar vacia."
+            return False, "Error: La fecha del ticket no puede estar vacía."
 
         # Verificar que la fecha sea valida
         formato = "%d-%m-%Y"
